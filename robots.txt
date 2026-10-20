@@ -1,0 +1,3 @@
+User-agent: *
+Allow: /
+Sitemap: https://tiagocarv-lang.github.io/bestincell/sitemap.xml
