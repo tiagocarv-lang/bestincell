@@ -247,6 +247,7 @@ html[data-theme=dark] .btn.ghost,html[data-theme=dark] .chip{background:#262320;
 @media (max-width:860px){.fab{bottom:84px;right:18px}.cn-src{display:none}.calmnext{padding:22px 20px!important}.cn-t{font-size:28px}.calmtools{justify-content:flex-start}}
 @media print{.fab,.calmtools,.calmnext,.onb{display:none!important}}
 html[data-theme=dark] .cm{background:#262320;color:#F1EBE2}
+html[data-theme=dark] .onb{background:#2E2925;border-color:#4A3F37;color:#F1EBE2}
 
 :root{--bg:#F8F1E7;--acc:#C9733E;--acc-l:#F6E3D3;--acc-d:#A1562A;--blush:#D9A07A;--blush-l:#F6E6DA;--gold:#B8914E}
 [data-acc=sage]{--acc:#7D8F75;--acc-l:#E4EADF;--acc-d:#5E6F57}
@@ -302,7 +303,7 @@ const fmtD=d=>d.toLocaleDateString('en-US',{weekday:'short',month:'short',day:'n
 const COURSES=['Starter','Main','Side','Dessert','Drinks'];const AISLES=['Produce','Meat & fish','Dairy & eggs','Bakery','Pantry','Frozen','Drinks','Other'];
 const WHEN=[['3 weeks before',21],['2 weeks before',14],['1 week before',7],['3 days before',3],['2 days before',2],['Day before',1],['Thanksgiving Day',0]];
 const DEF_TASKS=[[21,'Finalize guest list & send invites'],[21,'Plan the menu'],[21,'Order the turkey'],[14,'Ask guests about allergies'],[14,'Assign potluck dishes'],[14,'Check tableware & chairs'],[7,'Buy non-perishables & drinks'],[7,'Plan seating & table decor'],[3,'Start thawing the turkey'],[3,'Buy fresh produce'],[2,'Make cranberry sauce & pie dough'],[1,'Bake pies'],[1,'Prep vegetables & stuffing'],[1,'Set the table'],[0,'Turkey in the oven'],[0,'Enjoy & give thanks']];
-APP.blank=()=>({mem:[],host:'Our Thanksgiving',date:'2026-11-26',dinner:'16:00',budget:300,cur:'$',acc:'pumpkin',dark:false,lb:'',stuffed:false,guests:[],menu:[],shop:[],tasks:DEF_TASKS.map(([w,t])=>({id:uid(),w,t,done:false})),cook:[],extras:[],notes:[{id:uid(),t:'Ideas',b:''}]});
+APP.blank=()=>({mem:[],host:'Our Thanksgiving',date:'2026-11-26',dinner:'16:00',budget:300,cur:'$',acc:'pumpkin',dark:false,lb:'',stuffed:false,guests:[],menu:[],shop:[],tasks:DEF_TASKS.map(([w,t])=>({id:uid(),w,t,done:false})),cook:[],extras:[],oven:[],notes:[{id:uid(),t:'Ideas',b:''}]});
 APP.demo=()=>{const s=APP.blank();Object.assign(s,{host:'The Miller Family',budget:420,lb:16});
  s.guests=[['Grandma Rose','yes',1,0,'Low salt','Pecan pie'],['Uncle Mike & Lisa','yes',2,0,'','Green bean casserole'],['Sarah & Tom','yes',2,2,'Vegetarian (Sarah)','Mac & cheese'],['Jake','yes',1,0,'','Drinks'],['The Parkers','pending',2,1,'Nut allergy (kid)',''],['Aunt Beth','yes',1,0,'Gluten-free','Salad'],['Chris','no',1,0,'','']].map(([n,r,a,k,d,b])=>({id:uid(),name:n,rsvp:r,ad:a,kd:k,diet:d,bring:b}));
  s.menu=[['Butternut squash soup','Starter','Me',true],['Roast turkey','Main','Me',false],['Herb stuffing','Side','Me',false],['Mashed potatoes','Side','Dad',false],['Green bean casserole','Side','Uncle Mike',false],['Mac & cheese','Side','Sarah',false],['Cranberry sauce','Side','Me',true],['Pumpkin pie','Dessert','Me',false],['Pecan pie','Dessert','Grandma Rose',false],['Apple cider & wine','Drinks','Jake',false]].map(([d,c,w,ok])=>({id:uid(),dish:d,course:c,who:w,done:ok,note:''}));
@@ -563,11 +564,11 @@ function calmCard(){const n=calmCur();return `<div class="card calmnext"><div cl
 function dumpCard(){return `<div class="card"><h3>🧠 Brain dump<span class="x">get it out of your head</span></h3><div class="addrow"><input class="fi" id="dumpin" placeholder="What's on your mind? Type and press Enter" data-enter="dumpadd"><button class="btn" data-act="dumpadd">Add</button></div>
  <div class="list">${S.dump.map(d=>`<div class="it"><div style="flex:1">${esc(d.t)}</div><button class="btn ghost sm" data-act="dumpnext" data-id="${d.id}">Make it next</button><button class="del" data-delc="dump" data-id="${d.id}">×</button></div>`).join('')||'<div class="empty" style="padding:14px">Empty mind, happy mind ✨</div>'}</div></div>`}
 const CALM_ONB=KEY+'-onb';
-function onbBar(){let seen=null;try{seen=localStorage.getItem(CALM_ONB)}catch(e){}if(seen)return '';
+function onbBar(){if(/[?&]cap=/.test(location.search))return '';let seen=null;try{seen=localStorage.getItem(CALM_ONB)}catch(e){}if(seen)return '';
  return `<div class="onb"><div>👋 <b>This is an example planner.</b> Look around and tap anything, nothing here is yours yet.</div><div class="onb-b"><button class="btn ghost sm" data-act="onbkeep">Keep exploring</button><button class="btn sm" data-act="onbfresh">Start my own</button></div></div>`}
 function calmTools(){return `<div class="calmtools" style="margin:0"><button class="chip" data-act="focus">${S.focus?'✕ Exit focus':'🎯 Focus mode'}</button><button class="chip" data-act="calmhelp">? Help</button></div>`}
 const _view=view;
-view=function(){if(page!=='dashboard')return _view();
+view=function(){if(!Array.isArray(S.dump))S.dump=[];if(page!=='dashboard')return _view();
  if(S.focus)return `${onbBar()}<div class="top"><div><h1>Focus</h1><p>One thing at a time. Everything else can wait.</p></div><div class="r">${calmTools()}</div></div>${calmCard()}<div style="margin-top:16px">${dumpCard()}</div>`;
  const h=_view();const i=h.indexOf('<div class="r">');let top='',rest=h;if(i>=0){const j=h.indexOf('</div></div>',i)+12;top=h.slice(0,j-12)+calmTools()+'</div></div>';rest=h.slice(j)}return onbBar()+top+calmCard()+'<div style="height:16px"></div>'+rest+'<div style="margin-top:16px">'+dumpCard()+'</div>'};
 function modal(html){let m=$('#calmmodal');if(!m){m=document.createElement('div');m.id='calmmodal';document.body.appendChild(m)}m.innerHTML=`<div class="cm-bg" data-act="cmclose"></div><div class="cm">${html}<button class="cm-x" data-act="cmclose">×</button></div>`;m.style.display='block'}

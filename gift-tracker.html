@@ -247,6 +247,7 @@ html[data-theme=dark] .btn.ghost,html[data-theme=dark] .chip{background:#262320;
 @media (max-width:860px){.fab{bottom:84px;right:18px}.cn-src{display:none}.calmnext{padding:22px 20px!important}.cn-t{font-size:28px}.calmtools{justify-content:flex-start}}
 @media print{.fab,.calmtools,.calmnext,.onb{display:none!important}}
 html[data-theme=dark] .cm{background:#262320;color:#F1EBE2}
+html[data-theme=dark] .onb{background:#2E2925;border-color:#4A3F37;color:#F1EBE2}
 
 :root{--bg:#FAF4F2;--acc:#B5546B;--acc-l:#F5DEE3;--acc-d:#8E3B50;--blush:#D98C7A;--blush-l:#F7E3DD;--gold:#C9A24D}
 [data-acc=sage]{--acc:#6E8B74;--acc-l:#E1EBE3;--acc-d:#4F6955}
@@ -564,11 +565,11 @@ function calmCard(){const n=calmCur();return `<div class="card calmnext"><div cl
 function dumpCard(){return `<div class="card"><h3>🧠 Brain dump<span class="x">get it out of your head</span></h3><div class="addrow"><input class="fi" id="dumpin" placeholder="What's on your mind? Type and press Enter" data-enter="dumpadd"><button class="btn" data-act="dumpadd">Add</button></div>
  <div class="list">${S.dump.map(d=>`<div class="it"><div style="flex:1">${esc(d.t)}</div><button class="btn ghost sm" data-act="dumpnext" data-id="${d.id}">Make it next</button><button class="del" data-delc="dump" data-id="${d.id}">×</button></div>`).join('')||'<div class="empty" style="padding:14px">Empty mind, happy mind ✨</div>'}</div></div>`}
 const CALM_ONB=KEY+'-onb';
-function onbBar(){let seen=null;try{seen=localStorage.getItem(CALM_ONB)}catch(e){}if(seen)return '';
+function onbBar(){if(/[?&]cap=/.test(location.search))return '';let seen=null;try{seen=localStorage.getItem(CALM_ONB)}catch(e){}if(seen)return '';
  return `<div class="onb"><div>👋 <b>This is an example planner.</b> Look around and tap anything, nothing here is yours yet.</div><div class="onb-b"><button class="btn ghost sm" data-act="onbkeep">Keep exploring</button><button class="btn sm" data-act="onbfresh">Start my own</button></div></div>`}
 function calmTools(){return `<div class="calmtools" style="margin:0"><button class="chip" data-act="focus">${S.focus?'✕ Exit focus':'🎯 Focus mode'}</button><button class="chip" data-act="calmhelp">? Help</button></div>`}
 const _view=view;
-view=function(){if(page!=='dashboard')return _view();
+view=function(){if(!Array.isArray(S.dump))S.dump=[];if(page!=='dashboard')return _view();
  if(S.focus)return `${onbBar()}<div class="top"><div><h1>Focus</h1><p>One thing at a time. Everything else can wait.</p></div><div class="r">${calmTools()}</div></div>${calmCard()}<div style="margin-top:16px">${dumpCard()}</div>`;
  const h=_view();const i=h.indexOf('<div class="r">');let top='',rest=h;if(i>=0){const j=h.indexOf('</div></div>',i)+12;top=h.slice(0,j-12)+calmTools()+'</div></div>';rest=h.slice(j)}return onbBar()+top+calmCard()+'<div style="height:16px"></div>'+rest+'<div style="margin-top:16px">'+dumpCard()+'</div>'};
 function modal(html){let m=$('#calmmodal');if(!m){m=document.createElement('div');m.id='calmmodal';document.body.appendChild(m)}m.innerHTML=`<div class="cm-bg" data-act="cmclose"></div><div class="cm">${html}<button class="cm-x" data-act="cmclose">×</button></div>`;m.style.display='block'}
