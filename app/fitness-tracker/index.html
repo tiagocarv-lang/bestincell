@@ -615,6 +615,13 @@ function gridTracker(o){const t=new Date(),y=t.getFullYear(),m=t.getMonth(),nd=n
 function logDemo(days,p){const t=new Date(),y=t.getFullYear(),m=t.getMonth(),o={};for(let d=1;d<=Math.min(days,t.getDate());d++)if(Math.random()<p)o[`${y}-${String(m+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`]=1;return o}
 Object.assign(CORE_ACT,{addrow:t=>{const c=t.dataset.c;S[c].unshift(Object.assign(JSON.parse(JSON.stringify(((APP.defaults||{})[c])||{})),{id:uid()}));save();rerender()},
  tick:t=>{const it=S[t.dataset.c].find(x=>x.id===t.dataset.id);it.log=it.log||{};if(it.log[t.dataset.k])delete it.log[t.dataset.k];else it.log[t.dataset.k]=1;save();rerender()}});
+// ---- extra tabs added after launch (used by <app>/post.js) ----
+// addTab(after, [key,label,icon], arrayKey, seed(), defaults, keepSeedOnFreshStart)
+function addTab(after,tab,arr,seed,def,keep){const i=APP.pages.findIndex(p=>p[0]===after);APP.pages.splice(i<0?APP.pages.length-2:i+1,0,tab);if(!arr)return;
+ if(!APP.arrays.includes(arr))APP.arrays.push(arr);const mk=()=>seed?seed().map(x=>Object.assign({id:uid()},x)):[];
+ if(!Array.isArray(S[arr]))S[arr]=mk();APP.defaults=APP.defaults||{};APP.defaults[arr]=def||{};
+ const _d=APP.demo;APP.demo=()=>{const s=_d();s[arr]=mk();return s};const _b=APP.blank;APP.blank=()=>{const s=_b();s[arr]=keep?mk():[];return s}}
+const isoAgo=n=>{const d=new Date();d.setDate(d.getDate()-n);return d.toISOString().slice(0,10)};
 
 // ===== CALM LAYER: next small step, 5-min timer, stuck helper, brain dump, quick add, onboarding, focus mode, help =====
 if(!Array.isArray(S.dump))S.dump=[];
@@ -669,6 +676,9 @@ Object.assign(CORE_ACT,{
 (function(){const f=document.createElement('button');f.className='fab';f.dataset.act='quickadd';f.title='Quick add';f.textContent='+';document.body.appendChild(f);
  const db=$('#demobar');if(db&&window.ETSY_URL){db.innerHTML=`✨ <b>Free demo</b> · try anything, your data never leaves your browser · <a href="${window.ETSY_URL}" target="_blank" rel="noopener" style="color:inherit;font-weight:700;text-decoration:underline">Get the full app on Etsy →</a>`}})();
 
+// New tab: 30-day challenges
+addTab('habits',['challenges','30-day challenges','flame'],'chal',()=>[['Plank 1 minute',.6,'#2F7D86'],['10,000 steps',.5,'#E07A5F'],['Drink 2 L of water',.7,'#5A7FC8'],['Stretch 10 minutes',.4,'#B8914E']].map(([n,p,c])=>({name:n,log:logDemo(31,p),col:c})),{name:'New challenge',log:{}});
+APP.P.challenges=()=>`${head('30-day challenges','Pick a challenge, tap a square each day. Don’t break the chain 🔥',`<button class="btn" data-act="addrow" data-c="chal">${ic('plus',15)} Add challenge</button>`)}${gridTracker({c:'chal',t:'This month',label:'Challenge'})}`;
 
 boot();
 </script>
