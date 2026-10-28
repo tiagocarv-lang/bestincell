@@ -249,6 +249,8 @@ html[data-theme=dark] .btn.ghost,html[data-theme=dark] .chip{background:#262320;
 html[data-theme=dark] .cm{background:#262320;color:#F1EBE2}
 html[data-theme=dark] .onb{background:#2E2925;border-color:#4A3F37;color:#F1EBE2}
 
+.tblw{overflow-x:auto;max-width:100%}.card{min-width:0}
+
 :root{--bg:#F8F5F3;--acc:#A3708C;--acc-l:#F1E3EA;--acc-d:#7D5069;--blush:#A3708C;--blush-l:#F1E3EA;--gold:#C9A24D}
 .hero{background:radial-gradient(120% 140% at 85% 20%,#F1E3EA 0,transparent 55%),linear-gradient(120deg,#FDFBF8,#F1E3EA)}
 [data-acc=sage]{--acc:#6E8B74;--acc-l:#E1EBE3;--acc-d:#4F6955}[data-acc=rose]{--acc:#B5546B;--acc-l:#F5DEE3;--acc-d:#8E3B50}[data-acc=navy]{--acc:#34507A;--acc-l:#DEE5F0;--acc-d:#243A5A}[data-acc=gold]{--acc:#B8914E;--acc-l:#F3EAD8;--acc-d:#8E6E36}[data-acc=plum]{--acc:#7A4A6B;--acc-l:#EEDFE9;--acc-d:#5A3450}
@@ -604,8 +606,8 @@ function tablePage(o){let rows=S[o.c];if(o.filter){const v=fv(o.c+'f','all');if(
  ${o.side?`<div class="grid g21"><div class="card">${ft}${tbl}</div><div class="grid" style="align-content:start">${o.side}</div></div>`:`<div class="card">${ft}${tbl}</div>`}`}
 function gridTracker(o){const t=new Date(),y=t.getFullYear(),m=t.getMonth(),nd=new Date(y,m+1,0).getDate(),pre=`${y}-${String(m+1).padStart(2,'0')}-`;
  const streak=x=>{let s=0;for(let d=t.getDate();d>0;d--){if(x.log&&x.log[pre+String(d).padStart(2,'0')])s++;else if(d!==t.getDate())break}return s};
- return `<div class="card"><h3>${o.t}<span class="x">${t.toLocaleDateString('en-US',{month:'long',year:'numeric'})}</span></h3><div class="tblw"><table class="tbl" style="font-size:12px"><tr><th>${o.label||'Item'}</th>${[...Array(nd)].map((_,i)=>`<th style="text-align:center;padding:4px 2px">${i+1}</th>`).join('')}<th class="num">🔥</th></tr>
- ${S[o.c].map(x=>`<tr><td style="min-width:150px">${inp(o.c,x,o.f||'name',{st:'font-weight:600'})}</td>${[...Array(nd)].map((_,i)=>{const k=pre+String(i+1).padStart(2,'0'),on=x.log&&x.log[k];return `<td style="padding:2px;text-align:center"><button data-act="tick" data-c="${o.c}" data-id="${x.id}" data-k="${k}" style="width:20px;height:20px;border-radius:6px;border:1px solid var(--line);background:${on?(x.col||'var(--acc)'):'transparent'};cursor:pointer;padding:0"></button></td>`}).join('')}<td class="num"><b>${streak(x)}</b></td></tr>`).join('')}</table></div></div>`}
+ return `<div class="card"><h3>${o.t}<span class="x">${t.toLocaleDateString('en-US',{month:'long',year:'numeric'})}</span></h3><div class="tblw"><table class="tbl" style="font-size:12px"><tr><th>${o.label||'Item'}</th>${[...Array(nd)].map((_,i)=>`<th style="text-align:center;padding:4px 0;font-size:10px;letter-spacing:0">${i+1}</th>`).join('')}<th class="num">🔥</th></tr>
+ ${S[o.c].map(x=>`<tr><td style="min-width:110px;width:150px">${inp(o.c,x,o.f||'name',{st:'font-weight:600'})}</td>${[...Array(nd)].map((_,i)=>{const k=pre+String(i+1).padStart(2,'0'),on=x.log&&x.log[k];return `<td style="padding:1px;text-align:center"><button data-act="tick" data-c="${o.c}" data-id="${x.id}" data-k="${k}" style="width:100%;max-width:22px;min-width:12px;aspect-ratio:1;height:auto;border-radius:5px;border:1px solid var(--line);background:${on?(x.col||'var(--acc)'):'transparent'};cursor:pointer;padding:0;display:block;margin:0 auto"></button></td>`}).join('')}<td class="num"><b>${streak(x)}</b></td></tr>`).join('')}</table></div></div>`}
 function logDemo(days,p){const t=new Date(),y=t.getFullYear(),m=t.getMonth(),o={};for(let d=1;d<=Math.min(days,t.getDate());d++)if(Math.random()<p)o[`${y}-${String(m+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`]=1;return o}
 Object.assign(CORE_ACT,{addrow:t=>{const c=t.dataset.c;S[c].unshift(Object.assign(JSON.parse(JSON.stringify(((APP.defaults||{})[c])||{})),{id:uid()}));save();rerender()},
  tick:t=>{const it=S[t.dataset.c].find(x=>x.id===t.dataset.id);it.log=it.log||{};if(it.log[t.dataset.k])delete it.log[t.dataset.k];else it.log[t.dataset.k]=1;save();rerender()}});
