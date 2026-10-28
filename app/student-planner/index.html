@@ -615,6 +615,13 @@ function gridTracker(o){const t=new Date(),y=t.getFullYear(),m=t.getMonth(),nd=n
 function logDemo(days,p){const t=new Date(),y=t.getFullYear(),m=t.getMonth(),o={};for(let d=1;d<=Math.min(days,t.getDate());d++)if(Math.random()<p)o[`${y}-${String(m+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`]=1;return o}
 Object.assign(CORE_ACT,{addrow:t=>{const c=t.dataset.c;S[c].unshift(Object.assign(JSON.parse(JSON.stringify(((APP.defaults||{})[c])||{})),{id:uid()}));save();rerender()},
  tick:t=>{const it=S[t.dataset.c].find(x=>x.id===t.dataset.id);it.log=it.log||{};if(it.log[t.dataset.k])delete it.log[t.dataset.k];else it.log[t.dataset.k]=1;save();rerender()}});
+// ---- extra tabs added after launch (used by <app>/post.js) ----
+// addTab(after, [key,label,icon], arrayKey, seed(), defaults, keepSeedOnFreshStart)
+function addTab(after,tab,arr,seed,def,keep){const i=APP.pages.findIndex(p=>p[0]===after);APP.pages.splice(i<0?APP.pages.length-2:i+1,0,tab);if(!arr)return;
+ if(!APP.arrays.includes(arr))APP.arrays.push(arr);const mk=()=>seed?seed().map(x=>Object.assign({id:uid()},x)):[];
+ if(!Array.isArray(S[arr]))S[arr]=mk();APP.defaults=APP.defaults||{};APP.defaults[arr]=def||{};
+ const _d=APP.demo;APP.demo=()=>{const s=_d();s[arr]=mk();return s};const _b=APP.blank;APP.blank=()=>{const s=_b();s[arr]=keep?mk():[];return s}}
+const isoAgo=n=>{const d=new Date();d.setDate(d.getDate()-n);return d.toISOString().slice(0,10)};
 
 // ===== CALM LAYER: next small step, 5-min timer, stuck helper, brain dump, quick add, onboarding, focus mode, help =====
 if(!Array.isArray(S.dump))S.dump=[];
@@ -669,6 +676,187 @@ Object.assign(CORE_ACT,{
 (function(){const f=document.createElement('button');f.className='fab';f.dataset.act='quickadd';f.title='Quick add';f.textContent='+';document.body.appendChild(f);
  const db=$('#demobar');if(db&&window.ETSY_URL){db.innerHTML=`✨ <b>Free demo</b> · try anything, your data never leaves your browser · <a href="${window.ETSY_URL}" target="_blank" rel="noopener" style="color:inherit;font-weight:700;text-decoration:underline">Get the full app on Etsy →</a>`}})();
 
+// ===== EXTRAS: quotes, badges, insights (charts), timers, spinner wheel, year in pixels, breathing, water =====
+// Used from <app>/post.js:  X.quotes(list,{tab}) · X.badges(after,defs) · X.insights(after,tab,fn) · X.timer(after,tab,o)
+//                           X.wheel(after,tab,o) · X.pixels(after,tab,o) · X.breathe(after) · X.water(after,o)
+I.medal='<circle cx="12" cy="15" r="6"/><path d="M8.5 3.5L12 9l3.5-5.5"/><path d="M12 12.6l.9 1.7 1.9.3-1.4 1.3.3 1.9-1.7-.9-1.7.9.3-1.9-1.4-1.3 1.9-.3z"/>';
+I.spin='<circle cx="12" cy="12" r="9"/><path d="M12 3v9l6.4 6.4M12 12L5.6 18.4M12 12H3"/>';
+I.quote='<path d="M5 7h5v5c0 3-1.6 5-4.5 6M14 7h5v5c0 3-1.6 5-4.5 6"/>';
+I.drop='<path d="M12 3s6 6.5 6 11a6 6 0 0 1-12 0c0-4.5 6-11 6-11z"/>';
+I.wind='<path d="M3 8h11a3 3 0 1 0-3-3M3 12h16a3 3 0 1 1-3 3M3 16h7"/>';
+I.grid='<rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5"/><rect x="14" y="14" width="7" height="7" rx="1.5"/>';
+(function(){const s=document.createElement('style');s.textContent=`
+.xq{background:var(--acc-l);border:0;position:relative}.xq .qk{font:700 11px var(--sans);letter-spacing:.14em;color:var(--acc-d,var(--acc))}
+.xq .qt{font:600 21px/1.35 var(--serif);margin:8px 0 6px}.xq .qa{font-size:12.5px;color:var(--mute)}.xq .qb{display:flex;gap:6px;margin-top:12px;flex-wrap:wrap}
+.xbm{display:flex;flex-direction:column;justify-content:space-between}.xbm .em{font-size:30px;letter-spacing:4px;margin:8px 0}
+.xbg{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:12px}
+.xb{text-align:center;padding:16px 12px}.xb .e{font-size:36px;width:68px;height:68px;border-radius:50%;display:grid;place-items:center;margin:0 auto 8px;background:var(--acc-l)}
+.xb.lock .e{filter:grayscale(1);opacity:.4;background:var(--soft)}.xb b{display:block;font:600 16px/1.2 var(--serif)}.xb small{color:var(--mute);font-size:12px;display:block;margin-top:4px;line-height:1.35}
+.xb .d{font-size:11px;color:var(--acc);font-weight:700;margin-top:8px}.xb .bar{margin-top:10px}
+.xt{display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:14px}.xt .card{text-align:center}
+.xring{width:164px;height:164px;border-radius:50%;margin:6px auto 12px;display:grid;place-items:center}
+.xring>div{width:134px;height:134px;border-radius:50%;background:var(--card);display:grid;place-items:center;font:600 32px var(--serif)}
+.xt .card.done .xring>div{color:var(--acc)}.xbtns{display:flex;gap:6px;justify-content:center;flex-wrap:wrap}
+.xpre{display:flex;gap:8px;flex-wrap:wrap;margin:4px 0 2px}
+.xhb{display:grid;grid-template-columns:minmax(80px,140px) 1fr auto;gap:8px 10px;align-items:center;font-size:13px}.xhb .t{height:10px;border-radius:6px;background:var(--soft);overflow:hidden}.xhb .t i{display:block;height:100%;border-radius:6px;background:var(--acc)}.xhb b{font-variant-numeric:tabular-nums}
+.xheat{display:grid;grid-auto-flow:column;grid-template-rows:repeat(7,1fr);gap:3px;overflow-x:auto}.xheat i{width:14px;height:14px;border-radius:3px;background:var(--soft);display:block}
+.xpx{display:grid;grid-template-columns:22px repeat(12,1fr);gap:3px;font-size:10px;color:var(--mute);text-align:center}.xpx i{display:block;aspect-ratio:1;border-radius:3px;background:var(--soft);max-width:26px;margin:0 auto;width:100%}
+.xpx i.na{background:transparent}
+.xwh{position:relative;width:min(340px,86vw);margin:0 auto}.xwh svg{width:100%;display:block}.xwh .pt{position:absolute;left:50%;top:-6px;transform:translateX(-50%);width:0;height:0;border-left:13px solid transparent;border-right:13px solid transparent;border-top:24px solid var(--ink);z-index:2}
+.xwres{text-align:center;font:600 24px var(--serif);min-height:34px;margin-top:14px}
+.xbr{width:230px;height:230px;border-radius:50%;margin:24px auto;display:grid;place-items:center;background:radial-gradient(circle,var(--acc-l) 0,var(--acc-l) 55%,transparent 56%);position:relative}
+.xbr .c{position:absolute;inset:30px;border-radius:50%;background:var(--acc);opacity:.85;transform:scale(.55);transition:transform 4s ease-in-out}
+.xbr b{position:relative;color:#fff;font:600 22px var(--serif);text-shadow:0 1px 6px rgba(0,0,0,.25)}
+.xgl{display:flex;gap:6px;flex-wrap:wrap;justify-content:center;font-size:34px;margin:12px 0}.xgl span{opacity:.22;filter:grayscale(1)}.xgl span.on{opacity:1;filter:none}
+.xconf{position:fixed;top:-40px;font-size:26px;z-index:99;pointer-events:none;animation:xfall 1.7s ease-in forwards}@keyframes xfall{to{transform:translateY(110vh) rotate(540deg);opacity:.3}}
+@media(max-width:720px){.xq .qt{font-size:18px}.xring{width:140px;height:140px}.xring>div{width:112px;height:112px;font-size:27px}}`;document.head.appendChild(s)})();
+const X={};
+const xIso=d=>`${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,"0")}-${String(d.getDate()).padStart(2,"0")}`;
+const xToday=()=>xIso(new Date());
+const xDays=n=>[...Array(n)].map((_,i)=>{const d=new Date();d.setDate(d.getDate()-(n-1-i));return xIso(d)});
+const xNum=v=>+String(v??'').replace(/[^\d.-]/g,'')||0;
+const xCnt=(k,f)=>(S[k]||[]).filter(f||(()=>true)).length;
+const xTicks=k=>sum(S[k]||[],x=>Object.keys(x.log||{}).length);
+function xBest(k){const d=new Set();(S[k]||[]).forEach(x=>Object.keys(x.log||{}).forEach(z=>d.add(z)));let b=0,c=0,p=null;[...d].sort().forEach(z=>{const t=new Date(z+'T12:00');c=p&&Math.round((t-p)/864e5)===1?c+1:1;p=t;b=Math.max(b,c)});return b}
+function xByDay(arr,df,vf,n){const m={};arr.forEach(x=>{const d=x[df];if(d)m[d]=(m[d]||0)+(vf?+vf(x)||0:1)});return xDays(n).map(d=>m[d]||0)}
+function xByMonth(arr,df,vf,n){const now=new Date(),out=[];for(let i=n-1;i>=0;i--){const d=new Date(now.getFullYear(),now.getMonth()-i,1),k=xIso(d).slice(0,7);out.push([d.toLocaleDateString('en-US',{month:'short'}),sum(arr.filter(x=>String(x[df]||'').slice(0,7)===k),x=>vf?vf(x):1)])}return out}
+function xGroup(arr,kf,vf){const m={};arr.forEach(x=>{const k=kf(x)||'Other';m[k]=(m[k]||0)+(vf?+vf(x)||0:1)});return Object.entries(m).sort((a,b)=>b[1]-a[1])}
+const xDl=d=>new Date(d+'T12:00').toLocaleDateString('en-US',{weekday:'short'}).slice(0,2);
+// ---- charts ----
+function xLine(vals,labels,o={}){const W=320,H=o.h||150,p=18,n=vals.length;if(!n)return '<div class="empty">No data yet</div>';
+ const mn=o.zero?0:Math.min(...vals),mx=Math.max(...vals),r=(mx-mn)||1,X0=i=>p+(n<2?(W-2*p)/2:i*(W-2*p)/(n-1)),Y=v=>H-p-(v-mn)/r*(H-2*p-8);
+ const pts=vals.map((v,i)=>`${X0(i).toFixed(1)},${Y(v).toFixed(1)}`).join(' ');
+ return `<svg viewBox="0 0 ${W} ${H+14}" style="width:100%;height:auto;display:block"><polygon points="${X0(0)},${H-p} ${pts} ${X0(n-1)},${H-p}" style="fill:var(--acc);opacity:.12"/><polyline points="${pts}" fill="none" style="stroke:var(--acc)" stroke-width="2.4" stroke-linejoin="round" stroke-linecap="round"/>
+ ${vals.map((v,i)=>`<circle cx="${X0(i)}" cy="${Y(v)}" r="3.2" style="fill:var(--card);stroke:var(--acc)" stroke-width="2"/>`).join('')}
+ ${labels.map((l,i)=>(n<=12||i%Math.ceil(n/8)===0)?`<text x="${X0(i)}" y="${H+8}" text-anchor="middle" font-size="9" fill="#8C8378">${esc(l)}</text>`:'').join('')}
+ <text x="${p}" y="11" font-size="9" fill="#8C8378">${o.fmt?o.fmt(mx):Math.round(mx*10)/10}</text></svg>`}
+function xHBars(rows,fmt){const m=Math.max(1,...rows.map(r=>r[1]));return rows.length?`<div class="xhb">${rows.map(([k,v])=>`<span>${esc(k)}</span><div class="t"><i style="width:${Math.max(2,v/m*100)}%"></i></div><b>${fmt?fmt(v):Math.round(v*10)/10}</b>`).join('')}</div>`:'<div class="empty">No data yet</div>'}
+function xDonut(rows,center,lab){const t=rows.filter(r=>r[1]>0);return t.length?`<div style="display:flex;gap:18px;align-items:center;flex-wrap:wrap;justify-content:center">${donut(t.map(([k,v],i)=>({v,c:PAL[i%PAL.length]})),160,center,lab||'')}${legend(t.map(([k,v,d])=>[k,d!=null?d:v]))}</div>`:'<div class="empty">No data yet</div>'}
+function xHeat(map,weeks){weeks=weeks||18;const t=new Date(),st=new Date(t);st.setDate(t.getDate()-t.getDay()-7*(weeks-1));const mx=Math.max(1,...Object.values(map));let s='';
+ for(let i=0;i<weeks*7;i++){const d=new Date(st);d.setDate(st.getDate()+i);const k=xIso(d),v=map[k]||0;s+=d>t?'<i style="background:transparent"></i>':`<i title="${k}: ${v}" style="${v?`background:var(--acc);opacity:${(.3+.7*v/mx).toFixed(2)}`:''}"></i>`}
+ return `<div class="xheat">${s}</div><div style="display:flex;justify-content:space-between;font-size:11px;color:var(--mute);margin-top:6px"><span>${weeks} weeks ago</span><span>Today</span></div>`}
+const xCard=(t,body,x)=>`<div class="card"><h3>${t}${x?`<span class="x">${x}</span>`:''}</h3>${body}</div>`;
+function xConfetti(e){const em=[e||'🎉','✨','⭐','🎊'];for(let i=0;i<22;i++){const s=document.createElement('span');s.className='xconf';s.textContent=em[i%em.length];s.style.left=Math.random()*100+'vw';s.style.animationDelay=Math.random()*.5+'s';document.body.appendChild(s);setTimeout(()=>s.remove(),2600)}}
+// ---- quotes of the day ----
+const XQ={list:null,off:0,tab:null};
+X.quotes=(list,o={})=>{XQ.list=list;if(!Array.isArray(S.favq))S.favq=[];
+ if(o.tab){addTab(o.tab,['inspire',o.label||'Inspiration','quote'],'myq',null,{q:'',by:''});
+  APP.P.inspire=()=>`${head(o.label||'Inspiration',o.sub||'Words to come back to. Tap ♡ to keep your favorites.',`<button class="btn" data-act="addrow" data-c="myq">${ic('plus',15)} Add my own</button>`)}
+  ${S.myq.length?`<h3 style="margin:4px 0 10px">My words</h3><div class="grid g3">${S.myq.map(q=>`<div class="card xq"><div style="display:flex;justify-content:flex-end">${del('myq',q)}</div><textarea data-c="myq" data-id="${q.id}" data-f="q" placeholder="Write a quote or mantra…" style="width:100%;min-height:70px;border:0;background:transparent;font:600 19px/1.35 var(--serif);resize:vertical">${esc(q.q)}</textarea>${inp('myq',q,'by',{ph:'— who said it',st:'font-size:12.5px;background:transparent;border:0'})}</div>`).join('')}</div>`:''}
+  <h3 style="margin:18px 0 10px">${S.favq.length?'Favorites first':'All quotes'}</h3><div class="grid g3">${XQ.list.slice().sort((a,b)=>S.favq.includes(b[0])-S.favq.includes(a[0])).map(([q,a])=>{const f=S.favq.includes(q);return `<div class="card xq" style="${f?'':'background:var(--card);border:1px solid var(--line)'}"><div class="qt" style="font-size:18px">“${esc(q)}”</div><div style="display:flex;justify-content:space-between;align-items:center"><span class="qa">${a?'— '+esc(a):''}</span><button class="btn ghost sm" data-act="xqfav" data-q="${esc(q)}">${f?'♥':'♡'}</button></div></div>`}).join('')}</div>`}};
+function xQuoteCard(){const L=XQ.list;if(!L||!L.length)return '';const d=Math.floor((Date.now()-new Date(new Date().getFullYear(),0,0))/864e5),[q,a]=L[(d+XQ.off)%L.length],f=S.favq.includes(q);
+ return `<div class="card xq"><div class="qk">QUOTE OF THE DAY</div><div class="qt">“${esc(q)}”</div>${a?`<div class="qa">— ${esc(a)}</div>`:''}<div class="qb"><button class="btn ghost sm" data-act="xqnext">↻ Another</button><button class="btn ghost sm" data-act="xqfav" data-q="${esc(q)}">${f?'♥ Saved':'♡ Save'}</button>${APP.pages.some(p=>p[0]==='inspire')?'<button class="btn ghost sm" data-go="inspire">All quotes →</button>':''}</div></div>`}
+// ---- badges ----
+const XB={defs:null};
+X.badges=(after,defs,label)=>{XB.defs=defs;addTab(after,['badges',label||'Badges','medal']);
+ const _c=APP.counts;APP.counts=()=>{const c=_c?_c():{};c.badges=xBadges().filter(b=>b.ok).length;return c};
+ APP.P.badges=()=>{const st=xBadges(),ok=st.filter(b=>b.ok).length,nx=st.filter(b=>!b.ok).sort((a,b)=>b.v/b.g-a.v/a.g)[0];
+  return `${head(label||'Badges',`${ok} of ${st.length} unlocked · they unlock on their own as you use the app`)}
+  <div class="grid g21" style="margin-bottom:16px"><div class="card"><h3>Your collection<span class="x">${pct(ok/st.length)}%</span></h3><div class="bar"><i style="width:${pct(ok/st.length)}%"></i></div><div style="font-size:26px;letter-spacing:4px;margin-top:12px">${st.filter(b=>b.ok).map(b=>b.e).join('')||'<span style="font-size:14px;color:var(--mute);letter-spacing:0">Your first badge is close…</span>'}</div></div>
+  <div class="card xq">${nx?`<div class="qk">NEXT UP</div><div class="qt" style="font-size:19px">${nx.e} ${esc(nx.n)}</div><div class="qa">${esc(nx.d)} · ${Math.round(nx.v)} / ${nx.g}</div><div class="bar" style="margin-top:10px"><i style="width:${pct(nx.v/nx.g)}%"></i></div>`:'<div class="qt">All badges unlocked! 🏆</div>'}</div></div>
+  <div class="xbg">${st.map(b=>`<div class="card xb ${b.ok?'':'lock'}"><div class="e">${b.e}</div><b>${esc(b.n)}</b><small>${esc(b.d)}</small>${b.ok?`<div class="d">✓ ${S._bdg&&S._bdg[b.n]?new Date(S._bdg[b.n]+'T12:00').toLocaleDateString('en-US',{month:'short',day:'numeric'}):'Unlocked'}</div>`:`<div class="bar"><i style="width:${pct(b.v/b.g)}%"></i></div><div class="d" style="color:var(--mute)">${Math.round(b.v)} / ${b.g}</div>`}</div>`).join('')}</div>`}};
+function xBadges(){return (XB.defs||[]).map(([e,n,d,f,g])=>{let v=0;try{v=+f()||0}catch(x){}const ok=v>=g||!!(S._bdg&&S._bdg[n]);return {e,n,d,v:ok?g:Math.min(v,g),g,ok}})}
+function xBadgeCheck(){if(!XB.defs)return;const fresh=!S._bdg||typeof S._bdg!=='object';if(fresh)S._bdg={};const nw=[];
+ (XB.defs||[]).forEach(([e,n,d,f,g])=>{let v=0;try{v=+f()||0}catch(x){}if(v>=g&&!S._bdg[n]){S._bdg[n]=xToday();nw.push(e+' '+n)}});
+ if(fresh||nw.length)save();if(nw.length&&!fresh)setTimeout(()=>{toast('🏅 Badge unlocked: '+nw[0]);xConfetti(nw[0].split(' ')[0])},350)}
+function xBadgeMini(){if(!XB.defs)return '';const st=xBadges(),ok=st.filter(b=>b.ok),nx=st.filter(b=>!b.ok).sort((a,b)=>b.v/b.g-a.v/a.g)[0];
+ return `<div class="card xbm"><div><h3>🏅 Badges<span class="x">${ok.length} / ${st.length}</span></h3><div class="em">${ok.slice(-6).map(b=>b.e).join('')||'—'}</div>${nx?`<small style="color:var(--mute)">Next: ${nx.e} ${esc(nx.n)} · ${Math.round(nx.v)}/${nx.g}</small><div class="bar" style="margin-top:6px"><i style="width:${pct(nx.v/nx.g)}%"></i></div>`:''}</div><button class="btn ghost sm" data-go="badges" style="align-self:flex-start;margin-top:12px">See all badges →</button></div>`}
+// ---- insights page ----
+X.insights=(after,tab,fn,sub)=>{addTab(after,tab);APP.P[tab[0]]=()=>`${head(tab[1],sub||'Your numbers, drawn for you. Everything updates on its own.')}${fn()}`};
+// ---- timers (several can run at once) ----
+const XT={list:[],iv:null,o:{}};
+function xBeep(){try{const a=new(window.AudioContext||window.webkitAudioContext)();[0,.35,.7].forEach(t=>{const o=a.createOscillator(),g=a.createGain();o.frequency.value=880;o.connect(g);g.connect(a.destination);g.gain.setValueAtTime(.001,a.currentTime+t);g.gain.exponentialRampToValueAtTime(.3,a.currentTime+t+.02);g.gain.exponentialRampToValueAtTime(.001,a.currentTime+t+.3);o.start(a.currentTime+t);o.stop(a.currentTime+t+.32)})}catch(e){}try{navigator.vibrate&&navigator.vibrate([200,100,200])}catch(e){}}
+const xFmt=s=>{s=Math.max(0,Math.ceil(s));const h=Math.floor(s/3600),m=Math.floor(s%3600/60),x=s%60;return (h?h+':'+String(m).padStart(2,'0'):m)+':'+String(x).padStart(2,'0')};
+function xRingBg(t){return `conic-gradient(var(--acc) ${((1-t.left/t.total)*360).toFixed(1)}deg,var(--acc-l) 0)`}
+function xTick(){let any=false,fin=false;XT.list.forEach(t=>{if(!t.run)return;t.left=Math.max(0,(t.end-Date.now())/1000);
+  if(t.left<=0){t.run=false;t.done=true;fin=true;xBeep();toast('⏰ '+t.label+' is done!');if(!Array.isArray(S.tlog))S.tlog=[];S.tlog.unshift({date:xToday(),label:t.label,min:Math.round(t.total/60)});S.tlog=S.tlog.slice(0,300);save()}else any=true;
+  const el=document.getElementById('xt-'+t.id);if(el){el.querySelector('.tm').textContent=xFmt(t.left);el.querySelector('.xring').style.background=xRingBg(t)}});
+ if(!any){clearInterval(XT.iv);XT.iv=null}if(fin&&page===XT.o.key)rerender()}
+function xTStart(){if(!XT.iv)XT.iv=setInterval(xTick,250)}
+X.timer=(after,tab,o)=>{XT.o=Object.assign({key:tab[0]},o);addTab(after,tab);if(!Array.isArray(S.tlog))S.tlog=[];
+ APP.P[tab[0]]=()=>{const lg=S.tlog||[],td=sum(lg.filter(x=>x.date===xToday()),x=>x.min),wk=xByDay(lg,'date',x=>x.min,7);
+  return `${head(o.title||tab[1],o.sub||'Tap a preset to start. Several timers can run at once.')}
+  <div class="card" style="margin-bottom:16px"><h3>Start a timer</h3><div class="xpre">${o.presets.map(([l,m])=>`<button class="chip" data-act="xtadd" data-l="${esc(l)}" data-m="${m}">▶ ${esc(l)} · ${m<1?Math.round(m*60)+' s':m+' min'}</button>`).join('')}</div>
+   <div class="addrow" style="margin-top:12px"><input class="fi" id="xtlab" placeholder="${esc(o.ph||'Name (optional)')}" style="flex:2"><input class="fi" id="xtmin" type="number" min="1" step="any" placeholder="Minutes" style="flex:1"><button class="btn" data-act="xtcustom">Start</button></div></div>
+  <div class="xt">${XT.list.map(t=>`<div class="card ${t.done?'done':''}" id="xt-${t.id}"><b style="font:600 18px var(--serif)">${esc(t.label)}</b><div class="xring" style="background:${xRingBg(t)}"><div class="tm">${t.done?'Done ✓':xFmt(t.left)}</div></div>
+   <div class="xbtns">${t.done?`<button class="btn sm" data-act="xtreset" data-id="${t.id}">↺ Again</button>`:`<button class="btn sm" data-act="xtgo" data-id="${t.id}">${t.run?'Pause':'Resume'}</button><button class="btn ghost sm" data-act="xtplus" data-id="${t.id}">+1 min</button>`}<button class="btn ghost sm" data-act="xtdel" data-id="${t.id}">×</button></div></div>`).join('')||'<div class="card empty">No timer running. Pick one above ⏱</div>'}</div>
+  ${o.log===false?'':`<div class="grid g2" style="margin-top:16px">${xCard(o.logTitle||'Minutes this week',bars(wk,xDays(7).map(xDl),130),`today ${td} min`)}${xCard('Recent sessions',`<div class="list">${lg.slice(0,6).map(x=>`<div class="it"><div style="flex:1">${esc(x.label)}</div><small style="color:var(--mute)">${x.min} min · ${new Date(x.date+'T12:00').toLocaleDateString('en-US',{month:'short',day:'numeric'})}</small></div>`).join('')||'<div class="empty" style="padding:12px">Finished timers show up here</div>'}</div>`,`${lg.length} total`)}</div>`}`}};
+// ---- spinner wheel ----
+const XW={rot:0,res:''};
+X.wheel=(after,tab,o)=>{XW.o=o;addTab(after,tab);
+ APP.P[tab[0]]=()=>{const L=xWOpts();return `${head(o.title||tab[1],o.sub||'Can’t decide? Let the wheel pick.')}
+ <div class="grid g21"><div class="card" style="padding:26px 16px">${L.length>1?`<div class="xwh"><div class="pt"></div>${xWheelSvg(L)}</div><div class="xwres" id="xwres">${esc(XW.res)}</div><div style="text-align:center;margin-top:10px"><button class="btn" data-act="xwspin">🎡 ${o.verb||'Spin the wheel'}</button></div>`:`<div class="empty">${o.empty||'Add a few items first'}</div>`}</div>
+ <div class="card"><h3>On the wheel<span class="x">${L.length}</span></h3><div class="list">${L.map(x=>`<div class="it">${esc(x)}</div>`).join('')}</div>${o.note?`<p style="color:var(--mute);font-size:12.5px;margin:12px 0 0">${o.note}</p>`:''}</div></div>`}};
+const xWOpts=()=>{let L=[];try{L=XW.o.opts().filter(Boolean).map(String)}catch(e){}return [...new Set(L)].slice(0,16)};
+const xDark=h=>{const m=/^#([0-9a-f]{6})$/i.exec(h||"");if(!m)return true;const n=parseInt(m[1],16);return (0.299*(n>>16)+0.587*(n>>8&255)+0.114*(n&255))<150};
+function xWheelSvg(L){const n=L.length,sg=360/n,R=150,c=160,P=a=>[c+R*Math.cos((a-90)*Math.PI/180),c+R*Math.sin((a-90)*Math.PI/180)];
+ return `<svg viewBox="0 0 320 320"><g id="xwg" style="transform-origin:160px 160px;transform:rotate(${XW.rot}deg)">${L.map((l,i)=>{const [x1,y1]=P(i*sg),[x2,y2]=P((i+1)*sg),m=i*sg+sg/2;
+  const th=m-90,lf=th>90&&th<270;return `<path d="M${c} ${c} L${x1.toFixed(1)} ${y1.toFixed(1)} A${R} ${R} 0 ${sg>180?1:0} 1 ${x2.toFixed(1)} ${y2.toFixed(1)}z" fill="${PAL[i%PAL.length]}" stroke="#fff" stroke-width="2"/><text transform="rotate(${lf?th-180:th} ${c} ${c})" x="${lf?c-R+12:c+R-12}" y="${c+4}" text-anchor="${lf?"start":"end"}" font-size="${n>10?10:12}" font-weight="700" fill="${xDark(PAL[i%PAL.length])?"#fff":"#3A3029"}">${esc(l.length>18?l.slice(0,17)+'…':l)}</text>`}).join('')}</g><circle cx="${c}" cy="${c}" r="22" style="fill:var(--card)" stroke="#fff" stroke-width="3"/><text x="${c}" y="${c+6}" text-anchor="middle" font-size="18">✨</text></svg>`}
+// ---- year in pixels ----
+X.pixels=(after,tab,o)=>{addTab(after,tab);
+ APP.P[tab[0]]=()=>{const y=new Date().getFullYear(),m=o.get(),C=o.colors;let h='<span></span>'+'JFMAMJJASOND'.split('').map(x=>`<b>${x}</b>`).join('');
+  for(let d=1;d<=31;d++){h+=`<span>${d}</span>`;for(let mo=0;mo<12;mo++){const dt=new Date(y,mo,d);if(dt.getMonth()!==mo){h+='<i class="na"></i>';continue}const k=`${y}-${String(mo+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`,v=m[k];h+=`<i title="${k}${v?': '+o.labels[v-1]:''}" style="${v?'background:'+C[v-1]:''}"></i>`}}
+  const cnt=o.labels.map((l,i)=>[l,Object.values(m).filter(v=>v===i+1).length]);
+  return `${head(tab[1],o.sub||'One little square for every day of the year.')}<div class="grid g21"><div class="card"><h3>${y}<span class="x">${Object.keys(m).filter(k=>k.startsWith(y)).length} days logged</span></h3><div class="xpx">${h}</div></div>
+  <div class="grid" style="align-content:start"><div class="card"><h3>Legend</h3><div class="list">${o.labels.map((l,i)=>`<div class="it"><i style="width:16px;height:16px;border-radius:4px;background:${C[i]};display:inline-block"></i><div style="flex:1">${l}</div><b>${cnt[i][1]}</b></div>`).join('')}</div></div>${o.side?o.side():''}</div></div>`}};
+// ---- breathing ----
+const XBR={on:false,pat:'box',iv:null};
+const XBP={box:['Box breathing',[['Breathe in',4],['Hold',4],['Breathe out',4],['Hold',4]]],calm:['4 · 7 · 8 relax',[['Breathe in',4],['Hold',7],['Breathe out',8]]],easy:['Easy calm',[['Breathe in',4],['Breathe out',6]]]};
+X.breathe=(after)=>{addTab(after,['breathe','Breathe','wind']);
+ APP.P.breathe=()=>`${head('Breathe','A one-minute reset. Follow the circle.')}<div class="grid g21"><div class="card" style="text-align:center"><div class="tabs" style="justify-content:center">${Object.entries(XBP).map(([k,[l]])=>`<button class="${XBR.pat===k?'on':''}" data-act="xbrpat" data-p="${k}">${l}</button>`).join('')}</div>
+  <div class="xbr"><div class="c" id="xbrc"></div><b id="xbrt">${XBR.on?'…':'Ready'}</b></div><button class="btn" data-act="xbrgo">${XBR.on?'Stop':'▶ Start'}</button><p style="color:var(--mute);font-size:13px;margin:12px 0 0" id="xbrn">${XBR.n?XBR.n+' breaths today':''}</p></div>
+  <div class="card"><h3>When to use it</h3><div class="list"><div class="it">😮‍💨 Before a hard conversation</div><div class="it">🛏 When you can’t fall asleep (try 4·7·8)</div><div class="it">💻 Between two tasks</div><div class="it">🌀 When everything feels like too much</div></div></div></div>`};
+function xBrRun(){const [,ph]=XBP[XBR.pat];let i=0;const step=()=>{if(!XBR.on)return;const [l,s]=ph[i%ph.length],c=$('#xbrc'),t=$('#xbrt');if(!c){XBR.on=false;return}
+ c.style.transitionDuration=s+'s';c.style.transform=l==='Breathe in'?'scale(1)':l==='Breathe out'?'scale(.55)':c.style.transform;let k=s;t.textContent=l+' · '+k;
+ clearInterval(XBR.iv);XBR.iv=setInterval(()=>{k--;if(k>0&&$('#xbrt'))$('#xbrt').textContent=l+' · '+k},1000);
+ if(i%ph.length===ph.length-1){XBR.n=(XBR.n||0)+1}i++;XBR.to=setTimeout(step,s*1000)};step()}
+// ---- water ----
+X.water=(after,o={})=>{const g=o.goal||8;XWG=g;addTab(after,['water',o.label||'Water','drop']);if(!S.water||typeof S.water!=='object'||Array.isArray(S.water))S.water={};
+ APP.P.water=()=>{const n=S.water[xToday()]||0,wk=xDays(7).map(d=>S.water[d]||0),hit=Object.values(S.water).filter(v=>v>=g).length;
+  return `${head(o.label||'Water',`Goal: ${g} glasses a day · goal reached ${hit} days`)}<div class="grid g21"><div class="card" style="text-align:center"><div style="font:600 46px var(--serif)">${n} <span style="font-size:20px;color:var(--mute)">/ ${g}</span></div><div class="xgl">${[...Array(Math.max(g,n))].map((_,i)=>`<span class="${i<n?'on':''}">💧</span>`).join('')}</div>
+  <div class="xbtns"><button class="btn" data-act="xwat" data-d="1">+ 1 glass</button><button class="btn ghost" data-act="xwat" data-d="-1">− 1</button></div>${n>=g?'<p style="margin:12px 0 0;font-weight:700;color:var(--acc)">Goal reached today 🎉</p>':''}</div>${xCard('Last 7 days',bars(wk,xDays(7).map(xDl),140))}</div>`}};
+// ---- actions ----
+Object.assign(CORE_ACT,{
+ xqnext:()=>{XQ.off++;rerender()},
+ xqfav:t=>{const q=t.dataset.q;S.favq=S.favq.includes(q)?S.favq.filter(x=>x!==q):[q,...S.favq];save();rerender();toast(S.favq.includes(q)?'Saved ♥':'Removed')},
+ xtadd:t=>{const m=+t.dataset.m;XT.list.unshift({id:uid(),label:t.dataset.l,total:m*60,left:m*60,end:Date.now()+m*6e4,run:true});xTStart();rerender()},
+ xtcustom:()=>{const m=+$('#xtmin').value;if(!(m>0)){toast('Type the minutes first');return}const l=$('#xtlab').value.trim()||(m+' min timer');XT.list.unshift({id:uid(),label:l,total:m*60,left:m*60,end:Date.now()+m*6e4,run:true});xTStart();rerender()},
+ xtgo:t=>{const x=XT.list.find(z=>z.id===t.dataset.id);if(!x)return;if(x.run){x.run=false;x.left=Math.max(0,(x.end-Date.now())/1000)}else{x.run=true;x.end=Date.now()+x.left*1000;xTStart()}rerender()},
+ xtplus:t=>{const x=XT.list.find(z=>z.id===t.dataset.id);if(!x)return;x.total+=60;x.left+=60;x.end+=6e4;rerender()},
+ xtreset:t=>{const x=XT.list.find(z=>z.id===t.dataset.id);if(!x)return;x.done=false;x.run=true;x.left=x.total;x.end=Date.now()+x.total*1000;xTStart();rerender()},
+ xtdel:t=>{XT.list=XT.list.filter(z=>z.id!==t.dataset.id);rerender()},
+ xwspin:()=>{const L=xWOpts(),n=L.length;if(n<2)return;const w=Math.floor(Math.random()*n),sg=360/n,ac=(w+.5)*sg,cur=((XW.rot%360)+360)%360,need=((360-ac-cur)%360+360)%360;XW.rot+=1440+need;
+  const g=document.getElementById('xwg'),r=$('#xwres');if(r)r.textContent='…';if(g){g.style.transition='transform 3.4s cubic-bezier(.17,.67,.15,1)';g.style.transform=`rotate(${XW.rot}deg)`}
+  setTimeout(()=>{XW.res=(XW.o.prefix||'')+L[w];const r2=$('#xwres');if(r2)r2.textContent=XW.res;xConfetti(XW.o.emoji||'🎉')},3500)},
+ xbrpat:t=>{XBR.pat=t.dataset.p;XBR.on=false;clearTimeout(XBR.to);clearInterval(XBR.iv);rerender()},
+ xbrgo:()=>{XBR.on=!XBR.on;clearTimeout(XBR.to);clearInterval(XBR.iv);rerender();if(XBR.on)setTimeout(xBrRun,50)},
+ xwat:t=>{const k=xToday();S.water[k]=Math.max(0,(S.water[k]||0)+(+t.dataset.d));save();rerender();if(+t.dataset.d>0&&S.water[k]===(XWG||8))xConfetti('💧')}});
+let XWG=8;
+// ---- dashboard row (quote + badges) & badge check on every render ----
+const _xview=view;
+view=function(){if(!Array.isArray(S.favq))S.favq=[];if(!Array.isArray(S.tlog))S.tlog=[];if(!S.water||typeof S.water!=="object"||Array.isArray(S.water))S.water={};const h=_xview();xBadgeCheck();if(page!=='dashboard'||S.focus)return h;const q=xQuoteCard(),b=xBadgeMini();if(!q&&!b)return h;
+ const row=`<div class="grid ${q&&b?'g21':''}" style="margin-bottom:16px">${q}${b}</div>`,mk='<div style="height:16px"></div>',i=h.indexOf(mk);return i>=0?h.slice(0,i+mk.length)+row+h.slice(i+mk.length):row+h};
+
+// New tab: flashcards with a quiz mode
+addTab('study',['cards','Flashcards','box'],'cards',()=>[['Biology 201','What does the mitochondria do?','Makes energy (ATP) for the cell'],['Biology 201','What is osmosis?','Water moving through a membrane to the saltier side'],['Calculus II','Derivative of sin x?','cos x'],['Calculus II','∫ 1/x dx = ?','ln|x| + C'],['English Lit','Who wrote The Great Gatsby?','F. Scott Fitzgerald'],['Psychology 101','What is classical conditioning?','Learning by association (Pavlov)']].map(([c,q,a])=>({course:c,q,a,known:false})),{course:'',q:'New question',a:'',known:false});
+let FC={i:-1,show:false};
+APP.P.cards=()=>{const pool=S.cards.filter(c=>!c.known&&(fv('fc','all')==='all'||c.course===fv('fc','all')));if(FC.i<0||!pool[FC.i])FC.i=pool.length?Math.floor(Math.random()*pool.length):-1;const c=pool[FC.i];const cs=[...new Set(S.cards.map(x=>x.course).filter(Boolean))];
+ return `${head('Flashcards','Quiz yourself. Mark cards you know, the rest come back.',`<span class="chip">${S.cards.filter(c=>c.known).length}/${S.cards.length} known</span>`)}
+ ${tabs('fc',[['all','All courses']].concat(cs.map(x=>[x,x])))}
+ <div class="card" style="text-align:center;padding:40px 24px;margin:12px 0 16px;min-height:200px">${c?`<small style="color:var(--mute);letter-spacing:.1em">${esc(c.course).toUpperCase()}</small><div style="font:600 30px/1.25 var(--serif);margin:14px 0 18px">${esc(c.q)}</div>${FC.show?`<div style="font:600 22px var(--sans);color:var(--acc-d);background:var(--acc-l);border-radius:14px;padding:14px;margin-bottom:16px">${esc(c.a)}</div><button class="btn" data-act="fcknow">✓ I knew it</button> <button class="btn ghost" data-act="fcnext">Again later</button>`:`<button class="btn" data-act="fcshow">Show answer</button>`}`:'<div style="font:600 24px var(--serif)">All cards known! 🎉</div><button class="btn ghost" data-act="fcreset" style="margin-top:14px">Start over</button>'}</div>
+ ${tablePage({c:'cards',t:'All cards',s:'',cols:[['known','Known','chk'],['course','Course','sel',cOpts()],['q','Question'],['a','Answer']],addLabel:'Add card'}).replace(/<div class="top">[\s\S]*?<\/div><\/div>/,'')}
+ <div style="margin-top:10px"><button class="btn" data-act="addrow" data-c="cards">${ic('plus',15)} Add card</button></div>`};
+Object.assign(APP.act,{fcshow(){FC.show=true;rerender()},fcnext(){FC.show=false;FC.i=-1;rerender()},fcknow(){const pool=S.cards.filter(c=>!c.known&&(fv('fc','all')==='all'||c.course===fv('fc','all')));if(pool[FC.i])pool[FC.i].known=true;FC.show=false;FC.i=-1;save();rerender();toast('Nice! ✓')},fcreset(){S.cards.forEach(c=>c.known=false);save();rerender()}});
+
+// ---- extras: pomodoro, study wheel, insights, badges, quotes ----
+X.timer('study',['timers','Pomodoro','timer'],{title:'Pomodoro timer',sub:'25 minutes of focus, 5 minutes of break. Repeat.',presets:[['Focus',25],['Short break',5],['Long break',15],['Deep work',50],['Quick review',10]],logTitle:'Focus minutes this week'});
+X.wheel('cards',['wheel','Study wheel','spin'],{title:'What should I study now?',sub:'Spin to pick from your open assignments and classes.',opts:()=>[...S.tasks.filter(t=>!t.done).map(t=>t.task),...[...new Set(S.classes.map(c=>c.course))].map(c=>'Review '+c)],emoji:'📚'});
+X.insights('grades',['insights','Insights','chart'],()=>{const avg=k=>{const g=S.grades.filter(x=>x.course===k),w=sum(g,x=>x.weight)||g.length;return g.length?sum(g,x=>xNum(x.score)*(xNum(x.weight)||1))/(sum(g,x=>xNum(x.weight)||1)):0},cs=[...new Set(S.grades.map(g=>g.course))],up=S.exams.filter(e=>e.date>=xToday()).sort((a,b)=>a.date.localeCompare(b.date));
+ return `<div class="grid g4" style="margin-bottom:16px">${kpi('check',xCnt('tasks',x=>x.done)+' / '+S.tasks.length,'assignments done',xCnt('tasks',x=>x.done)/(S.tasks.length||1))}${kpi('chart',cs.length?Math.round(sum(cs,avg)/cs.length)+'%':'—','average grade')}${kpi('timer',(S.tlog||[]).length,'pomodoros')}${kpi('star',xCnt('cards',x=>x.known)+' / '+S.cards.length,'flashcards known')}</div>
+ <div class="grid g2">${xCard('Average per class',xHBars(cs.map(c=>[c,avg(c)]),v=>Math.round(v)+'%'))}${xCard('Exam countdown',`<div class="list">${up.map(e=>`<div class="it"><div style="flex:1"><b>${esc(e.course)}</b></div><small style="color:var(--mute)">${Math.round((new Date(e.date+'T12:00')-new Date())/864e5)} days</small></div>`).join('')||'<div class="empty" style="padding:12px">No upcoming exams 🎉</div>'}</div>`)}
+ ${xCard('Study calendar',xHeat((()=>{const m={};S.study.forEach(h=>Object.keys(h.log||{}).forEach(k=>m[k]=(m[k]||0)+1));return m})(),18))}${xCard('Assignments by class',xDonut(xGroup(S.tasks,x=>x.course)))}</div>`});
+X.badges('insights',[['🍅','First pomodoro','Finish a focus timer',()=>(S.tlog||[]).length,1],['⏱','Focused','Finish 10 timers',()=>(S.tlog||[]).length,10],['🧠','Study machine','Finish 50 timers',()=>(S.tlog||[]).length,50],['✅','On top of it','Finish 10 assignments',()=>xCnt('tasks',x=>x.done),10],['📝','Hard worker','Finish 25 assignments',()=>xCnt('tasks',x=>x.done),25],['🃏','Memory master','Know 10 flashcards',()=>xCnt('cards',x=>x.known),10],['🏅','A student','Score 90%+ three times',()=>xCnt('grades',x=>+x.score>=90),3],['🔥','Study streak','Study 7 days in a row',()=>xBest('study'),7],['🎓','Exam ready','Get 3 exam grades',()=>xCnt('exams',x=>x.grade),3],['📸','Campus life','Add 4 photos',()=>xCnt('mem',x=>x.img),4]]);
+X.quotes([['Study hard, sleep well, repeat.'],['Start where you are.'],['A little progress each day adds up to big results.'],['You don’t have to be perfect. Just keep going.'],['The expert in anything was once a beginner.'],['Focus on the next 25 minutes.'],['Done is better than perfect.'],['Education is the most powerful weapon which you can use to change the world.','Nelson Mandela'],['Your future is created by what you do today.'],['Ask questions. Always.'],['Breaks are part of studying.'],['One assignment at a time.']]);
 
 boot();
 </script>
