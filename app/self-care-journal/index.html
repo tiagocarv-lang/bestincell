@@ -611,6 +611,13 @@ function gridTracker(o){const t=new Date(),y=t.getFullYear(),m=t.getMonth(),nd=n
 function logDemo(days,p){const t=new Date(),y=t.getFullYear(),m=t.getMonth(),o={};for(let d=1;d<=Math.min(days,t.getDate());d++)if(Math.random()<p)o[`${y}-${String(m+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`]=1;return o}
 Object.assign(CORE_ACT,{addrow:t=>{const c=t.dataset.c;S[c].unshift(Object.assign(JSON.parse(JSON.stringify(((APP.defaults||{})[c])||{})),{id:uid()}));save();rerender()},
  tick:t=>{const it=S[t.dataset.c].find(x=>x.id===t.dataset.id);it.log=it.log||{};if(it.log[t.dataset.k])delete it.log[t.dataset.k];else it.log[t.dataset.k]=1;save();rerender()}});
+// ---- extra tabs added after launch (used by <app>/post.js) ----
+// addTab(after, [key,label,icon], arrayKey, seed(), defaults, keepSeedOnFreshStart)
+function addTab(after,tab,arr,seed,def,keep){const i=APP.pages.findIndex(p=>p[0]===after);APP.pages.splice(i<0?APP.pages.length-2:i+1,0,tab);if(!arr)return;
+ if(!APP.arrays.includes(arr))APP.arrays.push(arr);const mk=()=>seed?seed().map(x=>Object.assign({id:uid()},x)):[];
+ if(!Array.isArray(S[arr]))S[arr]=mk();APP.defaults=APP.defaults||{};APP.defaults[arr]=def||{};
+ const _d=APP.demo;APP.demo=()=>{const s=_d();s[arr]=mk();return s};const _b=APP.blank;APP.blank=()=>{const s=_b();s[arr]=keep?mk():[];return s}}
+const isoAgo=n=>{const d=new Date();d.setDate(d.getDate()-n);return d.toISOString().slice(0,10)};
 
 // ===== CALM LAYER: next small step, 5-min timer, stuck helper, brain dump, quick add, onboarding, focus mode, help =====
 if(!Array.isArray(S.dump))S.dump=[];
@@ -665,6 +672,15 @@ Object.assign(CORE_ACT,{
 (function(){const f=document.createElement('button');f.className='fab';f.dataset.act='quickadd';f.title='Quick add';f.textContent='+';document.body.appendChild(f);
  const db=$('#demobar');if(db&&window.ETSY_URL){db.innerHTML=`✨ <b>Free demo</b> · try anything, your data never leaves your browser · <a href="${window.ETSY_URL}" target="_blank" rel="noopener" style="color:inherit;font-weight:700;text-decoration:underline">Get the full app on Etsy →</a>`}})();
 
+// New tabs: sleep log + wins jar
+addTab('mood',['sleep','Sleep log','moon'],'sleep',()=>[[4,'23:30','07:00','3'],[3,'22:45','06:50','4'],[2,'00:10','07:20','2'],[1,'22:30','06:45','5']].map(([d,b,w,q])=>({date:isoAgo(d),bed:b,wake:w,q})),{date:'',bed:'23:00',wake:'07:00',q:'0'});
+addTab('gratitude',['wins','Wins jar','star'],'wins',()=>[[6,'Went for a walk even though I was tired'],[3,'Said no to something I didn’t want'],[1,'Drank water all day']].map(([d,t])=>({date:isoAgo(d),win:t})),{date:'',win:''});
+const hrs=x=>{if(!x.bed||!x.wake)return 0;const [a,b]=x.bed.split(':').map(Number),[c,d]=x.wake.split(':').map(Number);let m=(c*60+d)-(a*60+b);if(m<0)m+=1440;return m/60};
+APP.P.sleep=()=>{const l=S.sleep.slice().sort((a,b)=>(a.date||'').localeCompare(b.date||'')).slice(-14),avg=l.length?sum(l,hrs)/l.length:0;return tablePage({c:'sleep',t:'Sleep log',s:`Average: ${avg.toFixed(1)} h a night`,cols:[['date','Night of','date'],['bed','Bedtime','time'],['wake','Woke up','time'],['q','Quality','stars']],addLabel:'Log a night',sort:(a,b)=>(b.date||'').localeCompare(a.date||''),
+ side:`<div class="card"><h3>Hours slept</h3>${bars(l.map(hrs),l.map(x=>(x.date||'').slice(8)),150)}</div>`})};
+APP.P.wins=()=>`${head('Wins jar','Small wins count. Drop one in the jar every day ✨',`<button class="btn" data-act="addrow" data-c="wins">${ic('plus',15)} Add a win</button><button class="btn ghost sm" data-act="winpick">🫙 Pick a win</button>`)}
+ <div class="grid g3">${S.wins.slice().sort((a,b)=>(b.date||'').localeCompare(a.date||'')).map(w=>`<div class="card" style="background:var(--acc-l)"><div style="display:flex;justify-content:space-between">${inp('wins',w,'date',{type:'date',st:'font-size:12px;color:var(--mute)'})}${del('wins',w)}</div><textarea data-c="wins" data-id="${w.id}" data-f="win" placeholder="Today I…" style="width:100%;min-height:70px;border:0;background:transparent;font:600 18px var(--serif);resize:vertical">${esc(w.win)}</textarea></div>`).join('')||'<div class="card empty">Add your first win ✨</div>'}</div>`;
+APP.act.winpick=()=>{if(!S.wins.length){toast('Add a win first ✨');return}toast('Remember: '+S.wins[Math.floor(Math.random()*S.wins.length)].win)};
 
 boot();
 </script>
