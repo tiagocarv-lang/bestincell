@@ -615,6 +615,13 @@ function gridTracker(o){const t=new Date(),y=t.getFullYear(),m=t.getMonth(),nd=n
 function logDemo(days,p){const t=new Date(),y=t.getFullYear(),m=t.getMonth(),o={};for(let d=1;d<=Math.min(days,t.getDate());d++)if(Math.random()<p)o[`${y}-${String(m+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`]=1;return o}
 Object.assign(CORE_ACT,{addrow:t=>{const c=t.dataset.c;S[c].unshift(Object.assign(JSON.parse(JSON.stringify(((APP.defaults||{})[c])||{})),{id:uid()}));save();rerender()},
  tick:t=>{const it=S[t.dataset.c].find(x=>x.id===t.dataset.id);it.log=it.log||{};if(it.log[t.dataset.k])delete it.log[t.dataset.k];else it.log[t.dataset.k]=1;save();rerender()}});
+// ---- extra tabs added after launch (used by <app>/post.js) ----
+// addTab(after, [key,label,icon], arrayKey, seed(), defaults, keepSeedOnFreshStart)
+function addTab(after,tab,arr,seed,def,keep){const i=APP.pages.findIndex(p=>p[0]===after);APP.pages.splice(i<0?APP.pages.length-2:i+1,0,tab);if(!arr)return;
+ if(!APP.arrays.includes(arr))APP.arrays.push(arr);const mk=()=>seed?seed().map(x=>Object.assign({id:uid()},x)):[];
+ if(!Array.isArray(S[arr]))S[arr]=mk();APP.defaults=APP.defaults||{};APP.defaults[arr]=def||{};
+ const _d=APP.demo;APP.demo=()=>{const s=_d();s[arr]=mk();return s};const _b=APP.blank;APP.blank=()=>{const s=_b();s[arr]=keep?mk():[];return s}}
+const isoAgo=n=>{const d=new Date();d.setDate(d.getDate()-n);return d.toISOString().slice(0,10)};
 
 // ===== CALM LAYER: next small step, 5-min timer, stuck helper, brain dump, quick add, onboarding, focus mode, help =====
 if(!Array.isArray(S.dump))S.dump=[];
@@ -669,6 +676,12 @@ Object.assign(CORE_ACT,{
 (function(){const f=document.createElement('button');f.className='fab';f.dataset.act='quickadd';f.title='Quick add';f.textContent='+';document.body.appendChild(f);
  const db=$('#demobar');if(db&&window.ETSY_URL){db.innerHTML=`✨ <b>Free demo</b> · try anything, your data never leaves your browser · <a href="${window.ETSY_URL}" target="_blank" rel="noopener" style="color:inherit;font-weight:700;text-decoration:underline">Get the full app on Etsy →</a>`}})();
 
+// New tabs: weight log + training & tricks
+addTab('health',['weight','Weight log','chart'],'weight',()=>[[60,'31.2'],[45,'31.8'],[30,'32.4'],[15,'32.1'],[2,'31.6']].map(([d,w])=>({pet:'',date:isoAgo(d),kg:+w,note:''})),{pet:'',date:'',kg:'',note:''});
+addTab('care',['tricks','Training & tricks','star'],'tricks',()=>[['Sit','Mastered'],['Paw','Mastered'],['Stay','Practicing'],['Roll over','Learning'],['Leave it','Practicing']].map(([t,s])=>({pet:'',trick:t,status:s})),{pet:'',trick:'New trick',status:'Learning'});
+APP.P.weight=()=>{const w=S.weight.filter(x=>x.kg!=='').sort((a,b)=>(a.date||'').localeCompare(b.date||''));return tablePage({c:'weight',t:'Weight log',s:'Weigh in once a month to spot changes early.',cols:[['pet','Pet','sel',petOpts()],['date','Date','date'],['kg','Weight','num'],['note','Note']],addLabel:'Add weigh-in',sort:(a,b)=>(b.date||'').localeCompare(a.date||''),
+ side:`<div class="card"><h3>Trend</h3>${bars(w.map(x=>+x.kg),w.map(x=>(x.date||'').slice(5)),150)}</div>`})};
+APP.P.tricks=()=>tablePage({c:'tricks',t:'Training & tricks',s:`${S.tricks.filter(t=>t.status==='Mastered').length} tricks mastered 🐾`,cols:[['pet','Pet','sel',petOpts()],['trick','Trick'],['status','Status','sel',['Learning','Practicing','Mastered']]],addLabel:'Add trick'});
 
 boot();
 </script>
