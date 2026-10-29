@@ -249,6 +249,8 @@ html[data-theme=dark] .btn.ghost,html[data-theme=dark] .chip{background:#262320;
 html[data-theme=dark] .cm{background:#262320;color:#F1EBE2}
 html[data-theme=dark] .onb{background:#2E2925;border-color:#4A3F37;color:#F1EBE2}
 
+.tblw{overflow-x:auto;max-width:100%}.card{min-width:0}
+
 :root{--bg:#F4F6F2;--acc:#3F7D5A;--acc-l:#DDEDE3;--acc-d:#2B5C40;--blush:#3F7D5A;--blush-l:#DDEDE3;--gold:#C9A24D}
 .hero{background:radial-gradient(120% 140% at 85% 20%,#DDEDE3 0,transparent 55%),linear-gradient(120deg,#FDFBF8,#DDEDE3)}
 [data-acc=sage]{--acc:#6E8B74;--acc-l:#E1EBE3;--acc-d:#4F6955}[data-acc=rose]{--acc:#B5546B;--acc-l:#F5DEE3;--acc-d:#8E3B50}[data-acc=navy]{--acc:#34507A;--acc-l:#DEE5F0;--acc-d:#243A5A}[data-acc=gold]{--acc:#B8914E;--acc-l:#F3EAD8;--acc-d:#8E6E36}[data-acc=plum]{--acc:#7A4A6B;--acc-l:#EEDFE9;--acc-d:#5A3450}
@@ -620,11 +622,18 @@ function tablePage(o){let rows=S[o.c];if(o.filter){const v=fv(o.c+'f','all');if(
  ${o.side?`<div class="grid g21"><div class="card">${ft}${tbl}</div><div class="grid" style="align-content:start">${o.side}</div></div>`:`<div class="card">${ft}${tbl}</div>`}`}
 function gridTracker(o){const t=new Date(),y=t.getFullYear(),m=t.getMonth(),nd=new Date(y,m+1,0).getDate(),pre=`${y}-${String(m+1).padStart(2,'0')}-`;
  const streak=x=>{let s=0;for(let d=t.getDate();d>0;d--){if(x.log&&x.log[pre+String(d).padStart(2,'0')])s++;else if(d!==t.getDate())break}return s};
- return `<div class="card"><h3>${o.t}<span class="x">${t.toLocaleDateString('en-US',{month:'long',year:'numeric'})}</span></h3><div class="tblw"><table class="tbl" style="font-size:12px"><tr><th>${o.label||'Item'}</th>${[...Array(nd)].map((_,i)=>`<th style="text-align:center;padding:4px 2px">${i+1}</th>`).join('')}<th class="num">🔥</th></tr>
- ${S[o.c].map(x=>`<tr><td style="min-width:150px">${inp(o.c,x,o.f||'name',{st:'font-weight:600'})}</td>${[...Array(nd)].map((_,i)=>{const k=pre+String(i+1).padStart(2,'0'),on=x.log&&x.log[k];return `<td style="padding:2px;text-align:center"><button data-act="tick" data-c="${o.c}" data-id="${x.id}" data-k="${k}" style="width:20px;height:20px;border-radius:6px;border:1px solid var(--line);background:${on?(x.col||'var(--acc)'):'transparent'};cursor:pointer;padding:0"></button></td>`}).join('')}<td class="num"><b>${streak(x)}</b></td></tr>`).join('')}</table></div></div>`}
+ return `<div class="card"><h3>${o.t}<span class="x">${t.toLocaleDateString('en-US',{month:'long',year:'numeric'})}</span></h3><div class="tblw"><table class="tbl" style="font-size:12px"><tr><th>${o.label||'Item'}</th>${[...Array(nd)].map((_,i)=>`<th style="text-align:center;padding:4px 0;font-size:10px;letter-spacing:0">${i+1}</th>`).join('')}<th class="num">🔥</th></tr>
+ ${S[o.c].map(x=>`<tr><td style="min-width:110px;width:150px">${inp(o.c,x,o.f||'name',{st:'font-weight:600'})}</td>${[...Array(nd)].map((_,i)=>{const k=pre+String(i+1).padStart(2,'0'),on=x.log&&x.log[k];return `<td style="padding:1px;text-align:center"><button data-act="tick" data-c="${o.c}" data-id="${x.id}" data-k="${k}" style="width:100%;max-width:22px;min-width:12px;aspect-ratio:1;height:auto;border-radius:5px;border:1px solid var(--line);background:${on?(x.col||'var(--acc)'):'transparent'};cursor:pointer;padding:0;display:block;margin:0 auto"></button></td>`}).join('')}<td class="num"><b>${streak(x)}</b></td></tr>`).join('')}</table></div></div>`}
 function logDemo(days,p){const t=new Date(),y=t.getFullYear(),m=t.getMonth(),o={};for(let d=1;d<=Math.min(days,t.getDate());d++)if(Math.random()<p)o[`${y}-${String(m+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`]=1;return o}
 Object.assign(CORE_ACT,{addrow:t=>{const c=t.dataset.c;S[c].unshift(Object.assign(JSON.parse(JSON.stringify(((APP.defaults||{})[c])||{})),{id:uid()}));save();rerender()},
  tick:t=>{const it=S[t.dataset.c].find(x=>x.id===t.dataset.id);it.log=it.log||{};if(it.log[t.dataset.k])delete it.log[t.dataset.k];else it.log[t.dataset.k]=1;save();rerender()}});
+// ---- extra tabs added after launch (used by <app>/post.js) ----
+// addTab(after, [key,label,icon], arrayKey, seed(), defaults, keepSeedOnFreshStart)
+function addTab(after,tab,arr,seed,def,keep){const i=APP.pages.findIndex(p=>p[0]===after);APP.pages.splice(i<0?APP.pages.length-2:i+1,0,tab);if(!arr)return;
+ if(!APP.arrays.includes(arr))APP.arrays.push(arr);const mk=()=>seed?seed().map(x=>Object.assign({id:uid()},x)):[];
+ if(!Array.isArray(S[arr]))S[arr]=mk();APP.defaults=APP.defaults||{};APP.defaults[arr]=def||{};
+ const _d=APP.demo;APP.demo=()=>{const s=_d();s[arr]=mk();return s};const _b=APP.blank;APP.blank=()=>{const s=_b();s[arr]=keep?mk():[];return s}}
+const isoAgo=n=>{const d=new Date();d.setDate(d.getDate()-n);return d.toISOString().slice(0,10)};
 
 // ===== CALM LAYER: next small step, 5-min timer, stuck helper, brain dump, quick add, onboarding, focus mode, help =====
 if(!Array.isArray(S.dump))S.dump=[];
@@ -679,6 +688,405 @@ Object.assign(CORE_ACT,{
 (function(){const f=document.createElement('button');f.className='fab';f.dataset.act='quickadd';f.title='Quick add';f.textContent='+';document.body.appendChild(f);
  const db=$('#demobar');if(db&&window.ETSY_URL){db.innerHTML=`✨ <b>Free demo</b> · try anything, your data never leaves your browser · <a href="${window.ETSY_URL}" target="_blank" rel="noopener" style="color:inherit;font-weight:700;text-decoration:underline">Get the full app on Etsy →</a>`}})();
 
+// ===== EXTRAS: quotes, badges, insights (charts), timers, spinner wheel, year in pixels, breathing, water =====
+// Used from <app>/post.js:  X.quotes(list,{tab}) · X.badges(after,defs) · X.insights(after,tab,fn) · X.timer(after,tab,o)
+//                           X.wheel(after,tab,o) · X.pixels(after,tab,o) · X.breathe(after) · X.water(after,o)
+I.medal='<circle cx="12" cy="15" r="6"/><path d="M8.5 3.5L12 9l3.5-5.5"/><path d="M12 12.6l.9 1.7 1.9.3-1.4 1.3.3 1.9-1.7-.9-1.7.9.3-1.9-1.4-1.3 1.9-.3z"/>';
+I.spin='<circle cx="12" cy="12" r="9"/><path d="M12 3v9l6.4 6.4M12 12L5.6 18.4M12 12H3"/>';
+I.quote='<path d="M5 7h5v5c0 3-1.6 5-4.5 6M14 7h5v5c0 3-1.6 5-4.5 6"/>';
+I.drop='<path d="M12 3s6 6.5 6 11a6 6 0 0 1-12 0c0-4.5 6-11 6-11z"/>';
+I.wind='<path d="M3 8h11a3 3 0 1 0-3-3M3 12h16a3 3 0 1 1-3 3M3 16h7"/>';
+I.grid='<rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5"/><rect x="14" y="14" width="7" height="7" rx="1.5"/>';
+(function(){const s=document.createElement('style');s.textContent=`
+.xq{background:var(--acc-l);border:0;position:relative}.xq .qk{font:700 11px var(--sans);letter-spacing:.14em;color:var(--acc-d,var(--acc))}
+.xq .qt{font:600 21px/1.35 var(--serif);margin:8px 0 6px}.xq .qa{font-size:12.5px;color:var(--mute)}.xq .qb{display:flex;gap:6px;margin-top:12px;flex-wrap:wrap}
+.xbm{display:flex;flex-direction:column;justify-content:space-between}.xbm .em{font-size:30px;letter-spacing:4px;margin:8px 0}
+.xbg{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:12px}
+.xb{text-align:center;padding:16px 12px}.xb .e{font-size:36px;width:68px;height:68px;border-radius:50%;display:grid;place-items:center;margin:0 auto 8px;background:var(--acc-l)}
+.xb.lock .e{filter:grayscale(1);opacity:.4;background:var(--soft)}.xb b{display:block;font:600 16px/1.2 var(--serif)}.xb small{color:var(--mute);font-size:12px;display:block;margin-top:4px;line-height:1.35}
+.xb .d{font-size:11px;color:var(--acc);font-weight:700;margin-top:8px}.xb .bar{margin-top:10px}
+.xt{display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:14px}.xt .card{text-align:center}
+.xring{width:164px;height:164px;border-radius:50%;margin:6px auto 12px;display:grid;place-items:center}
+.xring>div{width:134px;height:134px;border-radius:50%;background:var(--card);display:grid;place-items:center;font:600 32px var(--serif)}
+.xt .card.done .xring>div{color:var(--acc)}.xbtns{display:flex;gap:6px;justify-content:center;flex-wrap:wrap}
+.xpre{display:flex;gap:8px;flex-wrap:wrap;margin:4px 0 2px}
+.xhb{display:grid;grid-template-columns:minmax(80px,140px) 1fr auto;gap:8px 10px;align-items:center;font-size:13px}.xhb .t{height:10px;border-radius:6px;background:var(--soft);overflow:hidden}.xhb .t i{display:block;height:100%;border-radius:6px;background:var(--acc)}.xhb b{font-variant-numeric:tabular-nums}
+.xheat{display:grid;grid-auto-flow:column;grid-template-rows:repeat(7,1fr);gap:3px;overflow-x:auto}.xheat i{width:14px;height:14px;border-radius:3px;background:var(--soft);display:block}
+.xpx{display:grid;grid-template-columns:22px repeat(12,1fr);gap:3px;font-size:10px;color:var(--mute);text-align:center}.xpx i{display:block;aspect-ratio:1;border-radius:3px;background:var(--soft);max-width:26px;margin:0 auto;width:100%}
+.xpx i.na{background:transparent}
+.xwh{position:relative;width:min(340px,86vw);margin:0 auto}.xwh svg{width:100%;display:block}.xwh .pt{position:absolute;left:50%;top:-6px;transform:translateX(-50%);width:0;height:0;border-left:13px solid transparent;border-right:13px solid transparent;border-top:24px solid var(--ink);z-index:2}
+.xwres{text-align:center;font:600 24px var(--serif);min-height:34px;margin-top:14px}
+.xbr{width:230px;height:230px;border-radius:50%;margin:24px auto;display:grid;place-items:center;background:radial-gradient(circle,var(--acc-l) 0,var(--acc-l) 55%,transparent 56%);position:relative}
+.xbr .c{position:absolute;inset:30px;border-radius:50%;background:var(--acc);opacity:.85;transform:scale(.55);transition:transform 4s ease-in-out}
+.xbr b{position:relative;color:#fff;font:600 22px var(--serif);text-shadow:0 1px 6px rgba(0,0,0,.25)}
+.xgl{display:flex;gap:6px;flex-wrap:wrap;justify-content:center;font-size:34px;margin:12px 0}.xgl span{opacity:.22;filter:grayscale(1)}.xgl span.on{opacity:1;filter:none}
+.xconf{position:fixed;top:-40px;font-size:26px;z-index:99;pointer-events:none;animation:xfall 1.7s ease-in forwards}@keyframes xfall{to{transform:translateY(110vh) rotate(540deg);opacity:.3}}
+@media(max-width:720px){.xq .qt{font-size:18px}.xring{width:140px;height:140px}.xring>div{width:112px;height:112px;font-size:27px}}`;document.head.appendChild(s)})();
+const X={};
+const xIso=d=>`${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,"0")}-${String(d.getDate()).padStart(2,"0")}`;
+const xToday=()=>xIso(new Date());
+const xDays=n=>[...Array(n)].map((_,i)=>{const d=new Date();d.setDate(d.getDate()-(n-1-i));return xIso(d)});
+const xNum=v=>+String(v??'').replace(/[^\d.-]/g,'')||0;
+const xCnt=(k,f)=>(S[k]||[]).filter(f||(()=>true)).length;
+const xTicks=k=>sum(S[k]||[],x=>Object.keys(x.log||{}).length);
+function xBest(k){const d=new Set();(S[k]||[]).forEach(x=>Object.keys(x.log||{}).forEach(z=>d.add(z)));let b=0,c=0,p=null;[...d].sort().forEach(z=>{const t=new Date(z+'T12:00');c=p&&Math.round((t-p)/864e5)===1?c+1:1;p=t;b=Math.max(b,c)});return b}
+function xByDay(arr,df,vf,n){const m={};arr.forEach(x=>{const d=x[df];if(d)m[d]=(m[d]||0)+(vf?+vf(x)||0:1)});return xDays(n).map(d=>m[d]||0)}
+function xByMonth(arr,df,vf,n){const now=new Date(),out=[];for(let i=n-1;i>=0;i--){const d=new Date(now.getFullYear(),now.getMonth()-i,1),k=xIso(d).slice(0,7);out.push([d.toLocaleDateString('en-US',{month:'short'}),sum(arr.filter(x=>String(x[df]||'').slice(0,7)===k),x=>vf?vf(x):1)])}return out}
+function xGroup(arr,kf,vf){const m={};arr.forEach(x=>{const k=kf(x)||'Other';m[k]=(m[k]||0)+(vf?+vf(x)||0:1)});return Object.entries(m).sort((a,b)=>b[1]-a[1])}
+const xDl=d=>new Date(d+'T12:00').toLocaleDateString('en-US',{weekday:'short'}).slice(0,2);
+// ---- charts ----
+function xLine(vals,labels,o={}){const W=320,H=o.h||150,p=18,n=vals.length;if(!n)return '<div class="empty">No data yet</div>';
+ const mn=o.zero?0:Math.min(...vals),mx=Math.max(...vals),r=(mx-mn)||1,X0=i=>p+(n<2?(W-2*p)/2:i*(W-2*p)/(n-1)),Y=v=>H-p-(v-mn)/r*(H-2*p-8);
+ const pts=vals.map((v,i)=>`${X0(i).toFixed(1)},${Y(v).toFixed(1)}`).join(' ');
+ return `<svg viewBox="0 0 ${W} ${H+14}" style="width:100%;height:auto;display:block"><polygon points="${X0(0)},${H-p} ${pts} ${X0(n-1)},${H-p}" style="fill:var(--acc);opacity:.12"/><polyline points="${pts}" fill="none" style="stroke:var(--acc)" stroke-width="2.4" stroke-linejoin="round" stroke-linecap="round"/>
+ ${vals.map((v,i)=>`<circle cx="${X0(i)}" cy="${Y(v)}" r="3.2" style="fill:var(--card);stroke:var(--acc)" stroke-width="2"/>`).join('')}
+ ${labels.map((l,i)=>(n<=12||i%Math.ceil(n/8)===0)?`<text x="${X0(i)}" y="${H+8}" text-anchor="middle" font-size="9" fill="#8C8378">${esc(l)}</text>`:'').join('')}
+ <text x="${p}" y="11" font-size="9" fill="#8C8378">${o.fmt?o.fmt(mx):Math.round(mx*10)/10}</text></svg>`}
+function xHBars(rows,fmt){const m=Math.max(1,...rows.map(r=>r[1]));return rows.length?`<div class="xhb">${rows.map(([k,v])=>`<span>${esc(k)}</span><div class="t"><i style="width:${Math.max(2,v/m*100)}%"></i></div><b>${fmt?fmt(v):Math.round(v*10)/10}</b>`).join('')}</div>`:'<div class="empty">No data yet</div>'}
+const XPAL=()=>X.pal||(PAL.length>=6?PAL:["var(--acc)","#E07A5F","#B8914E","#7A8FB8","#81B29A","#B5546B","#8C8378","#D8A25E"]);
+function xDonut(rows,center,lab){const t=rows.filter(r=>r[1]>0),P=XPAL();return t.length?`<div style="display:flex;gap:18px;align-items:center;flex-wrap:wrap;justify-content:center">${donut(t.map(([k,v],i)=>({v,c:P[i%P.length]})),160,center,lab||'')}<div class="legend">${t.map(([k,v,d],i)=>`<span><i style="background:${P[i%P.length]}"></i>${esc(k)}<b>${d!=null?d:v}</b></span>`).join('')}</div></div>`:'<div class="empty">No data yet</div>'}
+function xHeat(map,weeks){weeks=weeks||18;const t=new Date(),st=new Date(t);st.setDate(t.getDate()-t.getDay()-7*(weeks-1));const mx=Math.max(1,...Object.values(map));let s='';
+ for(let i=0;i<weeks*7;i++){const d=new Date(st);d.setDate(st.getDate()+i);const k=xIso(d),v=map[k]||0;s+=d>t?'<i style="background:transparent"></i>':`<i title="${k}: ${v}" style="${v?`background:var(--acc);opacity:${(.3+.7*v/mx).toFixed(2)}`:''}"></i>`}
+ return `<div class="xheat">${s}</div><div style="display:flex;justify-content:space-between;font-size:11px;color:var(--mute);margin-top:6px"><span>${weeks} weeks ago</span><span>Today</span></div>`}
+const xCard=(t,body,x)=>`<div class="card"><h3>${t}${x?`<span class="x">${x}</span>`:''}</h3>${body}</div>`;
+function xConfetti(e){return;const em=[e||'🎉','✨','⭐','🎊'];for(let i=0;i<22;i++){const s=document.createElement('span');s.className='xconf';s.textContent=em[i%em.length];s.style.left=Math.random()*100+'vw';s.style.animationDelay=Math.random()*.5+'s';document.body.appendChild(s);setTimeout(()=>s.remove(),2600)}}
+// ---- quotes of the day ----
+const XQ={list:null,off:0,tab:null};
+X.quotes=(list,o={})=>{XQ.list=list;if(!Array.isArray(S.favq))S.favq=[];
+ if(o.tab){addTab(o.tab,['inspire',o.label||'Inspiration','quote'],'myq',null,{q:'',by:''});
+  APP.P.inspire=()=>`${head(o.label||'Inspiration',o.sub||'Words to come back to. Tap ♡ to keep your favorites.',`<button class="btn" data-act="addrow" data-c="myq">${ic('plus',15)} Add my own</button>`)}
+  ${S.myq.length?`<h3 style="margin:4px 0 10px">My words</h3><div class="grid g3">${S.myq.map(q=>`<div class="card xq"><div style="display:flex;justify-content:flex-end">${del('myq',q)}</div><textarea data-c="myq" data-id="${q.id}" data-f="q" placeholder="Write a quote or mantra…" style="width:100%;min-height:70px;border:0;background:transparent;font:600 19px/1.35 var(--serif);resize:vertical">${esc(q.q)}</textarea>${inp('myq',q,'by',{ph:'— who said it',st:'font-size:12.5px;background:transparent;border:0'})}</div>`).join('')}</div>`:''}
+  <h3 style="margin:18px 0 10px">${S.favq.length?'Favorites first':'All quotes'}</h3><div class="grid g3">${XQ.list.slice().sort((a,b)=>S.favq.includes(b[0])-S.favq.includes(a[0])).map(([q,a])=>{const f=S.favq.includes(q);return `<div class="card xq" style="${f?'':'background:var(--card);border:1px solid var(--line)'}"><div class="qt" style="font-size:18px">“${esc(q)}”</div><div style="display:flex;justify-content:space-between;align-items:center"><span class="qa">${a?'— '+esc(a):''}</span><button class="btn ghost sm" data-act="xqfav" data-q="${esc(q)}">${f?'♥':'♡'}</button></div></div>`}).join('')}</div>`}};
+function xQuoteCard(){const L=XQ.list;if(!L||!L.length)return '';const d=Math.floor((Date.now()-new Date(new Date().getFullYear(),0,0))/864e5),[q,a]=L[(d+XQ.off)%L.length],f=S.favq.includes(q);
+ return `<div class="card xq"><div class="qk">QUOTE OF THE DAY</div><div class="qt">“${esc(q)}”</div>${a?`<div class="qa">— ${esc(a)}</div>`:''}<div class="qb"><button class="btn ghost sm" data-act="xqnext">↻ Another</button><button class="btn ghost sm" data-act="xqfav" data-q="${esc(q)}">${f?'♥ Saved':'♡ Save'}</button>${APP.pages.some(p=>p[0]==='inspire')?'<button class="btn ghost sm" data-go="inspire">All quotes →</button>':''}</div></div>`}
+// ---- badges ----
+const XB={defs:null};
+X.badges=(after,defs,label)=>{XB.defs=defs;XB.label=label||"Badges";addTab(after,['badges',label||'Badges','medal']);
+ const _c=APP.counts;APP.counts=()=>{const c=_c?_c():{};c.badges=xBadges().filter(b=>b.ok).length;return c};
+ APP.P.badges=()=>{const st=xBadges(),ok=st.filter(b=>b.ok).length,nx=st.filter(b=>!b.ok).sort((a,b)=>b.v/b.g-a.v/a.g)[0];
+  return `${head(label||'Badges',`${ok} of ${st.length} unlocked · they unlock on their own as you use the app`)}
+  <div class="grid g21" style="margin-bottom:16px"><div class="card"><h3>Your collection<span class="x">${pct(ok/st.length)}%</span></h3><div class="bar"><i style="width:${pct(ok/st.length)}%"></i></div><div style="font-size:26px;letter-spacing:4px;margin-top:12px">${st.filter(b=>b.ok).map(b=>b.e).join('')||'<span style="font-size:14px;color:var(--mute);letter-spacing:0">Your first badge is close…</span>'}</div></div>
+  <div class="card xq">${nx?`<div class="qk">NEXT UP</div><div class="qt" style="font-size:19px">${nx.e} ${esc(nx.n)}</div><div class="qa">${esc(nx.d)} · ${Math.round(nx.v)} / ${nx.g}</div><div class="bar" style="margin-top:10px"><i style="width:${pct(nx.v/nx.g)}%"></i></div>`:'<div class="qt">All badges unlocked! 🏆</div>'}</div></div>
+  <div class="xbg">${st.map(b=>`<div class="card xb ${b.ok?'':'lock'}"><div class="e">${b.e}</div><b>${esc(b.n)}</b><small>${esc(b.d)}</small>${b.ok?`<div class="d">✓ ${S._bdg&&S._bdg[b.n]?new Date(S._bdg[b.n]+'T12:00').toLocaleDateString('en-US',{month:'short',day:'numeric'}):'Unlocked'}</div>`:`<div class="bar"><i style="width:${pct(b.v/b.g)}%"></i></div><div class="d" style="color:var(--mute)">${Math.round(b.v)} / ${b.g}</div>`}</div>`).join('')}</div>`}};
+function xBadges(){return (XB.defs||[]).map(([e,n,d,f,g])=>{let v=0;try{v=+f()||0}catch(x){}const ok=v>=g||!!(S._bdg&&S._bdg[n]);return {e,n,d,v:ok?g:Math.min(v,g),g,ok}})}
+function xBadgeCheck(){if(!XB.defs)return;const fresh=!S._bdg||typeof S._bdg!=='object';if(fresh)S._bdg={};const nw=[];
+ (XB.defs||[]).forEach(([e,n,d,f,g])=>{let v=0;try{v=+f()||0}catch(x){}if(v>=g&&!S._bdg[n]){S._bdg[n]=xToday();nw.push(e+' '+n)}});
+ if(fresh||nw.length)save();if(nw.length&&!fresh)setTimeout(()=>{toast('🏅 Badge unlocked: '+nw[0]);xConfetti(nw[0].split(' ')[0])},350)}
+function xBadgeMini(){if(!XB.defs)return '';const st=xBadges(),ok=st.filter(b=>b.ok),nx=st.filter(b=>!b.ok).sort((a,b)=>b.v/b.g-a.v/a.g)[0];
+ return `<div class="card xbm"><div><h3>🏅 ${XB.label||"Badges"}<span class="x">${ok.length} / ${st.length}</span></h3><div class="em">${ok.slice(-6).map(b=>b.e).join('')||'—'}</div>${nx?`<small style="color:var(--mute)">Next: ${nx.e} ${esc(nx.n)} · ${Math.round(nx.v)}/${nx.g}</small><div class="bar" style="margin-top:6px"><i style="width:${pct(nx.v/nx.g)}%"></i></div>`:''}</div><button class="btn ghost sm" data-go="badges" style="align-self:flex-start;margin-top:12px">See all →</button></div>`}
+// ---- insights page ----
+X.insights=(after,tab,fn,sub)=>{addTab(after,tab);APP.P[tab[0]]=()=>`${head(tab[1],sub||'Your numbers, drawn for you. Everything updates on its own.')}${fn()}`};
+// ---- timers (several can run at once) ----
+const XT={list:[],iv:null,o:{}};
+function xBeep(){try{const a=new(window.AudioContext||window.webkitAudioContext)();[0,.35,.7].forEach(t=>{const o=a.createOscillator(),g=a.createGain();o.frequency.value=880;o.connect(g);g.connect(a.destination);g.gain.setValueAtTime(.001,a.currentTime+t);g.gain.exponentialRampToValueAtTime(.3,a.currentTime+t+.02);g.gain.exponentialRampToValueAtTime(.001,a.currentTime+t+.3);o.start(a.currentTime+t);o.stop(a.currentTime+t+.32)})}catch(e){}try{navigator.vibrate&&navigator.vibrate([200,100,200])}catch(e){}}
+const xFmt=s=>{s=Math.max(0,Math.ceil(s));const h=Math.floor(s/3600),m=Math.floor(s%3600/60),x=s%60;return (h?h+':'+String(m).padStart(2,'0'):m)+':'+String(x).padStart(2,'0')};
+function xRingBg(t){return `conic-gradient(var(--acc) ${((1-t.left/t.total)*360).toFixed(1)}deg,var(--acc-l) 0)`}
+function xTick(){let any=false,fin=false;XT.list.forEach(t=>{if(!t.run)return;t.left=Math.max(0,(t.end-Date.now())/1000);
+  if(t.left<=0){t.run=false;t.done=true;fin=true;xBeep();toast('⏰ '+t.label+' is done!');if(!Array.isArray(S.tlog))S.tlog=[];S.tlog.unshift({date:xToday(),label:t.label,min:Math.round(t.total/60)});S.tlog=S.tlog.slice(0,300);save()}else any=true;
+  const el=document.getElementById('xt-'+t.id);if(el){el.querySelector('.tm').textContent=xFmt(t.left);el.querySelector('.xring').style.background=xRingBg(t)}});
+ if(!any){clearInterval(XT.iv);XT.iv=null}if(fin&&page===XT.o.key)rerender()}
+function xTStart(){if(!XT.iv)XT.iv=setInterval(xTick,250)}
+X.timer=(after,tab,o)=>{XT.o=Object.assign({key:tab[0]},o);addTab(after,tab);if(!Array.isArray(S.tlog))S.tlog=[];
+ APP.P[tab[0]]=()=>{const lg=S.tlog||[],td=sum(lg.filter(x=>x.date===xToday()),x=>x.min),wk=xByDay(lg,'date',x=>x.min,7);
+  return `${head(o.title||tab[1],o.sub||'Tap a preset to start. Several timers can run at once.')}
+  <div class="card" style="margin-bottom:16px"><h3>Start a timer</h3><div class="xpre">${o.presets.map(([l,m])=>`<button class="chip" data-act="xtadd" data-l="${esc(l)}" data-m="${m}">▶ ${esc(l)} · ${m<1?Math.round(m*60)+' s':m+' min'}</button>`).join('')}</div>
+   <div class="addrow" style="margin-top:12px"><input class="fi" id="xtlab" placeholder="${esc(o.ph||'Name (optional)')}" style="flex:2"><input class="fi" id="xtmin" type="number" min="1" step="any" placeholder="Minutes" style="flex:1"><button class="btn" data-act="xtcustom">Start</button></div></div>
+  <div class="xt">${XT.list.map(t=>`<div class="card ${t.done?'done':''}" id="xt-${t.id}"><b style="font:600 18px var(--serif)">${esc(t.label)}</b><div class="xring" style="background:${xRingBg(t)}"><div class="tm">${t.done?'Done ✓':xFmt(t.left)}</div></div>
+   <div class="xbtns">${t.done?`<button class="btn sm" data-act="xtreset" data-id="${t.id}">↺ Again</button>`:`<button class="btn sm" data-act="xtgo" data-id="${t.id}">${t.run?'Pause':'Resume'}</button><button class="btn ghost sm" data-act="xtplus" data-id="${t.id}">+1 min</button>`}<button class="btn ghost sm" data-act="xtdel" data-id="${t.id}">×</button></div></div>`).join('')||'<div class="card empty">No timer running. Pick one above ⏱</div>'}</div>
+  ${o.log===false?'':`<div class="grid g2" style="margin-top:16px">${xCard(o.logTitle||'Minutes this week',bars(wk,xDays(7).map(xDl),130),`today ${td} min`)}${xCard('Recent sessions',`<div class="list">${lg.slice(0,6).map(x=>`<div class="it"><div style="flex:1">${esc(x.label)}</div><small style="color:var(--mute)">${x.min} min · ${new Date(x.date+'T12:00').toLocaleDateString('en-US',{month:'short',day:'numeric'})}</small></div>`).join('')||'<div class="empty" style="padding:12px">Finished timers show up here</div>'}</div>`,`${lg.length} total`)}</div>`}`}};
+// ---- spinner wheel ----
+const XW={rot:0,res:''};
+X.wheel=(after,tab,o)=>{XW.o=o;addTab(after,tab);
+ APP.P[tab[0]]=()=>{const L=xWOpts();return `${head(o.title||tab[1],o.sub||'Can’t decide? Let the wheel pick.')}
+ <div class="grid g21"><div class="card" style="padding:26px 16px">${L.length>1?`<div class="xwh"><div class="pt"></div>${xWheelSvg(L)}</div><div class="xwres" id="xwres">${esc(XW.res)}</div><div style="text-align:center;margin-top:10px"><button class="btn" data-act="xwspin">🎡 ${o.verb||'Spin the wheel'}</button></div>`:`<div class="empty">${o.empty||'Add a few items first'}</div>`}</div>
+ <div class="card"><h3>On the wheel<span class="x">${L.length}</span></h3><div class="list">${L.map(x=>`<div class="it">${esc(x)}</div>`).join('')}</div>${o.note?`<p style="color:var(--mute);font-size:12.5px;margin:12px 0 0">${o.note}</p>`:''}</div></div>`}};
+const xWOpts=()=>{let L=[];try{L=XW.o.opts().filter(Boolean).map(String)}catch(e){}return [...new Set(L)].slice(0,16)};
+const xDark=h=>{const m=/^#([0-9a-f]{6})$/i.exec(h||"");if(!m)return true;const n=parseInt(m[1],16);return (0.299*(n>>16)+0.587*(n>>8&255)+0.114*(n&255))<150};
+function xWheelSvg(L){const n=L.length,sg=360/n,R=150,c=160,P=a=>[c+R*Math.cos((a-90)*Math.PI/180),c+R*Math.sin((a-90)*Math.PI/180)];
+ return `<svg viewBox="0 0 320 320"><g id="xwg" style="transform-origin:160px 160px;transform:rotate(${XW.rot}deg)">${L.map((l,i)=>{const [x1,y1]=P(i*sg),[x2,y2]=P((i+1)*sg),m=i*sg+sg/2;
+  const th=m-90,lf=th>90&&th<270;return `<path d="M${c} ${c} L${x1.toFixed(1)} ${y1.toFixed(1)} A${R} ${R} 0 ${sg>180?1:0} 1 ${x2.toFixed(1)} ${y2.toFixed(1)}z" fill="${PAL[i%PAL.length]}" stroke="#fff" stroke-width="2"/><text transform="rotate(${lf?th-180:th} ${c} ${c})" x="${lf?c-R+12:c+R-12}" y="${c+4}" text-anchor="${lf?"start":"end"}" font-size="${n>10?10:12}" font-weight="700" fill="${xDark(PAL[i%PAL.length])?"#fff":"#3A3029"}">${esc(l.length>18?l.slice(0,17)+'…':l)}</text>`}).join('')}</g><circle cx="${c}" cy="${c}" r="22" style="fill:var(--card)" stroke="#fff" stroke-width="3"/><text x="${c}" y="${c+6}" text-anchor="middle" font-size="18">✨</text></svg>`}
+// ---- year in pixels ----
+X.pixels=(after,tab,o)=>{addTab(after,tab);
+ APP.P[tab[0]]=()=>{const y=new Date().getFullYear(),m=o.get(),C=o.colors;let h='<span></span>'+'JFMAMJJASOND'.split('').map(x=>`<b>${x}</b>`).join('');
+  for(let d=1;d<=31;d++){h+=`<span>${d}</span>`;for(let mo=0;mo<12;mo++){const dt=new Date(y,mo,d);if(dt.getMonth()!==mo){h+='<i class="na"></i>';continue}const k=`${y}-${String(mo+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`,v=m[k];h+=`<i title="${k}${v?': '+o.labels[v-1]:''}" style="${v?'background:'+C[v-1]:''}"></i>`}}
+  const cnt=o.labels.map((l,i)=>[l,Object.values(m).filter(v=>v===i+1).length]);
+  return `${head(tab[1],o.sub||'One little square for every day of the year.')}<div class="grid g21"><div class="card"><h3>${y}<span class="x">${Object.keys(m).filter(k=>k.startsWith(y)).length} days logged</span></h3><div class="xpx">${h}</div></div>
+  <div class="grid" style="align-content:start"><div class="card"><h3>Legend</h3><div class="list">${o.labels.map((l,i)=>`<div class="it"><i style="width:16px;height:16px;border-radius:4px;background:${C[i]};display:inline-block"></i><div style="flex:1">${l}</div><b>${cnt[i][1]}</b></div>`).join('')}</div></div>${o.side?o.side():''}</div></div>`}};
+// ---- breathing ----
+const XBR={on:false,pat:'box',iv:null};
+const XBP={box:['Box breathing',[['Breathe in',4],['Hold',4],['Breathe out',4],['Hold',4]]],calm:['4 · 7 · 8 relax',[['Breathe in',4],['Hold',7],['Breathe out',8]]],easy:['Easy calm',[['Breathe in',4],['Breathe out',6]]]};
+X.breathe=(after)=>{addTab(after,['breathe','Breathe','wind']);
+ APP.P.breathe=()=>`${head('Breathe','A one-minute reset. Follow the circle.')}<div class="grid g21"><div class="card" style="text-align:center"><div class="tabs" style="justify-content:center">${Object.entries(XBP).map(([k,[l]])=>`<button class="${XBR.pat===k?'on':''}" data-act="xbrpat" data-p="${k}">${l}</button>`).join('')}</div>
+  <div class="xbr"><div class="c" id="xbrc"></div><b id="xbrt">${XBR.on?'…':'Ready'}</b></div><button class="btn" data-act="xbrgo">${XBR.on?'Stop':'▶ Start'}</button><p style="color:var(--mute);font-size:13px;margin:12px 0 0" id="xbrn">${XBR.n?XBR.n+' breaths today':''}</p></div>
+  <div class="card"><h3>When to use it</h3><div class="list"><div class="it">😮‍💨 Before a hard conversation</div><div class="it">🛏 When you can’t fall asleep (try 4·7·8)</div><div class="it">💻 Between two tasks</div><div class="it">🌀 When everything feels like too much</div></div></div></div>`};
+function xBrRun(){const [,ph]=XBP[XBR.pat];let i=0;const step=()=>{if(!XBR.on)return;const [l,s]=ph[i%ph.length],c=$('#xbrc'),t=$('#xbrt');if(!c){XBR.on=false;return}
+ c.style.transitionDuration=s+'s';c.style.transform=l==='Breathe in'?'scale(1)':l==='Breathe out'?'scale(.55)':c.style.transform;let k=s;t.textContent=l+' · '+k;
+ clearInterval(XBR.iv);XBR.iv=setInterval(()=>{k--;if(k>0&&$('#xbrt'))$('#xbrt').textContent=l+' · '+k},1000);
+ if(i%ph.length===ph.length-1){XBR.n=(XBR.n||0)+1}i++;XBR.to=setTimeout(step,s*1000)};step()}
+// ---- water ----
+X.water=(after,o={})=>{const g=o.goal||8;XWG=g;addTab(after,['water',o.label||'Water','drop']);if(!S.water||typeof S.water!=='object'||Array.isArray(S.water))S.water={};
+ APP.P.water=()=>{const n=S.water[xToday()]||0,wk=xDays(7).map(d=>S.water[d]||0),hit=Object.values(S.water).filter(v=>v>=g).length;
+  return `${head(o.label||'Water',`Goal: ${g} glasses a day · goal reached ${hit} days`)}<div class="grid g21"><div class="card" style="text-align:center"><div style="font:600 46px var(--serif)">${n} <span style="font-size:20px;color:var(--mute)">/ ${g}</span></div><div class="xgl">${[...Array(Math.max(g,n))].map((_,i)=>`<span class="${i<n?'on':''}">💧</span>`).join('')}</div>
+  <div class="xbtns"><button class="btn" data-act="xwat" data-d="1">+ 1 glass</button><button class="btn ghost" data-act="xwat" data-d="-1">− 1</button></div>${n>=g?'<p style="margin:12px 0 0;font-weight:700;color:var(--acc)">Goal reached today 🎉</p>':''}</div>${xCard('Last 7 days',bars(wk,xDays(7).map(xDl),140))}</div>`}};
+// ---- actions ----
+Object.assign(CORE_ACT,{
+ xqnext:()=>{XQ.off++;rerender()},
+ xqfav:t=>{const q=t.dataset.q;S.favq=S.favq.includes(q)?S.favq.filter(x=>x!==q):[q,...S.favq];save();rerender();toast(S.favq.includes(q)?'Saved ♥':'Removed')},
+ xtadd:t=>{const m=+t.dataset.m;XT.list.unshift({id:uid(),label:t.dataset.l,total:m*60,left:m*60,end:Date.now()+m*6e4,run:true});xTStart();rerender()},
+ xtcustom:()=>{const m=+$('#xtmin').value;if(!(m>0)){toast('Type the minutes first');return}const l=$('#xtlab').value.trim()||(m+' min timer');XT.list.unshift({id:uid(),label:l,total:m*60,left:m*60,end:Date.now()+m*6e4,run:true});xTStart();rerender()},
+ xtgo:t=>{const x=XT.list.find(z=>z.id===t.dataset.id);if(!x)return;if(x.run){x.run=false;x.left=Math.max(0,(x.end-Date.now())/1000)}else{x.run=true;x.end=Date.now()+x.left*1000;xTStart()}rerender()},
+ xtplus:t=>{const x=XT.list.find(z=>z.id===t.dataset.id);if(!x)return;x.total+=60;x.left+=60;x.end+=6e4;rerender()},
+ xtreset:t=>{const x=XT.list.find(z=>z.id===t.dataset.id);if(!x)return;x.done=false;x.run=true;x.left=x.total;x.end=Date.now()+x.total*1000;xTStart();rerender()},
+ xtdel:t=>{XT.list=XT.list.filter(z=>z.id!==t.dataset.id);rerender()},
+ xwspin:()=>{const L=xWOpts(),n=L.length;if(n<2)return;const w=Math.floor(Math.random()*n),sg=360/n,ac=(w+.5)*sg,cur=((XW.rot%360)+360)%360,need=((360-ac-cur)%360+360)%360;XW.rot+=1440+need;
+  const g=document.getElementById('xwg'),r=$('#xwres');if(r)r.textContent='…';if(g){g.style.transition='transform 3.4s cubic-bezier(.17,.67,.15,1)';g.style.transform=`rotate(${XW.rot}deg)`}
+  setTimeout(()=>{XW.res=(XW.o.prefix||'')+L[w];const r2=$('#xwres');if(r2)r2.textContent=XW.res;xConfetti(XW.o.emoji||'🎉')},3500)},
+ xbrpat:t=>{XBR.pat=t.dataset.p;XBR.on=false;clearTimeout(XBR.to);clearInterval(XBR.iv);rerender()},
+ xbrgo:()=>{XBR.on=!XBR.on;clearTimeout(XBR.to);clearInterval(XBR.iv);rerender();if(XBR.on)setTimeout(xBrRun,50)},
+ xwat:t=>{const k=xToday();S.water[k]=Math.max(0,(S.water[k]||0)+(+t.dataset.d));save();rerender();if(+t.dataset.d>0&&S.water[k]===(XWG||8))xConfetti('💧')}});
+let XWG=8;
+// ---- dashboard row (quote + badges) & badge check on every render ----
+
+// ---- sections with sub-tabs (pro layout) ----
+// X.section(key,[[sub,label,fn]...]) · X.layout([[key,label,icon]...]) · X.dash(fn) adds a dashboard card
+X.section=(key,subs)=>{APP.P[key]=()=>{const cur=F["sub_"+key]||subs[0][0],s=subs.find(x=>x[0]===cur)||subs[0];let h="";try{h=s[2]()}catch(e){h=`<div class="card empty">${esc(e.message)}</div>`}
+ const bar=`<div class="tabs xsub">${subs.map(([k,l])=>`<button class="${k===s[0]?"on":""}" data-flt="sub_${key}:${k}">${l}</button>`).join("")}</div>`;
+ const i=h.indexOf(`<div class="top">`);if(i<0)return bar+h;const r=h.indexOf(`<div class="r">`,i),j=h.indexOf("</div></div>",r)+12;return h.slice(0,j)+bar+h.slice(j)}};
+X.go=(key,sub)=>{if(sub)F["sub_"+key]=sub;page=key;history.replaceState(null,"","#"+key);render()};
+X.layout=L=>{APP.pages=L};
+const XDC=[];X.dash=fn=>XDC.push(fn);
+function xTable(c,rows,cols,o={}){const w={chk:"40px",num:"84px",money:"100px",date:"145px",time:"105px",thumb:"56px",stars:"118px"};
+ return `<div class="tblw"><table class="tbl"><tr>${cols.map(k=>`<th class="${["num","money","calc"].includes(k[2])?"num":""}">${k[1]}</th>`).join("")}${o.nodel?"":"<th></th>"}</tr>${rows.map(x=>`<tr>${cols.map(k=>`<td style="${w[k[2]]?"width:"+w[k[2]]:""}${k[2]==="calc"?";text-align:right;white-space:nowrap;font-variant-numeric:tabular-nums":""}">${k[2]==="calc"?k[3](x):cellFor(c,x,k)}</td>`).join("")}${o.nodel?"":`<td>${del(c,x)}</td>`}</tr>`).join("")}</table>${rows.length?"":`<div class="empty">${o.empty||"Nothing yet"}</div>`}</div>`}
+Object.assign(CORE_ACT,{xgo:t=>X.go(t.dataset.k,t.dataset.s)});
+(function(){const s=document.createElement("style");s.textContent=`.xsub{margin:-4px 0 18px;overflow-x:auto;flex-wrap:nowrap;scrollbar-width:none}.xsub::-webkit-scrollbar{display:none}.xsub button{white-space:nowrap}
+.xday{display:flex;flex-direction:column;gap:8px}.xday.today{outline:2px solid var(--acc);outline-offset:-2px}.xday .dn{display:flex;justify-content:space-between;align-items:center}.xday .dn b{font:600 18px var(--serif)}.xday textarea{width:100%;min-height:150px;border:1px solid var(--line);border-radius:12px;padding:8px 10px;font:500 13px/1.5 var(--sans);background:transparent;color:inherit;resize:vertical}
+.xpill{display:inline-block;padding:3px 10px;border-radius:20px;background:var(--acc-l);color:var(--acc-d,var(--acc));font-size:12px;font-weight:700}
+.xmeter{display:grid;grid-template-columns:90px 1fr auto;gap:6px 10px;align-items:center;font-size:13px}.xmeter .t{height:9px;border-radius:6px;background:var(--soft);overflow:hidden}.xmeter .t i{display:block;height:100%;background:var(--acc);border-radius:6px}.xmeter .t i.over{background:var(--red,#C0503F)}
+.xcal{display:grid;grid-template-columns:repeat(7,1fr);gap:6px}.xcal .h{font-size:11px;color:var(--mute);text-align:center;font-weight:700}.xcal .c{min-height:76px;border:1px solid var(--line);border-radius:12px;padding:6px;font-size:11px;display:flex;flex-direction:column;gap:3px}.xcal .c.o{opacity:.35}.xcal .c.t{border-color:var(--acc);box-shadow:inset 0 0 0 1px var(--acc)}.xcal .c b{font-size:12px}.xcal .c span{border-radius:6px;padding:1px 5px;background:var(--acc-l);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.xcal .c span.p{background:transparent;border:1px dashed var(--line);color:var(--mute)}
+.xprog{display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:14px}.xprog .card.on{outline:2px solid var(--acc)}
+@media(max-width:720px){.xcal .c{min-height:54px;font-size:9px}.xcal .c span{padding:0 3px}}`;document.head.appendChild(s)})();
+
+// ---- gentle review ask: paid apps only, after 3 days of use, never with an incentive (Etsy rules) ----
+const XRV={k:KEY+'-rv',v:null};
+try{if(!DEMO){XRV.v=JSON.parse(localStorage.getItem(XRV.k)||'null');if(!XRV.v){XRV.v={first:Date.now(),snooze:0,done:0};localStorage.setItem(XRV.k,JSON.stringify(XRV.v))}}}catch(e){}
+const xrvSave=()=>{try{localStorage.setItem(XRV.k,JSON.stringify(XRV.v))}catch(e){}};
+X.dash(()=>{const v=XRV.v;if(!v||v.done||Date.now()-v.first<3*864e5)return '';
+ return `<div class="card" style="margin-bottom:16px;display:flex;gap:16px;align-items:center;flex-wrap:wrap;border:1px solid var(--line)"><div style="font-size:30px">💛</div><div style="flex:1;min-width:220px"><b style="font:600 18px var(--serif)">Enjoying ${esc(document.title)}?</b><div style="color:var(--mute);font-size:13.5px;margin-top:4px">If it helps you, a short review on Etsy means a lot to a small shop. Something not right? Message me on Etsy first and I’ll fix it.</div></div><div class="xbtns"><a class="btn sm" href="https://www.etsy.com/your/purchases" target="_blank" rel="noopener" data-act="xrvgo">Leave a review</a><button class="btn ghost sm" data-act="xrvlater">Not now</button><button class="btn ghost sm" data-act="xrvdone">Already did</button></div></div>`});
+Object.assign(CORE_ACT,{xrvgo:()=>{XRV.v.done=1;xrvSave();setTimeout(rerender,300)},xrvdone:()=>{XRV.v.done=1;xrvSave();rerender()},
+ xrvlater:()=>{XRV.v.snooze++;if(XRV.v.snooze>=2)XRV.v.done=1;else XRV.v.first=Date.now()+11*864e5;xrvSave();rerender()}});
+// ---- dashboard alerts (due soon, use soon…) ----
+const XA=[];X.alert=fn=>XA.push(fn);
+function xAlerts(){const L=[];XA.forEach(f=>{try{(f()||[]).forEach(x=>L.push(x))}catch(e){}});return L.length?`<div class="card" style="margin-bottom:16px;border-left:5px solid var(--acc)"><h3>🔔 Heads up<span class="x">${L.length}</span></h3><div class="list">${L.slice(0,6).map(x=>`<div class="it">${x}</div>`).join("")}</div></div>`:""}
+const xDaysTo=d=>d?Math.round((new Date(d+"T12:00")-new Date(xToday()+"T12:00"))/864e5):null;
+const _xview=view;
+view=function(){if(!Array.isArray(S.favq))S.favq=[];if(!Array.isArray(S.tlog))S.tlog=[];if(!S.water||typeof S.water!=="object"||Array.isArray(S.water))S.water={};const h=_xview();xBadgeCheck();if(page!=='dashboard'||S.focus)return h;const q=xQuoteCard(),b=xBadgeMini(),al=xAlerts();if(!q&&!b&&!al&&!XDC.length)return h;
+ const dx=XDC.map(f=>{try{return f()}catch(e){return ""}}).join("");const row=al+dx+(q||b?`<div class="grid ${q&&b?'g21':''}" style="margin-bottom:16px">${q}${b}</div>`:''),mk='<div style="height:16px"></div>',i=h.indexOf(mk);if(X.dashEnd)return h.replace(/(<div style="margin-top:16px"><div class="card"><h3>🧠 Brain dump)/,`<div style="margin-top:16px">${row}</div>$1`);return i>=0?h.slice(0,i+mk.length)+row+h.slice(i+mk.length):row+h};
+
+// ===== DEBT PAYOFF PRO: today · payoff plan (strategy, what-if, schedule, timeline) · debts · payments (this month, log, calendar) · extra money · data · milestones =====
+const dbR2=v=>Math.round((+v||0)*100)/100;
+const dbYM=(o=0)=>{const d=new Date();d.setDate(1);d.setMonth(d.getMonth()+o);return xIso(d).slice(0,7)};
+const dbYMl=(ym,long)=>ym?new Date(ym+'-01T12:00').toLocaleDateString('en-US',long?{month:'long',year:'numeric'}:{month:'short',year:'numeric'}):'—';
+const dbMDiff=d=>{if(!d)return 0;const a=new Date(),y=+d.slice(0,4),m=+d.slice(5,7)-1;return (y-a.getFullYear())*12+m-a.getMonth()};
+const dbOrd=n=>{n=+n||0;const s=n%100>10&&n%100<14?'th':{1:'st',2:'nd',3:'rd'}[n%10]||'th';return n+s};
+const dbLen=m=>m>=600?'50+ years':m<12?m+' mo':Math.floor(m/12)+' yr'+(m%12?' '+m%12+' mo':'');
+const dbDue=(d,o=0)=>{const n=new Date(),y=n.getFullYear(),m=n.getMonth()+o,last=new Date(y,m+1,0).getDate();return xIso(new Date(y,m,Math.min(xNum(d.due)||1,last)))};
+const dbPays=(d,ym)=>S.pays.filter(p=>(p.did?p.did===d.id:p.debt===d.name)&&(!ym||(p.date||'').startsWith(ym)));
+const dbPaidM=(d,ym)=>sum(dbPays(d,ym||dbYM()),p=>xNum(p.amount));
+const dbB0=d=>xNum(d.bal)+sum(S.pays.filter(p=>p.applied&&p.did===d.id&&(p.date||'').startsWith(dbYM())),p=>xNum(p.prin));
+const dbStartAll=()=>sum(S.debts,d=>Math.max(xNum(d.start),xNum(d.bal))),dbTot=()=>sum(S.debts,d=>xNum(d.bal));
+const dbMeth=()=>['snowball','avalanche','custom'].includes(S.method)?S.method:'snowball';
+const DB_ML={snowball:'Snowball',avalanche:'Avalanche',custom:'Custom order',minimums:'Minimums only'};
+const DB_MD={snowball:'Smallest balance first. Quick wins keep you going.',avalanche:'Highest APR first. Pays the least interest.',custom:'Your own order. Pay what matters most to you first.'};
+// ---- month-by-month amortization simulation ----
+let DB_C={};
+function dbSim(method,extra,o={}){const tm=dbYM();
+ const k=JSON.stringify([method,xNum(extra),o.noSnow?1:0,xNum(o.lump),tm,S.debts.map(d=>[d.id,d.name,d.bal,d.rate,d.min,d.prio]),S.pays.filter(p=>p.applied&&(p.date||'').startsWith(tm)).map(p=>[p.did,p.prin]),S.income.filter(x=>!x.paid).map(x=>[x.date,x.amt])]);
+ if(DB_C[k])return DB_C[k];if(Object.keys(DB_C).length>60)DB_C={};
+ const L=S.debts.map(d=>({id:d.id,n:d.name||'Debt',b:dbB0(d),r:xNum(d.rate)/1200,m:xNum(d.min),p:xNum(d.prio)||99,b0:0})).filter(d=>d.b>.005);L.forEach(d=>d.b0=d.b);
+ const mins=method==='minimums',sn={};if(!mins&&!o.noSnow)S.income.filter(x=>!x.paid&&xNum(x.amt)>0).forEach(x=>{const i=Math.max(1,dbMDiff(x.date)+1);sn[i]=(sn[i]||0)+xNum(x.amt)});
+ if(xNum(o.lump))sn[1]=(sn[1]||0)+xNum(o.lump);
+ const budget=sum(L,d=>d.m)+(mins?0:xNum(extra)),rows=[],order=[];let m=0,ti=0;
+ const cmp=(a,b)=>method==='avalanche'?(b.r-a.r)||(a.b-b.b):method==='custom'?(a.p-b.p)||(a.b-b.b):(a.b-b.b)||(b.r-a.r);
+ while(L.some(d=>d.b>.005)&&m<600){m++;let mi=0,left=budget+(sn[m]||0);const pay={},intd={};
+  L.forEach(d=>{if(d.b>.005){const i=d.b*d.r;d.b+=i;mi+=i;intd[d.id]=i}});
+  L.forEach(d=>{if(d.b>.005){const p=Math.min(d.m,d.b);d.b-=p;pay[d.id]=p;left-=p}});
+  if(!mins){left=Math.max(0,left);L.filter(d=>d.b>.005).sort(cmp).forEach(d=>{if(left<=0)return;const p=Math.min(left,d.b);d.b-=p;left-=p;pay[d.id]=(pay[d.id]||0)+p})}
+  ti+=mi;const tp=sum(Object.values(pay),x=>x);
+  L.forEach(d=>{if(d.b<=.005&&!order.find(x=>x.id===d.id)){d.b=0;order.push({id:d.id,n:d.n,m,ym:dbYM(m-1)})}});
+  rows.push({m,ym:dbYM(m-1),int:mi,paid:tp,prin:tp-mi,pay,intd,bal:L.map(d=>Math.max(0,d.b)),tot:sum(L,d=>Math.max(0,d.b))})}
+ return DB_C[k]={months:m,interest:ti,order,rows,L,stuck:m>=600,budget,end:m?dbYM(m-1):tm,paid:sum(rows,x=>x.paid)}}
+const dbCur=()=>dbSim(dbMeth(),S.extra);
+const dbCmp=m=>(a,b)=>m==='avalanche'?(xNum(b.rate)-xNum(a.rate))||(xNum(a.bal)-xNum(b.bal)):m==='custom'?((xNum(a.prio)||99)-(xNum(b.prio)||99))||(xNum(a.bal)-xNum(b.bal)):(xNum(a.bal)-xNum(b.bal))||(xNum(b.rate)-xNum(a.rate));
+const dbFocus=()=>S.debts.filter(d=>xNum(d.bal)>0).sort(dbCmp(dbMeth()))[0];
+function dbMonthPlan(){const r=dbCur(),r1=r.rows[0]||{pay:{}};return S.debts.map(d=>{const plan=r1.pay[d.id]||0,paid=dbPaidM(d);return {d,plan,paid,left:Math.max(0,plan-paid),due:xNum(d.due)?dbDue(d):''}}).filter(x=>x.plan>0||x.paid>0).sort((a,b)=>(a.due||'9').localeCompare(b.due||'9'))}
+// ---- log a payment: split into interest + principal, update the balance ----
+function dbLog(d,amt,date,note){amt=dbR2(amt);if(!d||!(amt>0))return null;date=date||xToday();const ym=date.slice(0,7),had=S.pays.some(p=>p.did===d.id&&p.applied&&xNum(p.int)>0&&(p.date||'').startsWith(ym));
+ const b=xNum(d.bal),int=had?0:Math.min(amt,dbR2(b*xNum(d.rate)/1200)),prin=Math.max(0,Math.min(b,dbR2(amt-int)));d.bal=dbR2(b-prin);
+ const p={id:uid(),date,debt:d.name,amount:amt,note:note||'',did:d.id,int,prin,applied:true};S.pays.unshift(p);
+ if(b>0&&d.bal<=.005){d.bal=0;S.wins.unshift({id:uid(),date,t:'Paid off '+d.name+' 🎉',done:true});setTimeout(()=>toast('🎉 '+d.name+' is paid off!'),300)}return p}
+const DB_N={};
+APP.onChange=(c,it,f)=>{
+ if(c==='debts'&&f==='name'){const o=DB_N[it.id];if(o&&o!==it.name)S.pays.forEach(p=>{if(p.debt===o)p.debt=it.name});DB_N[it.id]=it.name}
+ if(c==='pays'&&it.applied&&(f==='amount'||f==='debt')){const od=S.debts.find(d=>d.id===it.did);if(od)od.bal=dbR2(xNum(od.bal)+xNum(it.prin));const nd=S.debts.find(d=>d.name===it.debt);
+  if(nd){it.did=nd.id;it.int=Math.min(xNum(it.amount),xNum(it.int));const pr=Math.max(0,Math.min(xNum(nd.bal),dbR2(xNum(it.amount)-it.int)));it.prin=pr;nd.bal=dbR2(xNum(nd.bal)-pr)}else it.applied=false}};
+// ---- data: arrays kept (income, nsd) + richer demo ----
+addTab('payments',['income','Extra income','budget'],'income',()=>[[isoAgo(48),'Sold old bike',120,true],[isoAgo(20),'Overtime',185,true],[isoAgo(3),'Garage sale',60,false],[dISO(75),'Tax refund (expected)',900,false]].map(([d,s,a,p])=>({date:d,src:s,amt:a,paid:p})),{date:xToday(),src:'',amt:0,paid:false});
+addTab('income',['nospend','No-spend days','flame'],'nsd',()=>[{name:'No-spend day',log:logDemo(31,.45),col:'#3F7D5A'}],{name:'No-spend day',log:{}},true);
+APP.defaults.debts={name:'New debt',type:'Credit card',bal:1000,start:1000,rate:20,min:35,due:15,prio:9};
+function dbDemo(s){const due={'Visa card':12,'Store card':5,'Car loan':20,'Student loan':28,'Medical bill':9},pr={'Visa card':1,'Store card':2,'Medical bill':3,'Car loan':4,'Student loan':5};
+ s.debts.forEach(d=>{d.due=due[d.name]||15;d.prio=pr[d.name]||9});const P=[];
+ for(let k=6;k>=0;k--)s.debts.forEach(d=>{const t=new Date();t.setDate(1);t.setMonth(t.getMonth()-k);t.setDate(Math.min(d.due,28));const ex=d.name==='Medical bill'?100:d.name==='Store card'?(k<=3?0:150):0,amt=xNum(d.min)+ex;
+  if(d.name==='Store card'&&k<=3)return;if(!k&&d.due>=new Date().getDate())return;if(!k){const i0=dbR2(xNum(d.bal)*xNum(d.rate)/1200),p0=dbR2(amt-i0);d.bal=dbR2(xNum(d.bal)-p0);P.push({id:uid(),date:xIso(t),debt:d.name,amount:amt,note:'',did:d.id,int:i0,prin:p0,applied:true});return}const bb=xNum(d.bal)+k*xNum(d.min)*.6,int=dbR2(bb*xNum(d.rate)/1200);P.push({id:uid(),date:xIso(t),debt:d.name,amount:amt,note:ex?'Snowball extra':'',int,prin:dbR2(amt-int)})});
+ s.debts.forEach(d=>{if(d.name==='Store card'){d.bal=0;d.start=1500}});s.pays=P.reverse();
+ s.wins=[[-120,'Paid off Target card 🎉'],[-75,'Paid off Store card 🎉'],[-60,'Under $35k total'],[-20,'3 months with no new debt'],[-5,'Emergency fund hit $1,000']].map(([d,t])=>({id:uid(),date:dISO(d),t,done:true}));return s}
+try{if(!localStorage.getItem(KEY))dbDemo(S)}catch(e){}
+const _dbd=APP.demo;APP.demo=()=>dbDemo(_dbd());
+if(!['snowball','avalanche','custom'].includes(S.method))S.method='snowball';
+// ---- small UI helpers ----
+const dbBar=(v,cls)=>`<div class="bar ${cls||''}"><i style="width:${pct(v)}%"></i></div>`;
+const dbBig=(v,s)=>`<div style="font:600 30px var(--serif);line-height:1.1">${v}</div>${s?`<small style="color:var(--mute)">${s}</small>`:''}`;
+const dbNone=(t,s,k,sub,b)=>`<div class="card" style="text-align:center;padding:30px"><div style="font:600 22px var(--serif)">${t}</div><p style="color:var(--mute);margin:6px 0 14px">${s}</p>${k?`<button class="btn" data-act="xgo" data-k="${k}" data-s="${sub}">${b}</button>`:''}</div>`;
+function dbStatus(x){if(x.paid>=x.plan-.5)return '<span class="xpill">✓ Paid</span>';if(x.paid>0)return '<span class="xpill">Partly paid</span>';if(!x.due)return x.paid?'<span class="xpill">Partly paid</span>':'';const n=xDaysTo(x.due);return n<0?`<span class="xpill" style="background:#F6E1DC;color:var(--red)">Overdue</span>`:n<=5?`<span class="xpill" style="background:#F3EAD8;color:#8E6E36">${n?'Due in '+n+'d':'Due today'}</span>`:`<span style="color:var(--mute);font-size:12px">${fmtS(x.due)}</span>`}
+function dbPlanTable(L,full){return `<div class="tblw"><table class="tbl"><tr><th>Debt</th><th class="num">Due</th><th class="num">Plan</th><th class="num">Logged</th><th>Status</th>${full?'<th></th>':''}</tr>${L.map(x=>`<tr><td><b>${esc(x.d.name)}</b>${x.plan>xNum(x.d.min)+.5?' <span class="xpill">+ extra</span>':''}</td><td class="num">${x.d.due?dbOrd(x.d.due):'—'}</td><td class="num">${money(x.plan,1)}</td><td class="num">${money(x.paid,1)}</td><td>${dbStatus(x)}</td>${full?`<td>${x.left>.5?`<button class="btn sm" data-act="dbpay1" data-id="${x.d.id}">Log ${money(x.left)}</button>`:''}</td>`:''}</tr>`).join('')}</table></div>`}
+// ---- stacked balance chart (projection) ----
+function dbStack(r){const R=[{bal:r.L.map(d=>d.b0),tot:sum(r.L,d=>d.b0)}].concat(r.rows),n=R.length;if(n<2||!r.L.length)return '<div class="empty">Add a debt to see your payoff chart</div>';
+ const st=Math.max(1,Math.ceil(n/60)),pts=R.filter((_,i)=>i%st===0||i===n-1),W=320,H=150,p=16,mx=Math.max(1,...pts.map(x=>x.tot)),P=XPAL(),X0=i=>p+i*(W-2*p)/Math.max(1,pts.length-1),Y=v=>H-p-v/mx*(H-2*p);
+ let acc=pts.map(()=>0),s='';r.L.forEach((d,j)=>{const lo=acc.slice(),hi=pts.map((x,i)=>acc[i]+(x.bal[j]||0));acc=hi;s+=`<polygon points="${hi.map((v,i)=>X0(i).toFixed(1)+','+Y(v).toFixed(1)).join(' ')} ${lo.map((v,i)=>X0(i).toFixed(1)+','+Y(v).toFixed(1)).reverse().join(' ')}" fill="${P[j%P.length]}" opacity=".85"/>`});
+ const lab=[0,Math.floor((pts.length-1)/2),pts.length-1].map(i=>`<text x="${X0(i)}" y="${H+8}" text-anchor="${i?i===pts.length-1?'end':'middle':'start'}" font-size="9" fill="#8C8378">${i?dbYMl(dbYM(Math.min(n-1,i*st)-1)):'Now'}</text>`).join('');
+ return `<svg viewBox="0 0 ${W} ${H+14}" style="width:100%;height:auto;max-height:260px;display:block">${s}${lab}<text x="${p}" y="11" font-size="9" fill="#8C8378">${money(mx)}</text></svg><div class="legend" style="margin-top:8px">${r.L.map((d,j)=>`<span><i style="background:${P[j%P.length]}"></i>${esc(d.n)}</span>`).join('')}</div>`}
+function dbGantt(r){const T=Math.max(1,r.months),P=XPAL();return r.L.length?`<div style="display:grid;gap:10px">${r.L.map((d,j)=>[d,j]).sort((a,b)=>((r.order.find(x=>x.id===a[0].id)||{m:1e4}).m)-((r.order.find(x=>x.id===b[0].id)||{m:1e4}).m)).map(([d,j])=>{const o=r.order.find(x=>x.id===d.id),m=o?o.m:T;return `<div><div style="display:flex;justify-content:space-between;font-size:13px;margin-bottom:4px"><b>${esc(d.n)}</b><span style="color:var(--mute)">${o?'paid off '+dbYMl(o.ym,1)+' · month '+o.m:'not paid off'}</span></div><div style="height:12px;background:var(--soft);border-radius:8px;overflow:hidden"><i style="display:block;height:100%;width:${Math.max(2,m/T*100)}%;background:${P[j%P.length]};border-radius:8px"></i></div></div>`}).join('')}<div style="display:flex;justify-content:space-between;font-size:11px;color:var(--mute)"><span>Now</span><span>Debt free · ${dbYMl(r.end,1)}</span></div></div>`:'<div class="empty">No balance left</div>'}
+// ---- dashboard: what do I pay this month? ----
+APP.side=()=>{const r=dbCur();return `<svg viewBox="0 0 120 120"><circle cx="60" cy="60" r="40" fill="#DDEDE3"/><text x="60" y="78" font-size="48" text-anchor="middle">💸</text></svg><div class="n">${r.months}</div><small>months to debt free</small>`};
+APP.P.dashboard=()=>{const r=dbCur(),mn=dbSim('minimums',0),t=dbTot(),st=dbStartAll(),paid=Math.max(0,st-t),L=dbMonthPlan(),fx=dbFocus(),now=new Date().toLocaleDateString('en-US',{weekday:'long',month:'long',day:'numeric'});
+ const top=head('Today',`${now} · ${DB_ML[dbMeth()]} plan`,`<button class="btn ghost sm" data-act="xgo" data-k="plan" data-s="whatif">${ic('target',14)} What if…</button>`);
+ if(!S.debts.length)return top+dbNone('Start with your debts','Add each balance, APR and minimum. The app builds your payoff plan.','debts','list','+ Add my debts');
+ if(t<=0)return top+`<div class="card" style="text-align:center;padding:36px"><div style="font-size:44px">🎉</div><div style="font:600 30px var(--serif)">You are debt free</div><p style="color:var(--mute)">${money(paid)} paid off. Keep the payment going into savings.</p></div>`;
+ const left=L.filter(x=>x.left>.5),saved=Math.max(0,mn.interest-r.interest),imo=sum(S.debts,d=>xNum(d.bal)*xNum(d.rate)/1200),nx=r.order[0],fo=fx?r.order.find(o=>o.id===fx.id):null,after=fx?S.debts.filter(d=>xNum(d.bal)>0&&d.id!==fx.id).sort(dbCmp(dbMeth()))[0]:null;
+ return `${top}${heroBox('Debt free date',dbYMl(r.end,1),`${dbLen(r.months)} · ${money(S.extra)} extra a month · ${DB_ML[dbMeth()]}`,[[money(t),'left to pay'],[pct(st?paid/st:0)+'%','paid off'],[money(saved),'interest saved vs minimums']])}
+ <div class="grid g21" style="margin-top:16px"><div class="card"><h3>${new Date().toLocaleDateString('en-US',{month:'long'})} payments<span class="x">${money(sum(L,x=>x.plan))} planned</span></h3>${dbPlanTable(L)}
+  <div class="xbtns" style="justify-content:flex-start;margin-top:12px">${left.length?`<button class="btn" data-act="dblogall">✓ Log ${left.length} remaining (${money(sum(left,x=>x.left))})</button>`:`<span class="xpill">All ${new Date().toLocaleDateString('en-US',{month:'long'})} payments logged ✓</span>`}<button class="btn ghost" data-act="xgo" data-k="payments" data-s="log">+ Other payment</button></div></div>
+ <div class="card" style="background:var(--acc-l);border:0">${fx?`<small style="color:var(--mute);font-weight:700;letter-spacing:.08em">FOCUS DEBT · GETS EVERY EXTRA DOLLAR</small><div style="font:600 26px var(--serif);margin:6px 0 2px">${esc(fx.name)}</div><small style="color:var(--mute)">${money(fx.bal,1)} left · ${xNum(fx.rate)}% APR</small>${dbBar(1-xNum(fx.bal)/(Math.max(xNum(fx.start),xNum(fx.bal))||1))}
+  <div class="list" style="margin-top:10px"><div class="it"><div style="flex:1">Pay this month</div><b>${money((r.rows[0]||{pay:{}}).pay[fx.id]||0)}</b></div><div class="it"><div style="flex:1">Paid off in</div><b>${fo?dbYMl(fo.ym,1):'—'}</b></div>${after?`<div class="it"><div style="flex:1">Then it rolls to</div><b>${esc(after.name)}</b></div>`:''}</div>`:''}</div></div>
+ <div class="grid g4" style="margin-top:16px">${kpi('budget',money(t),'total debt left')}${kpi('check',money(paid),'paid off so far',st?paid/st:0,'gd')}${kpi('flame',money(imo),'interest this month · '+money(imo/30.4,1)+' a day')}${kpi('chart',money(r.interest),'interest still to pay')}</div>
+ <div class="grid g3" style="margin-top:16px"><div class="card"><h3>Payoff order<span class="x">${DB_ML[dbMeth()]}</span></h3><div class="list">${r.order.slice(0,6).map((o,i)=>`<div class="it"><span class="chipc">#${i+1}</span><div style="flex:1"><b>${esc(o.n)}</b><small>${dbYMl(o.ym,1)} · month ${o.m}</small></div></div>`).join('')}</div></div>
+ ${xCard('Projected balance',xLine(r.rows.filter((x,i)=>i%Math.max(1,Math.ceil(r.rows.length/12))===0||i===r.rows.length-1).map(x=>x.tot),r.rows.filter((x,i)=>i%Math.max(1,Math.ceil(r.rows.length/12))===0||i===r.rows.length-1).map(x=>dbYMl(x.ym)),{fmt:v=>money(v),zero:1}),'to $0')}
+ <div class="card"><h3>Coming up</h3><div class="list">${S.debts.filter(d=>xNum(d.due)&&xNum(d.bal)>0).map(d=>{const pd=dbPaidM(d)>0;return {d,dt:pd?dbDue(d,1):dbDue(d)}}).sort((a,b)=>a.dt.localeCompare(b.dt)).slice(0,5).map(x=>`<div class="it"><div style="flex:1">${esc(x.d.name)}<small>${fmtS(x.dt)} · ${xDaysTo(x.dt)<0?'overdue':'in '+xDaysTo(x.dt)+' days'}</small></div><b>${money(x.d.min)}</b></div>`).join('')||'<div class="it">Add due days to your debts to see them here</div>'}</div></div></div>`};
+X.alert(()=>{const out=[];dbMonthPlan().forEach(x=>{if(x.left>.5&&x.due){const n=xDaysTo(x.due);if(n<0)out.push(`<div style="flex:1"><b>${esc(x.d.name)}</b> was due ${fmtS(x.due)} · ${money(x.left)} not logged yet</div><button class="btn sm" data-act="dbpay1" data-id="${x.d.id}">Log it</button>`);else if(n<=5)out.push(`<div style="flex:1"><b>${esc(x.d.name)}</b> due ${n?'in '+n+' day'+(n>1?'s':''):'today'} · ${money(x.left)}</div><button class="btn sm" data-act="dbpay1" data-id="${x.d.id}">Log it</button>`)}});
+ const u=S.income.filter(x=>!x.paid&&xNum(x.amt)>0&&(x.date||'')<=xToday());if(u.length)out.push(`<div style="flex:1">${money(sum(u,x=>x.amt))} of extra income not sent to debt yet</div><button class="btn ghost sm" data-act="xgo" data-k="boost" data-s="income">Send it</button>`);
+ S.debts.filter(d=>xNum(d.bal)>0&&xNum(d.rate)>0&&xNum(d.min)<=xNum(d.bal)*xNum(d.rate)/1200).forEach(d=>out.push(`<div style="flex:1"><b>${esc(d.name)}</b>: the minimum doesn’t cover the interest. Raise the payment.</div>`));return out});
+// ---- payoff plan ----
+const dbStrategy=()=>{const R={snowball:dbSim('snowball',S.extra),avalanche:dbSim('avalanche',S.extra),custom:dbSim('custom',S.extra)},mn=dbSim('minimums',0),cur=dbMeth(),best=Object.entries(R).sort((a,b)=>a[1].interest-b[1].interest)[0][0];
+ return `${head('Strategy',`Same ${money(xNum(S.extra))} extra a month, three ways to use it. Pick yours.`)}
+ ${S.debts.some(d=>xNum(d.bal)>0)?'':dbNone('No balance to plan','Add your debts first.','debts','list','Add debts')}
+ <div class="grid g3">${Object.entries(R).map(([k,r])=>`<div class="card" style="${cur===k?'outline:2px solid var(--acc)':''}"><div style="display:flex;justify-content:space-between;align-items:center"><h3 style="margin:0">${DB_ML[k]}</h3>${best===k?'<span class="xpill">Least interest</span>':''}</div><p style="color:var(--mute);font-size:13px;margin:6px 0 12px">${DB_MD[k]}</p>
+  ${dbBig(dbYMl(r.end,1),dbLen(r.months)+' to debt free')}<div class="list" style="margin-top:10px"><div class="it"><div style="flex:1">Total interest</div><b>${money(r.interest)}</b></div><div class="it"><div style="flex:1">Saved vs minimums</div><b>${money(Math.max(0,mn.interest-r.interest))}</b></div><div class="it"><div style="flex:1">First debt gone</div><b>${r.order[0]?esc(r.order[0].n)+' · '+dbYMl(r.order[0].ym):'—'}</b></div></div>
+  <button class="btn ${cur===k?'ghost':''}" style="margin-top:12px;width:100%" data-act="method" data-m="${k}">${cur===k?'✓ Your plan':'Use '+DB_ML[k].toLowerCase()}</button></div>`).join('')}</div>
+ <div class="grid g21" style="margin-top:16px"><div class="card"><h3>Side by side</h3><div class="tblw"><table class="tbl"><tr><th>Plan</th><th>Debt free</th><th class="num">Months</th><th class="num">Interest</th><th class="num">Total paid</th></tr>${Object.entries(R).concat([['minimums',mn]]).map(([k,r])=>`<tr><td><b>${DB_ML[k]}</b>${k===cur?' <span class="xpill">current</span>':''}</td><td>${r.stuck?'Never at this rate':dbYMl(r.end,1)}</td><td class="num">${r.stuck?'600+':r.months}</td><td class="num">${money(r.interest)}</td><td class="num">${money(r.paid)}</td></tr>`).join('')}</table></div>
+  <p style="color:var(--mute);font-size:12.5px;margin:10px 0 0">Minimums only = no extra, and the minimum of a paid-off debt is not rolled over. Planned extra income (unsent snowflakes) is included in the three plans.</p></div>
+ <div class="card"><h3>Custom order<span class="x">1 = paid first</span></h3><div class="list">${S.debts.filter(d=>xNum(d.bal)>0).sort(dbCmp('custom')).map(d=>`<div class="it"><input class="in num" type="number" data-c="debts" data-id="${d.id}" data-f="prio" value="${esc(d.prio)}" style="width:56px"><div style="flex:1">${esc(d.name)}<small>${money(d.bal)} · ${xNum(d.rate)}%</small></div><button class="btn ghost sm" data-act="dbup" data-id="${d.id}">↑</button></div>`).join('')}</div><button class="btn ghost sm" style="margin-top:10px" data-act="dbcopy">Start from snowball order</button></div></div>`};
+function dbWv(v){const e=document.getElementById('dbwv');if(e)e.textContent=money(+v)}
+const dbWhatIf=()=>{const v=F.dbw!=null?F.dbw:xNum(S.extra),lp=xNum(F.dbl),m=dbMeth(),cur=dbSim(m,S.extra),w=dbSim(m,v,{lump:lp}),mn=dbSim('minimums',0),mx=Math.max(2000,Math.ceil(xNum(S.extra)*3/100)*100),dm=cur.months-w.months,di=cur.interest-w.interest;
+ return `${head('What if I pay more?','Move the slider. Everything recalculates month by month.')}
+ <div class="grid g21"><div class="card"><label class="f">EXTRA EACH MONTH (on top of minimums)</label><div style="font:600 40px var(--serif);color:var(--acc)" id="dbwv">${money(v)}</div>
+  <input type="range" min="0" max="${mx}" step="25" value="${v}" oninput="dbWv(this.value)" onchange="F.dbw=+this.value;rerender()" style="width:100%;accent-color:var(--acc)">
+  <div class="grid g2" style="gap:10px;margin-top:10px"><div><label class="f">EXACT AMOUNT</label><input class="fi" type="number" value="${v}" onchange="F.dbw=+this.value||0;rerender()"></div><div><label class="f">ONE-TIME LUMP SUM NOW</label><input class="fi" type="number" value="${lp||''}" placeholder="e.g. tax refund" onchange="F.dbl=+this.value||0;rerender()"></div></div>
+  <div class="grid g3" style="margin-top:16px;gap:10px">${[['Debt free',dbYMl(w.end,1)],['Months',w.stuck?'600+':w.months],['Interest',money(w.interest)]].map(([l,x])=>`<div style="background:var(--acc-l);border-radius:14px;padding:12px;text-align:center"><small style="color:var(--mute)">${l}</small><div style="font:600 21px var(--serif)">${x}</div></div>`).join('')}</div>
+  <p style="margin:14px 0 0;font-size:14px">${dm>0||di>0.5?`<b>${dm>0?dm+' months sooner':'Same date'}</b> and <b>${money(Math.max(0,di))} less interest</b> than your current plan (${money(S.extra)} extra).`:dm<0?`<b>${-dm} months later</b> and ${money(-di)} more interest than your current plan.`:'This is your current plan.'} vs minimums only: ${money(Math.max(0,mn.interest-w.interest))} saved.</p>
+  ${v!==xNum(S.extra)?`<button class="btn" style="margin-top:12px" data-act="dbsetx" data-v="${v}">Use ${money(v)} as my monthly extra</button>`:''}</div>
+ <div class="card"><h3>Quick scenarios</h3><div class="tblw"><table class="tbl"><tr><th class="num">Extra / mo</th><th>Debt free</th><th class="num">Interest</th><th class="num">Saved</th></tr>${[0,50,100,200,300,500,1000].map(x=>{const s=dbSim(m,x);return `<tr style="${x===xNum(S.extra)?'font-weight:700':''}"><td class="num">${money(x)}</td><td>${s.stuck?'Never':dbYMl(s.end)}</td><td class="num">${money(s.interest)}</td><td class="num">${money(Math.max(0,mn.interest-s.interest))}</td></tr>`}).join('')}</table></div><p style="color:var(--mute);font-size:12.5px;margin:10px 0 0">Saved = interest you avoid compared with paying minimums only.</p></div></div>
+ <div class="card" style="margin-top:16px"><h3>Balance with ${money(v)} extra</h3>${dbStack(w)}</div>`};
+const dbSchedule=()=>{const r=dbCur(),all=F.dbsall==='1',R=all?r.rows:r.rows.slice(0,24);
+ return `${head('Month-by-month schedule',`${r.months} payments · ${money(r.paid)} in total · ${money(r.interest)} interest`,`<button class="btn ghost sm" data-act="dbcsv">${ic('dl',14)} CSV</button><button class="btn ghost sm" data-act="print">${ic('print',14)} Print</button>`)}
+ <div class="card">${r.L.length?`<div class="tblw"><table class="tbl" style="font-size:12.5px"><tr><th>Month</th>${r.L.map(d=>`<th class="num">${esc(d.n)}</th>`).join('')}<th class="num">Interest</th><th class="num">Principal</th><th class="num">Total left</th></tr>
+ ${R.map(x=>{const po=r.order.filter(o=>o.m===x.m);return `<tr style="${po.length?'background:var(--acc-l)':''}"><td><b>${dbYMl(x.ym)}</b>${po.map(o=>` <span class="xpill">✓ ${esc(o.n)}</span>`).join('')}</td>${r.L.map((d,j)=>`<td class="num">${x.pay[d.id]?money(x.pay[d.id]):'<span style="color:var(--mute)">—</span>'}<br><small style="color:var(--mute)">${x.bal[j]>0?money(x.bal[j]):'paid'}</small></td>`).join('')}<td class="num">${money(x.int)}</td><td class="num">${money(x.prin)}</td><td class="num"><b>${money(x.tot)}</b></td></tr>`}).join('')}</table></div>
+ ${r.rows.length>24?`<button class="btn ghost sm" style="margin-top:12px" data-flt="dbsall:${all?'0':'1'}">${all?'Show first 24 months':'Show all '+r.rows.length+' months'}</button>`:''}`:'<div class="empty">Add a debt with a balance to see the schedule</div>'}</div>`};
+const dbTimeline=()=>{const r=dbCur(),Y={};r.rows.forEach(x=>{const y=x.ym.slice(0,4);Y[y]=Y[y]||[0,0];Y[y][0]+=x.int;Y[y][1]+=x.prin});const ys=Object.keys(Y).slice(0,12);
+ return `${head('Payoff timeline',`${DB_ML[dbMeth()]} · debt free ${dbYMl(r.end,1)}`)}<div class="grid g2">${xCard('Payoff order',dbGantt(r))}${xCard('Balance by debt',dbStack(r))}
+ ${xCard('Interest vs principal by year',ys.length?`<div class="xhb">${ys.map(y=>{const [i,p]=Y[y],t=i+p||1;return `<span>${y}</span><div class="t" style="display:flex"><i style="width:${i/t*100}%;background:var(--red);border-radius:0"></i><i style="width:${p/t*100}%;border-radius:0"></i></div><b>${money(i)} int.</b>`}).join('')}</div><div class="legend" style="margin-top:10px"><span><i style="background:var(--red)"></i>Interest</span><span><i style="background:var(--acc)"></i>Principal</span></div>`:'<div class="empty">No data yet</div>')}
+ ${xCard('Milestones ahead',`<div class="list">${[.25,.5,.75,1].map(q=>{const st=dbStartAll(),goal=st*(1-q),row=r.rows.find(x=>x.tot<=goal+.01);return `<div class="it"><div style="flex:1">${q===1?'Debt free':pct(q)+'% of all debt paid'}</div><b>${dbTot()<=goal+.01?'✓ Done':row?dbYMl(row.ym,1):'—'}</b></div>`}).join('')}</div>`)}</div>`};
+X.section('plan',[['strategy','Strategy',dbStrategy],['whatif','What if',dbWhatIf],['schedule','Schedule',dbSchedule],['timeline','Timeline',dbTimeline]]);
+// ---- debts ----
+const dbList=()=>{const r=dbCur(),t=dbTot(),w=t?sum(S.debts,d=>xNum(d.bal)*xNum(d.rate))/t:0,DTS=typeof DT!=='undefined'?DT:['Credit card','Other'];
+ return `${head('My debts',`${money(t)} across ${S.debts.filter(d=>xNum(d.bal)>0).length} open debts`,`<button class="btn" data-act="addrow" data-c="debts">${ic('plus',15)} Add debt</button>`)}
+ <div class="grid g4" style="margin-bottom:16px">${kpi('budget',money(t),'total balance')}${kpi('chart',(Math.round(w*10)/10)+'%','average APR (weighted)')}${kpi('check',money(sum(S.debts.filter(d=>xNum(d.bal)>0),d=>d.min)),'minimums a month')}${kpi('flame',money(sum(S.debts,d=>xNum(d.bal)*xNum(d.rate)/1200)),'interest a month')}</div>
+ <div class="card">${xTable('debts',S.debts,[['name','Debt'],['type','Type','sel',DTS],['bal','Balance','money'],['start','Original','money'],['rate','APR %','num'],['min','Minimum','money'],['due','Due day','num'],['_i','Interest/mo','calc',d=>money(xNum(d.bal)*xNum(d.rate)/1200,1)],['_p','Paid off','calc',d=>{if(xNum(d.bal)<=0)return '<span class="xpill">✓ Done</span>';const o=r.order.find(x=>x.id===d.id);return o?dbYMl(o.ym):'—'}]],{empty:'Add your first debt'})}</div>
+ <div class="grid g3" style="margin-top:16px">${S.debts.map(d=>{const s=Math.max(xNum(d.start),xNum(d.bal))||1,q=1-xNum(d.bal)/s;return `<div class="card"><div style="display:flex;justify-content:space-between;align-items:center"><b style="font:600 18px var(--serif)">${esc(d.name)}</b><span class="xpill">${esc(d.type||'')}</span></div><div style="font:600 26px var(--serif);margin:6px 0">${money(d.bal)}</div>${dbBar(q)}<small style="color:var(--mute)">${pct(q)}% paid · ${xNum(d.rate)}% APR · ${money(d.min)} min${d.due?' · due the '+dbOrd(d.due):''}</small><button class="btn ghost sm" style="margin-top:10px" data-act="dbdetail" data-id="${d.id}">Details →</button></div>`}).join('')}</div>`};
+const dbDetail=()=>{const L=S.debts;if(!L.length)return head('Debt details','One debt at a time.')+dbNone('No debts yet','Add a debt to see its own schedule.','debts','list','Add debt');
+ const id=fv('dbx',L[0].id),d=L.find(x=>x.id===id)||L[0],r=dbCur(),j=r.L.findIndex(x=>x.id===d.id),o=r.order.find(x=>x.id===d.id),R=j<0?[]:r.rows.filter(x=>x.pay[d.id]||x.bal[j]>0),P=dbPays(d).sort((a,b)=>(b.date||'').localeCompare(a.date||'')),ti=sum(R,x=>x.intd[d.id]||0),s=Math.max(xNum(d.start),xNum(d.bal))||1;
+ return `${head(esc(d.name),`${esc(d.type||'')} · ${xNum(d.rate)}% APR · ${money(d.min)} minimum${d.due?' · due the '+dbOrd(d.due):''}`)}${tabs('dbx',L.map(x=>[x.id,x.name]))}
+ <div class="grid g4" style="margin:12px 0 16px">${kpi('budget',money(d.bal),'balance',1-xNum(d.bal)/s,'gd')}${kpi('cal',o?dbYMl(o.ym):xNum(d.bal)>0?'—':'Paid off','payoff in your plan')}${kpi('flame',money(ti),'interest still to pay')}${kpi('check',money(sum(P,p=>p.amount)),P.length+' payments logged')}</div>
+ <div class="grid g21"><div class="card"><h3>Schedule for this debt</h3>${R.length?`<div class="tblw"><table class="tbl"><tr><th>Month</th><th class="num">Payment</th><th class="num">Interest</th><th class="num">Principal</th><th class="num">Balance</th></tr>${R.slice(0,36).map(x=>{const p=x.pay[d.id]||0,i=x.intd[d.id]||0;return `<tr><td>${dbYMl(x.ym)}</td><td class="num">${money(p,1)}</td><td class="num">${money(i,1)}</td><td class="num">${money(p-i,1)}</td><td class="num"><b>${money(x.bal[j],1)}</b></td></tr>`}).join('')}</table></div>${R.length>36?`<small style="color:var(--mute)">+ ${R.length-36} more months in Payoff plan → Schedule</small>`:''}`:'<div class="empty">Paid off. Nothing left to schedule 🎉</div>'}</div>
+ <div class="grid" style="align-content:start">${R.length?xCard('Balance ahead',xLine([s>0?(r.L[j]||{}).b0||0:0].concat(R.map(x=>x.bal[j])).filter((_,i,a)=>i%Math.max(1,Math.ceil(a.length/14))===0||i===a.length-1),['Now'].concat(R.map(x=>dbYMl(x.ym))).filter((_,i,a)=>i%Math.max(1,Math.ceil(a.length/14))===0||i===a.length-1),{fmt:v=>money(v),zero:1})):''}
+ <div class="card"><h3>Payments<span class="x">${P.length}</span></h3><div class="list">${P.slice(0,8).map(p=>`<div class="it"><div style="flex:1">${fmtS(p.date)}<small>${p.int!=null&&p.int!==''?money(p.int,1)+' interest · '+money(p.prin,1)+' principal':esc(p.note||'')}</small></div><b>${money(p.amount,1)}</b></div>`).join('')||'<div class="it">No payments yet</div>'}</div><button class="btn sm" style="margin-top:10px" data-act="dbpay1" data-id="${d.id}">+ Log a payment</button></div></div></div>`};
+X.section('debts',[['list','All debts',dbList],['detail','Debt details',dbDetail]]);
+// ---- payments ----
+const dbThisMonth=()=>{const L=dbMonthPlan(),left=L.filter(x=>x.left>.5),m=new Date().toLocaleDateString('en-US',{month:'long'});
+ return `${head(m+' checklist',`${money(sum(L,x=>x.plan))} planned · ${money(sum(L,x=>x.paid))} logged · amounts come from your payoff plan`,left.length?`<button class="btn" data-act="dblogall">✓ Log all remaining</button>`:'')}
+ <div class="grid g21"><div class="card">${L.length?dbPlanTable(L,1):'<div class="empty">No balance to pay 🎉</div>'}</div>
+ <div class="grid" style="align-content:start"><div class="card"><h3>Progress this month</h3>${dbBig(money(sum(L,x=>Math.min(x.paid,x.plan))),'of '+money(sum(L,x=>x.plan))+' planned')}${dbBar(sum(L,x=>Math.min(x.paid,x.plan))/(sum(L,x=>x.plan)||1))}</div>
+ <div class="card" style="background:var(--acc-l);border:0"><h3>How it works</h3><p style="font-size:13px;margin:0;line-height:1.55">Each month every debt gets its minimum and the focus debt gets the extra. <b>Log</b> splits the payment into interest and principal and lowers the balance for you. A debt that reaches $0 adds a milestone on its own.</p></div></div></div>`};
+const dbLogPage=()=>{const P=S.pays.slice().sort((a,b)=>(b.date||'').localeCompare(a.date||'')),f=fv('dbpf','all'),R=f==='all'?P:P.filter(p=>p.debt===f);
+ return `${head('Payment log',`${S.pays.length} payments · ${money(sum(S.pays,p=>p.amount))} paid in total`,`<button class="btn ghost sm" data-act="dbcsvp">${ic('dl',14)} CSV</button>`)}
+ <div class="card" style="margin-bottom:16px"><div class="addrow" style="margin:0"><select class="fi" id="dbpd" style="flex:1">${S.debts.filter(d=>xNum(d.bal)>0).map(d=>`<option value="${d.id}">${esc(d.name)}</option>`).join('')}</select><input class="fi" id="dbpa" type="number" step="any" placeholder="Amount" style="flex:.6" data-enter="dbadd"><input class="fi" id="dbpt" type="date" value="${xToday()}" style="flex:.6"><input class="fi" id="dbpn" placeholder="Note (optional)" style="flex:1"><button class="btn" data-act="dbadd">Log payment</button></div></div>
+ <div class="card">${tabs('dbpf',[['all','All']].concat(S.debts.map(d=>[d.name,d.name])))}<div class="tblw"><table class="tbl"><tr><th>Date</th><th>Debt</th><th class="num">Amount</th><th class="num">Interest</th><th class="num">Principal</th><th>Note</th><th></th></tr>
+ ${R.map(p=>`<tr><td style="width:140px">${inp('pays',p,'date',{type:'date'})}</td><td>${sel('pays',p,'debt',[['','—']].concat(S.debts.map(d=>[d.name,d.name])))}</td><td style="width:100px">${inp('pays',p,'amount',{num:1})}</td><td class="num">${p.int!=null&&p.int!==''?money(p.int,1):'—'}</td><td class="num">${p.prin!=null&&p.prin!==''?money(p.prin,1):'—'}</td><td>${inp('pays',p,'note')}</td><td><button class="del" data-act="dbpdel" data-id="${p.id}" title="Delete">×</button></td></tr>`).join('')}</table>${R.length?'':'<div class="empty">No payments yet</div>'}</div>
+ <p style="color:var(--mute);font-size:12.5px;margin:10px 0 0">Payments logged here lower the balance automatically. Deleting one puts the money back on the balance.</p></div>`};
+const dbCalendar=()=>{const off=+(F.dbcal||0),n=new Date(),m=new Date(n.getFullYear(),n.getMonth()+off,1),y=m.getFullYear(),mo=m.getMonth(),ym=xIso(m).slice(0,7),st=new Date(y,mo,1-((m.getDay()+6)%7)),td=xToday(),r=dbCur(),row=r.rows.find(x=>x.ym===ym),last=new Date(y,mo+1,0).getDate();let h='';
+ for(let i=0;i<42;i++){const d=new Date(st);d.setDate(st.getDate()+i);const k=xIso(d),inm=d.getMonth()===mo,ps=inm?S.pays.filter(p=>p.date===k):[],du=inm&&off>=0&&row?S.debts.filter(x=>xNum(x.due)&&Math.min(xNum(x.due),last)===d.getDate()&&row.pay[x.id]&&(off>0||dbPaidM(x)<row.pay[x.id]-.5)):[];
+  h+=`<div class="c ${inm?'':'o'} ${k===td?'t':''}"><b>${d.getDate()}</b>${ps.map(p=>`<span>✓ ${esc(p.debt)} ${money(p.amount)}</span>`).join('')}${du.map(x=>`<span class="p">${esc(x.name)}${' '+money(off?row.pay[x.id]:row.pay[x.id]-dbPaidM(x))}</span>`).join('')}</div>`}
+ const due=S.debts.filter(d=>xNum(d.due)&&xNum(d.bal)>0).map(d=>({d,dt:dbPaidM(d)>0?dbDue(d,1):dbDue(d)})).filter(x=>xDaysTo(x.dt)<=30).sort((a,b)=>a.dt.localeCompare(b.dt));
+ return `${head('Due dates',`${m.toLocaleDateString('en-US',{month:'long',year:'numeric'})} · filled = paid · dashed = due`,`<button class="btn ghost sm" data-flt="dbcal:${off-1}">‹</button><button class="btn ghost sm" data-flt="dbcal:0">Today</button><button class="btn ghost sm" data-flt="dbcal:${off+1}">›</button>`)}
+ <div class="grid g21"><div class="card"><div class="xcal">${['Mon','Tue','Wed','Thu','Fri','Sat','Sun'].map(x=>`<div class="h">${x}</div>`).join('')}${h}</div></div>
+ <div class="card"><h3>Next 30 days</h3><div class="list">${due.map(x=>{const n=xDaysTo(x.dt);return `<div class="it"><div style="flex:1"><b>${esc(x.d.name)}</b><small>${fmtS(x.dt)} · ${n<0?'overdue':n?'in '+n+' days':'today'}</small></div><b>${money(x.d.min)}</b></div>`}).join('')||'<div class="it">Nothing due in the next 30 days</div>'}</div><p style="color:var(--mute);font-size:12.5px;margin:10px 0 0">Set the due day of each debt in My debts. Alerts show on Today 5 days before.</p></div></div>`};
+X.section('payments',[['month','This month',dbThisMonth],['log','Payment log',dbLogPage],['calendar','Due dates',dbCalendar]]);
+// ---- extra money ----
+const dbIncome=()=>{const t=sum(S.income,x=>x.amt),sent=sum(S.income.filter(x=>x.paid),x=>x.amt),fx=dbFocus(),fut=S.income.filter(x=>!x.paid&&(x.date||'')>xToday()),now=S.income.filter(x=>!x.paid&&(x.date||'')<=xToday()&&xNum(x.amt)>0),base=dbSim(dbMeth(),S.extra,{noSnow:1}),r=dbCur();
+ return `${head('Extra income','Side money, refunds, bonuses. Send it to debt and watch the date move.',`<button class="btn" data-act="addrow" data-c="income">${ic('plus',15)} Add income</button>`)}
+ <div class="grid g21"><div class="card">${xTable('income',S.income.slice().sort((a,b)=>(b.date||'').localeCompare(a.date||'')),[['paid','Sent','chk'],['date','Date','date'],['src','Where from'],['amt','Amount','money'],['_s','','calc',x=>!x.paid&&xNum(x.amt)>0&&fx?`<button class="btn sm" data-act="dbsend" data-id="${x.id}">Send to ${esc(fx.name)}</button>`:x.paid?'<span class="xpill">✓ Sent</span>':'']])}
+  <p style="color:var(--mute);font-size:12.5px;margin:10px 0 0">Unsent amounts are planned “snowflakes”: they are already counted in your payoff plan in their month.</p></div>
+ <div class="grid" style="align-content:start"><div class="card"><h3>Extra money</h3>${dbBig(money(t),money(sent)+' already sent to debt')}${dbBar(t?sent/t:0)}</div>
+ <div class="card"><h3>Effect on your plan</h3><div class="list"><div class="it"><div style="flex:1">Without planned extras</div><b>${dbYMl(base.end,1)}</b></div><div class="it"><div style="flex:1">With them</div><b>${dbYMl(r.end,1)}</b></div><div class="it"><div style="flex:1">Interest saved</div><b>${money(Math.max(0,base.interest-r.interest))}</b></div></div><small style="color:var(--mute);display:block;margin-top:8px">${now.length?money(sum(now,x=>x.amt))+' ready to send now · ':''}${fut.length?fut.length+' planned for later':''}</small></div></div></div>`};
+const dbNsd=()=>{const v=xNum(S.dbNsdV)||20,n=xTicks('nsd'),tm=sum(S.nsd,x=>Object.keys(x.log||{}).filter(k=>k.startsWith(dbYM())).length),m={};S.nsd.forEach(x=>Object.keys(x.log||{}).forEach(k=>m[k]=1));
+ return `${head('No-spend days','Tap a square each day you spend nothing extra.')}${gridTracker({c:'nsd',t:'This month',label:'Challenge'})}
+ <div class="grid g3" style="margin-top:16px">${xCard('This month',dbBig(tm+' days',`≈ ${money(tm*v)} not spent`)+`<button class="btn sm" style="margin-top:12px" data-act="dbnsdsend" data-v="${tm*v}">Add ${money(tm*v)} as extra income</button>`)}${xCard('Best streak',dbBig(xBest('nsd')+' days','in a row · '+n+' days in total'))}<div class="card"><h3>Value of one day</h3>${SETF('dbNsdV','AVERAGE SAVED PER NO-SPEND DAY','number')}<small style="color:var(--mute)">Used to estimate what you kept.</small></div></div>
+ <div class="card" style="margin-top:16px"><h3>Last 18 weeks</h3>${xHeat(m,18)}</div>`};
+X.section('boost',[['income','Extra income',dbIncome],['nospend','No-spend days',dbNsd]]);
+// ---- data ----
+function dbPast(n){const t=dbTot();return [...Array(n)].map((_,i)=>{const o=i-n+1,ym=dbYM(o),end=dbYM(o+1)+'-01';return [dbYMl(ym),t+sum(S.pays.filter(p=>(p.date||'')>=end),p=>xNum(p.prin)||xNum(p.amount))]})}
+const dbData=()=>{const pb=dbPast(12),mo=xByMonth(S.pays,'date',x=>x.amount,12),st=dbStartAll(),t=dbTot();
+ return `${head('Overview','Your real numbers, from the payments you log.')}<div class="grid g4" style="margin-bottom:16px">${kpi('check',money(st-t),'paid off so far',st?(st-t)/st:0,'gd')}${kpi('budget',money(sum(S.pays,p=>p.amount)),'paid in total')}${kpi('star',S.debts.filter(d=>xNum(d.bal)<=0).length+' / '+S.debts.length,'debts paid off')}${kpi('chart',money(sum(mo.slice(-3),x=>x[1])/3),'paid a month (3-mo avg)')}</div>
+ <div class="grid g2">${xCard('Total balance, last 12 months',xLine(pb.map(x=>x[1]),pb.map(x=>x[0]),{fmt:v=>money(v)}))}${xCard('Paid per month',bars(mo.map(x=>x[1]),mo.map(x=>x[0]),150))}${xCard('Paid vs left',xDonut([['Paid off',Math.max(0,st-t),money(Math.max(0,st-t))],['Left',t,money(t)]],pct(st?(st-t)/st:0)+'%','PAID'))}${xCard('Balance by debt',xHBars(S.debts.filter(d=>xNum(d.bal)>0).map(d=>[d.name,xNum(d.bal)]),v=>money(v)))}</div>`};
+const dbDataInt=()=>{const r=dbCur(),mn=dbSim('minimums',0),li=sum(S.pays,p=>xNum(p.int)),lp=sum(S.pays,p=>xNum(p.prin)),byd=r.L.map(d=>[d.n,sum(r.rows,x=>x.intd[d.id]||0)]).sort((a,b)=>b[1]-a[1]),imo=sum(S.debts,d=>xNum(d.bal)*xNum(d.rate)/1200);
+ return `${head('Interest','What debt costs you, and what your plan saves.')}<div class="grid g4" style="margin-bottom:16px">${kpi('flame',money(imo/30.4,1),'interest a day right now')}${kpi('chart',money(r.interest),'interest left in your plan')}${kpi('check',money(Math.max(0,mn.interest-r.interest)),'saved vs minimums')}${kpi('time',mn.stuck?'600+':mn.months,'months with minimums only')}</div>
+ <div class="grid g2">${xCard('Logged payments: interest vs principal',xDonut([['Principal',lp,money(lp)],['Interest',li,money(li)]],pct(lp+li?lp/(lp+li):0)+'%','PRINCIPAL'))}${xCard('Interest still to pay, by debt',xHBars(byd,v=>money(v)))}
+ ${xCard('Interest per month ahead',(()=>{const R=r.rows.slice(0,12);return bars(R.map(x=>x.int),R.map(x=>dbYMl(x.ym).slice(0,3)),150,'#C46A5A')})())}${xCard('Plan vs minimums',xHBars([[DB_ML[dbMeth()],r.interest],['Minimums only',mn.interest]],v=>money(v)),'total interest')}</div>`};
+const dbDataProg=()=>{const m={};S.nsd.forEach(x=>Object.keys(x.log||{}).forEach(k=>m[k]=1));const pm={};S.pays.forEach(p=>{if(p.date)pm[p.date]=(pm[p.date]||0)+1});
+ return `${head('Progress','Every debt, side by side.')}<div class="grid g2">${xCard('Paid off per debt',xHBars(S.debts.map(d=>[d.name,pct(1-xNum(d.bal)/(Math.max(xNum(d.start),xNum(d.bal))||1))]),v=>v+'%'))}${xCard('Extra income by source',xHBars(xGroup(S.income,x=>x.src,x=>x.amt).slice(0,7),v=>money(v)))}${xCard('Payment days',xHeat(pm,18))}${xCard('No-spend days',xHeat(m,18))}</div>`};
+X.section('data',[['overview','Overview',dbData],['interest','Interest',dbDataInt],['progress','Progress',dbDataProg]]);
+// ---- milestones ----
+const dbP=()=>Math.max(0,dbStartAll()-dbTot()),dbQ=()=>pct(dbP()/(dbStartAll()||1));
+X.badges('wins',[['🌱','First payment','Log your first payment',()=>xCnt('pays'),1],['💵','$500 gone','Pay off $500',dbP,500],['💪','$1,000 gone','Pay off $1,000',dbP,1000],['🚀','$5,000 gone','Pay off $5,000',dbP,5000],['🏔','$10,000 gone','Pay off $10,000',dbP,10000],['✂️','Debt killer','Pay one debt down to $0',()=>xCnt('debts',d=>xNum(d.bal)<=0),1],['🥉','25% free','Pay off 25% of your debt',dbQ,25],['🥈','Halfway','Pay off 50% of your debt',dbQ,50],['🥇','Almost there','Pay off 75% of your debt',dbQ,75],['🎉','Debt free','Pay off everything',()=>S.debts.length&&S.debts.every(d=>xNum(d.bal)<=0)?1:0,1],['🔥','No-spend week','7 no-spend days',()=>xTicks('nsd'),7],['💰','Side hustler','Earn $500 extra income',()=>sum(S.income,x=>x.amt),500],['📅','Consistent','Log 12 payments',()=>xCnt('pays'),12]],'Milestones');
+const dbWins=()=>tablePage({c:'wins',t:'My wins',s:'Paid-off debts are added here automatically. Add your own wins too.',cols:[['done','','chk'],['date','Date','date'],['t','Win']],addLabel:'Add win',sort:(a,b)=>(b.date||'').localeCompare(a.date||'')});
+X.section('wins',[['miles','Milestones',()=>APP.P.badges()],['mine','My wins',dbWins],['photos','Proud moments',()=>memPage('Proud moments','screenshots of $0 balances, shredded cards, wins',APP.memArt)]]);
+X.quotes([['Every payment is a step closer to freedom.'],['Slow progress is still progress.'],['You didn’t get here in a day. You won’t get out in a day. Keep going.'],['Do not save what is left after spending; spend what is left after saving.','Warren Buffett'],['Rich is having choices.'],['One less bill. One more breath.']]);
+X.dashEnd=1;
+// ---- actions ----
+Object.assign(APP.act,{
+ dbpay1:t=>{const L=dbMonthPlan(),d=S.debts.find(x=>x.id===t.dataset.id);if(!d)return;const x=L.find(z=>z.d.id===d.id),amt=x&&x.left>.5?x.left:xNum(d.min);dbLog(d,amt,xToday(),'');save();rerender();toast('Logged '+money(amt,1)+' to '+d.name)},
+ dblogall:()=>{const L=dbMonthPlan().filter(x=>x.left>.5);L.forEach(x=>dbLog(x.d,x.left,xToday(),'Monthly plan'));save();rerender();toast(L.length+' payments logged ✓')},
+ dbadd:()=>{const d=S.debts.find(x=>x.id===$('#dbpd').value),a=+$('#dbpa').value;if(!d||!(a>0)){toast('Pick a debt and type an amount');return}const p=dbLog(d,a,$('#dbpt').value||xToday(),$('#dbpn').value.trim());save();rerender();toast(`Logged · ${money(p.int,1)} interest, ${money(p.prin,1)} off the balance`)},
+ dbpdel:t=>{const p=S.pays.find(x=>x.id===t.dataset.id);if(!p)return;if(p.applied){const d=S.debts.find(x=>x.id===p.did);if(d)d.bal=dbR2(xNum(d.bal)+xNum(p.prin))}S.pays=S.pays.filter(x=>x.id!==p.id);save();rerender()},
+ dbsend:t=>{const x=S.income.find(z=>z.id===t.dataset.id),d=dbFocus();if(!x||!d)return;dbLog(d,xNum(x.amt),xToday(),'Extra: '+(x.src||'income'));x.paid=true;save();rerender();toast(money(x.amt)+' sent to '+d.name)},
+ dbnsdsend:t=>{const v=+t.dataset.v;if(!(v>0)){toast('Tick a no-spend day first');return}S.income.unshift({id:uid(),date:xToday(),src:'No-spend savings '+new Date().toLocaleDateString('en-US',{month:'short'}),amt:v,paid:false});save();X.go('boost','income');toast('Added. Send it to your focus debt')},
+ dbsetx:t=>{S.extra=+t.dataset.v;F.dbw=null;save();rerender();toast('Monthly extra set to '+money(S.extra))},
+ dbup:t=>{const L=S.debts.filter(d=>xNum(d.bal)>0).sort(dbCmp('custom')),i=L.findIndex(d=>d.id===t.dataset.id);if(i>0){[L[i-1],L[i]]=[L[i],L[i-1]]}L.forEach((d,k)=>d.prio=k+1);S.method='custom';save();rerender()},
+ dbcopy:()=>{S.debts.filter(d=>xNum(d.bal)>0).sort(dbCmp('snowball')).forEach((d,k)=>d.prio=k+1);S.method='custom';save();rerender();toast('Order copied. Move debts up to change it')},
+ dbdetail:t=>{F.dbx=t.dataset.id;X.go('debts','detail')},
+ dbcsv:()=>{const r=dbCur();csvDownload('payoff-schedule.csv',[['Month'].concat(r.L.map(d=>d.n),['Interest','Principal','Total left'])].concat(r.rows.map(x=>[x.ym].concat(r.L.map(d=>(x.pay[d.id]||0).toFixed(2)),[x.int.toFixed(2),x.prin.toFixed(2),x.tot.toFixed(2)]))))},
+ dbcsvp:()=>csvDownload('debt-payments.csv',[['Date','Debt','Amount','Interest','Principal','Note']].concat(S.pays.map(p=>[p.date,p.debt,p.amount,p.int??'',p.prin??'',p.note])))});
+const _dbr=render;render=function(){S.debts.forEach(d=>DB_N[d.id]=d.name);_dbr()};
+X.layout([['dashboard','Today','home'],['plan','Payoff plan','target'],['debts','My debts','budget'],['payments','Payments','check'],['boost','Extra money','flame'],['data','Data','chart'],['wins','Milestones','star'],['notes','Notes','note'],['settings','Settings','set']]);
+APP.counts=()=>({payments:dbMonthPlan().filter(x=>x.left>.5&&x.due&&xDaysTo(x.due)<=5).length||null});
 
 boot();
 </script>
