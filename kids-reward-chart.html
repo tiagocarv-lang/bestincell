@@ -249,6 +249,8 @@ html[data-theme=dark] .btn.ghost,html[data-theme=dark] .chip{background:#262320;
 html[data-theme=dark] .cm{background:#262320;color:#F1EBE2}
 html[data-theme=dark] .onb{background:#2E2925;border-color:#4A3F37;color:#F1EBE2}
 
+.tblw{overflow-x:auto;max-width:100%}.card{min-width:0}
+
 :root{--bg:#FBF7F0;--acc:#E0862F;--acc-l:#FBE7D3;--acc-d:#B8651A;--blush:#E0862F;--blush-l:#FBE7D3;--gold:#C9A24D}
 .hero{background:radial-gradient(120% 140% at 85% 20%,#FBE7D3 0,transparent 55%),linear-gradient(120deg,#FDFBF8,#FBE7D3)}
 [data-acc=sage]{--acc:#6E8B74;--acc-l:#E1EBE3;--acc-d:#4F6955}[data-acc=rose]{--acc:#B5546B;--acc-l:#F5DEE3;--acc-d:#8E3B50}[data-acc=navy]{--acc:#34507A;--acc-l:#DEE5F0;--acc-d:#243A5A}[data-acc=gold]{--acc:#B8914E;--acc-l:#F3EAD8;--acc-d:#8E6E36}[data-acc=plum]{--acc:#7A4A6B;--acc-l:#EEDFE9;--acc-d:#5A3450}
@@ -621,11 +623,18 @@ function tablePage(o){let rows=S[o.c];if(o.filter){const v=fv(o.c+'f','all');if(
  ${o.side?`<div class="grid g21"><div class="card">${ft}${tbl}</div><div class="grid" style="align-content:start">${o.side}</div></div>`:`<div class="card">${ft}${tbl}</div>`}`}
 function gridTracker(o){const t=new Date(),y=t.getFullYear(),m=t.getMonth(),nd=new Date(y,m+1,0).getDate(),pre=`${y}-${String(m+1).padStart(2,'0')}-`;
  const streak=x=>{let s=0;for(let d=t.getDate();d>0;d--){if(x.log&&x.log[pre+String(d).padStart(2,'0')])s++;else if(d!==t.getDate())break}return s};
- return `<div class="card"><h3>${o.t}<span class="x">${t.toLocaleDateString('en-US',{month:'long',year:'numeric'})}</span></h3><div class="tblw"><table class="tbl" style="font-size:12px"><tr><th>${o.label||'Item'}</th>${[...Array(nd)].map((_,i)=>`<th style="text-align:center;padding:4px 2px">${i+1}</th>`).join('')}<th class="num">🔥</th></tr>
- ${S[o.c].map(x=>`<tr><td style="min-width:150px">${inp(o.c,x,o.f||'name',{st:'font-weight:600'})}</td>${[...Array(nd)].map((_,i)=>{const k=pre+String(i+1).padStart(2,'0'),on=x.log&&x.log[k];return `<td style="padding:2px;text-align:center"><button data-act="tick" data-c="${o.c}" data-id="${x.id}" data-k="${k}" style="width:20px;height:20px;border-radius:6px;border:1px solid var(--line);background:${on?(x.col||'var(--acc)'):'transparent'};cursor:pointer;padding:0"></button></td>`}).join('')}<td class="num"><b>${streak(x)}</b></td></tr>`).join('')}</table></div></div>`}
+ return `<div class="card"><h3>${o.t}<span class="x">${t.toLocaleDateString('en-US',{month:'long',year:'numeric'})}</span></h3><div class="tblw"><table class="tbl" style="font-size:12px"><tr><th>${o.label||'Item'}</th>${[...Array(nd)].map((_,i)=>`<th style="text-align:center;padding:4px 0;font-size:10px;letter-spacing:0">${i+1}</th>`).join('')}<th class="num">🔥</th></tr>
+ ${S[o.c].map(x=>`<tr><td style="min-width:110px;width:150px">${inp(o.c,x,o.f||'name',{st:'font-weight:600'})}</td>${[...Array(nd)].map((_,i)=>{const k=pre+String(i+1).padStart(2,'0'),on=x.log&&x.log[k];return `<td style="padding:1px;text-align:center"><button data-act="tick" data-c="${o.c}" data-id="${x.id}" data-k="${k}" style="width:100%;max-width:22px;min-width:12px;aspect-ratio:1;height:auto;border-radius:5px;border:1px solid var(--line);background:${on?(x.col||'var(--acc)'):'transparent'};cursor:pointer;padding:0;display:block;margin:0 auto"></button></td>`}).join('')}<td class="num"><b>${streak(x)}</b></td></tr>`).join('')}</table></div></div>`}
 function logDemo(days,p){const t=new Date(),y=t.getFullYear(),m=t.getMonth(),o={};for(let d=1;d<=Math.min(days,t.getDate());d++)if(Math.random()<p)o[`${y}-${String(m+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`]=1;return o}
 Object.assign(CORE_ACT,{addrow:t=>{const c=t.dataset.c;S[c].unshift(Object.assign(JSON.parse(JSON.stringify(((APP.defaults||{})[c])||{})),{id:uid()}));save();rerender()},
  tick:t=>{const it=S[t.dataset.c].find(x=>x.id===t.dataset.id);it.log=it.log||{};if(it.log[t.dataset.k])delete it.log[t.dataset.k];else it.log[t.dataset.k]=1;save();rerender()}});
+// ---- extra tabs added after launch (used by <app>/post.js) ----
+// addTab(after, [key,label,icon], arrayKey, seed(), defaults, keepSeedOnFreshStart)
+function addTab(after,tab,arr,seed,def,keep){const i=APP.pages.findIndex(p=>p[0]===after);APP.pages.splice(i<0?APP.pages.length-2:i+1,0,tab);if(!arr)return;
+ if(!APP.arrays.includes(arr))APP.arrays.push(arr);const mk=()=>seed?seed().map(x=>Object.assign({id:uid()},x)):[];
+ if(!Array.isArray(S[arr]))S[arr]=mk();APP.defaults=APP.defaults||{};APP.defaults[arr]=def||{};
+ const _d=APP.demo;APP.demo=()=>{const s=_d();s[arr]=mk();return s};const _b=APP.blank;APP.blank=()=>{const s=_b();s[arr]=keep?mk():[];return s}}
+const isoAgo=n=>{const d=new Date();d.setDate(d.getDate()-n);return d.toISOString().slice(0,10)};
 
 // ===== CALM LAYER: next small step, 5-min timer, stuck helper, brain dump, quick add, onboarding, focus mode, help =====
 if(!Array.isArray(S.dump))S.dump=[];
@@ -680,6 +689,417 @@ Object.assign(CORE_ACT,{
 (function(){const f=document.createElement('button');f.className='fab';f.dataset.act='quickadd';f.title='Quick add';f.textContent='+';document.body.appendChild(f);
  const db=$('#demobar');if(db&&window.ETSY_URL){db.innerHTML=`✨ <b>Free demo</b> · try anything, your data never leaves your browser · <a href="${window.ETSY_URL}" target="_blank" rel="noopener" style="color:inherit;font-weight:700;text-decoration:underline">Get the full app on Etsy →</a>`}})();
 
+// ===== EXTRAS: quotes, badges, insights (charts), timers, spinner wheel, year in pixels, breathing, water =====
+// Used from <app>/post.js:  X.quotes(list,{tab}) · X.badges(after,defs) · X.insights(after,tab,fn) · X.timer(after,tab,o)
+//                           X.wheel(after,tab,o) · X.pixels(after,tab,o) · X.breathe(after) · X.water(after,o)
+I.medal='<circle cx="12" cy="15" r="6"/><path d="M8.5 3.5L12 9l3.5-5.5"/><path d="M12 12.6l.9 1.7 1.9.3-1.4 1.3.3 1.9-1.7-.9-1.7.9.3-1.9-1.4-1.3 1.9-.3z"/>';
+I.spin='<circle cx="12" cy="12" r="9"/><path d="M12 3v9l6.4 6.4M12 12L5.6 18.4M12 12H3"/>';
+I.quote='<path d="M5 7h5v5c0 3-1.6 5-4.5 6M14 7h5v5c0 3-1.6 5-4.5 6"/>';
+I.drop='<path d="M12 3s6 6.5 6 11a6 6 0 0 1-12 0c0-4.5 6-11 6-11z"/>';
+I.wind='<path d="M3 8h11a3 3 0 1 0-3-3M3 12h16a3 3 0 1 1-3 3M3 16h7"/>';
+I.grid='<rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5"/><rect x="14" y="14" width="7" height="7" rx="1.5"/>';
+(function(){const s=document.createElement('style');s.textContent=`
+.xq{background:var(--acc-l);border:0;position:relative}.xq .qk{font:700 11px var(--sans);letter-spacing:.14em;color:var(--acc-d,var(--acc))}
+.xq .qt{font:600 21px/1.35 var(--serif);margin:8px 0 6px}.xq .qa{font-size:12.5px;color:var(--mute)}.xq .qb{display:flex;gap:6px;margin-top:12px;flex-wrap:wrap}
+.xbm{display:flex;flex-direction:column;justify-content:space-between}.xbm .em{font-size:30px;letter-spacing:4px;margin:8px 0}
+.xbg{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:12px}
+.xb{text-align:center;padding:16px 12px}.xb .e{font-size:36px;width:68px;height:68px;border-radius:50%;display:grid;place-items:center;margin:0 auto 8px;background:var(--acc-l)}
+.xb.lock .e{filter:grayscale(1);opacity:.4;background:var(--soft)}.xb b{display:block;font:600 16px/1.2 var(--serif)}.xb small{color:var(--mute);font-size:12px;display:block;margin-top:4px;line-height:1.35}
+.xb .d{font-size:11px;color:var(--acc);font-weight:700;margin-top:8px}.xb .bar{margin-top:10px}
+.xt{display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:14px}.xt .card{text-align:center}
+.xring{width:164px;height:164px;border-radius:50%;margin:6px auto 12px;display:grid;place-items:center}
+.xring>div{width:134px;height:134px;border-radius:50%;background:var(--card);display:grid;place-items:center;font:600 32px var(--serif)}
+.xt .card.done .xring>div{color:var(--acc)}.xbtns{display:flex;gap:6px;justify-content:center;flex-wrap:wrap}
+.xpre{display:flex;gap:8px;flex-wrap:wrap;margin:4px 0 2px}
+.xhb{display:grid;grid-template-columns:minmax(80px,140px) 1fr auto;gap:8px 10px;align-items:center;font-size:13px}.xhb .t{height:10px;border-radius:6px;background:var(--soft);overflow:hidden}.xhb .t i{display:block;height:100%;border-radius:6px;background:var(--acc)}.xhb b{font-variant-numeric:tabular-nums}
+.xheat{display:grid;grid-auto-flow:column;grid-template-rows:repeat(7,1fr);gap:3px;overflow-x:auto}.xheat i{width:14px;height:14px;border-radius:3px;background:var(--soft);display:block}
+.xpx{display:grid;grid-template-columns:22px repeat(12,1fr);gap:3px;font-size:10px;color:var(--mute);text-align:center}.xpx i{display:block;aspect-ratio:1;border-radius:3px;background:var(--soft);max-width:26px;margin:0 auto;width:100%}
+.xpx i.na{background:transparent}
+.xwh{position:relative;width:min(340px,86vw);margin:0 auto}.xwh svg{width:100%;display:block}.xwh .pt{position:absolute;left:50%;top:-6px;transform:translateX(-50%);width:0;height:0;border-left:13px solid transparent;border-right:13px solid transparent;border-top:24px solid var(--ink);z-index:2}
+.xwres{text-align:center;font:600 24px var(--serif);min-height:34px;margin-top:14px}
+.xbr{width:230px;height:230px;border-radius:50%;margin:24px auto;display:grid;place-items:center;background:radial-gradient(circle,var(--acc-l) 0,var(--acc-l) 55%,transparent 56%);position:relative}
+.xbr .c{position:absolute;inset:30px;border-radius:50%;background:var(--acc);opacity:.85;transform:scale(.55);transition:transform 4s ease-in-out}
+.xbr b{position:relative;color:#fff;font:600 22px var(--serif);text-shadow:0 1px 6px rgba(0,0,0,.25)}
+.xgl{display:flex;gap:6px;flex-wrap:wrap;justify-content:center;font-size:34px;margin:12px 0}.xgl span{opacity:.22;filter:grayscale(1)}.xgl span.on{opacity:1;filter:none}
+.xconf{position:fixed;top:-40px;font-size:26px;z-index:99;pointer-events:none;animation:xfall 1.7s ease-in forwards}@keyframes xfall{to{transform:translateY(110vh) rotate(540deg);opacity:.3}}
+@media(max-width:720px){.xq .qt{font-size:18px}.xring{width:140px;height:140px}.xring>div{width:112px;height:112px;font-size:27px}}`;document.head.appendChild(s)})();
+const X={};
+const xIso=d=>`${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,"0")}-${String(d.getDate()).padStart(2,"0")}`;
+const xToday=()=>xIso(new Date());
+const xDays=n=>[...Array(n)].map((_,i)=>{const d=new Date();d.setDate(d.getDate()-(n-1-i));return xIso(d)});
+const xNum=v=>+String(v??'').replace(/[^\d.-]/g,'')||0;
+const xCnt=(k,f)=>(S[k]||[]).filter(f||(()=>true)).length;
+const xTicks=k=>sum(S[k]||[],x=>Object.keys(x.log||{}).length);
+function xBest(k){const d=new Set();(S[k]||[]).forEach(x=>Object.keys(x.log||{}).forEach(z=>d.add(z)));let b=0,c=0,p=null;[...d].sort().forEach(z=>{const t=new Date(z+'T12:00');c=p&&Math.round((t-p)/864e5)===1?c+1:1;p=t;b=Math.max(b,c)});return b}
+function xByDay(arr,df,vf,n){const m={};arr.forEach(x=>{const d=x[df];if(d)m[d]=(m[d]||0)+(vf?+vf(x)||0:1)});return xDays(n).map(d=>m[d]||0)}
+function xByMonth(arr,df,vf,n){const now=new Date(),out=[];for(let i=n-1;i>=0;i--){const d=new Date(now.getFullYear(),now.getMonth()-i,1),k=xIso(d).slice(0,7);out.push([d.toLocaleDateString('en-US',{month:'short'}),sum(arr.filter(x=>String(x[df]||'').slice(0,7)===k),x=>vf?vf(x):1)])}return out}
+function xGroup(arr,kf,vf){const m={};arr.forEach(x=>{const k=kf(x)||'Other';m[k]=(m[k]||0)+(vf?+vf(x)||0:1)});return Object.entries(m).sort((a,b)=>b[1]-a[1])}
+const xDl=d=>new Date(d+'T12:00').toLocaleDateString('en-US',{weekday:'short'}).slice(0,2);
+// ---- charts ----
+function xLine(vals,labels,o={}){const W=320,H=o.h||150,p=18,n=vals.length;if(!n)return '<div class="empty">No data yet</div>';
+ const mn=o.zero?0:Math.min(...vals),mx=Math.max(...vals),r=(mx-mn)||1,X0=i=>p+(n<2?(W-2*p)/2:i*(W-2*p)/(n-1)),Y=v=>H-p-(v-mn)/r*(H-2*p-8);
+ const pts=vals.map((v,i)=>`${X0(i).toFixed(1)},${Y(v).toFixed(1)}`).join(' ');
+ return `<svg viewBox="0 0 ${W} ${H+14}" style="width:100%;height:auto;display:block"><polygon points="${X0(0)},${H-p} ${pts} ${X0(n-1)},${H-p}" style="fill:var(--acc);opacity:.12"/><polyline points="${pts}" fill="none" style="stroke:var(--acc)" stroke-width="2.4" stroke-linejoin="round" stroke-linecap="round"/>
+ ${vals.map((v,i)=>`<circle cx="${X0(i)}" cy="${Y(v)}" r="3.2" style="fill:var(--card);stroke:var(--acc)" stroke-width="2"/>`).join('')}
+ ${labels.map((l,i)=>(n<=12||i%Math.ceil(n/8)===0)?`<text x="${X0(i)}" y="${H+8}" text-anchor="middle" font-size="9" fill="#8C8378">${esc(l)}</text>`:'').join('')}
+ <text x="${p}" y="11" font-size="9" fill="#8C8378">${o.fmt?o.fmt(mx):Math.round(mx*10)/10}</text></svg>`}
+function xHBars(rows,fmt){const m=Math.max(1,...rows.map(r=>r[1]));return rows.length?`<div class="xhb">${rows.map(([k,v])=>`<span>${esc(k)}</span><div class="t"><i style="width:${Math.max(2,v/m*100)}%"></i></div><b>${fmt?fmt(v):Math.round(v*10)/10}</b>`).join('')}</div>`:'<div class="empty">No data yet</div>'}
+const XPAL=()=>X.pal||(PAL.length>=6?PAL:["var(--acc)","#E07A5F","#B8914E","#7A8FB8","#81B29A","#B5546B","#8C8378","#D8A25E"]);
+function xDonut(rows,center,lab){const t=rows.filter(r=>r[1]>0),P=XPAL();return t.length?`<div style="display:flex;gap:18px;align-items:center;flex-wrap:wrap;justify-content:center">${donut(t.map(([k,v],i)=>({v,c:P[i%P.length]})),160,center,lab||'')}<div class="legend">${t.map(([k,v,d],i)=>`<span><i style="background:${P[i%P.length]}"></i>${esc(k)}<b>${d!=null?d:v}</b></span>`).join('')}</div></div>`:'<div class="empty">No data yet</div>'}
+function xHeat(map,weeks){weeks=weeks||18;const t=new Date(),st=new Date(t);st.setDate(t.getDate()-t.getDay()-7*(weeks-1));const mx=Math.max(1,...Object.values(map));let s='';
+ for(let i=0;i<weeks*7;i++){const d=new Date(st);d.setDate(st.getDate()+i);const k=xIso(d),v=map[k]||0;s+=d>t?'<i style="background:transparent"></i>':`<i title="${k}: ${v}" style="${v?`background:var(--acc);opacity:${(.3+.7*v/mx).toFixed(2)}`:''}"></i>`}
+ return `<div class="xheat">${s}</div><div style="display:flex;justify-content:space-between;font-size:11px;color:var(--mute);margin-top:6px"><span>${weeks} weeks ago</span><span>Today</span></div>`}
+const xCard=(t,body,x)=>`<div class="card"><h3>${t}${x?`<span class="x">${x}</span>`:''}</h3>${body}</div>`;
+function xConfetti(e){return;const em=[e||'🎉','✨','⭐','🎊'];for(let i=0;i<22;i++){const s=document.createElement('span');s.className='xconf';s.textContent=em[i%em.length];s.style.left=Math.random()*100+'vw';s.style.animationDelay=Math.random()*.5+'s';document.body.appendChild(s);setTimeout(()=>s.remove(),2600)}}
+// ---- quotes of the day ----
+const XQ={list:null,off:0,tab:null};
+X.quotes=(list,o={})=>{XQ.list=list;if(!Array.isArray(S.favq))S.favq=[];
+ if(o.tab){addTab(o.tab,['inspire',o.label||'Inspiration','quote'],'myq',null,{q:'',by:''});
+  APP.P.inspire=()=>`${head(o.label||'Inspiration',o.sub||'Words to come back to. Tap ♡ to keep your favorites.',`<button class="btn" data-act="addrow" data-c="myq">${ic('plus',15)} Add my own</button>`)}
+  ${S.myq.length?`<h3 style="margin:4px 0 10px">My words</h3><div class="grid g3">${S.myq.map(q=>`<div class="card xq"><div style="display:flex;justify-content:flex-end">${del('myq',q)}</div><textarea data-c="myq" data-id="${q.id}" data-f="q" placeholder="Write a quote or mantra…" style="width:100%;min-height:70px;border:0;background:transparent;font:600 19px/1.35 var(--serif);resize:vertical">${esc(q.q)}</textarea>${inp('myq',q,'by',{ph:'— who said it',st:'font-size:12.5px;background:transparent;border:0'})}</div>`).join('')}</div>`:''}
+  <h3 style="margin:18px 0 10px">${S.favq.length?'Favorites first':'All quotes'}</h3><div class="grid g3">${XQ.list.slice().sort((a,b)=>S.favq.includes(b[0])-S.favq.includes(a[0])).map(([q,a])=>{const f=S.favq.includes(q);return `<div class="card xq" style="${f?'':'background:var(--card);border:1px solid var(--line)'}"><div class="qt" style="font-size:18px">“${esc(q)}”</div><div style="display:flex;justify-content:space-between;align-items:center"><span class="qa">${a?'— '+esc(a):''}</span><button class="btn ghost sm" data-act="xqfav" data-q="${esc(q)}">${f?'♥':'♡'}</button></div></div>`}).join('')}</div>`}};
+function xQuoteCard(){const L=XQ.list;if(!L||!L.length)return '';const d=Math.floor((Date.now()-new Date(new Date().getFullYear(),0,0))/864e5),[q,a]=L[(d+XQ.off)%L.length],f=S.favq.includes(q);
+ return `<div class="card xq"><div class="qk">QUOTE OF THE DAY</div><div class="qt">“${esc(q)}”</div>${a?`<div class="qa">— ${esc(a)}</div>`:''}<div class="qb"><button class="btn ghost sm" data-act="xqnext">↻ Another</button><button class="btn ghost sm" data-act="xqfav" data-q="${esc(q)}">${f?'♥ Saved':'♡ Save'}</button>${APP.pages.some(p=>p[0]==='inspire')?'<button class="btn ghost sm" data-go="inspire">All quotes →</button>':''}</div></div>`}
+// ---- badges ----
+const XB={defs:null};
+X.badges=(after,defs,label)=>{XB.defs=defs;XB.label=label||"Badges";addTab(after,['badges',label||'Badges','medal']);
+ const _c=APP.counts;APP.counts=()=>{const c=_c?_c():{};c.badges=xBadges().filter(b=>b.ok).length;return c};
+ APP.P.badges=()=>{const st=xBadges(),ok=st.filter(b=>b.ok).length,nx=st.filter(b=>!b.ok).sort((a,b)=>b.v/b.g-a.v/a.g)[0];
+  return `${head(label||'Badges',`${ok} of ${st.length} unlocked · they unlock on their own as you use the app`)}
+  <div class="grid g21" style="margin-bottom:16px"><div class="card"><h3>Your collection<span class="x">${pct(ok/st.length)}%</span></h3><div class="bar"><i style="width:${pct(ok/st.length)}%"></i></div><div style="font-size:26px;letter-spacing:4px;margin-top:12px">${st.filter(b=>b.ok).map(b=>b.e).join('')||'<span style="font-size:14px;color:var(--mute);letter-spacing:0">Your first badge is close…</span>'}</div></div>
+  <div class="card xq">${nx?`<div class="qk">NEXT UP</div><div class="qt" style="font-size:19px">${nx.e} ${esc(nx.n)}</div><div class="qa">${esc(nx.d)} · ${Math.round(nx.v)} / ${nx.g}</div><div class="bar" style="margin-top:10px"><i style="width:${pct(nx.v/nx.g)}%"></i></div>`:'<div class="qt">All badges unlocked! 🏆</div>'}</div></div>
+  <div class="xbg">${st.map(b=>`<div class="card xb ${b.ok?'':'lock'}"><div class="e">${b.e}</div><b>${esc(b.n)}</b><small>${esc(b.d)}</small>${b.ok?`<div class="d">✓ ${S._bdg&&S._bdg[b.n]?new Date(S._bdg[b.n]+'T12:00').toLocaleDateString('en-US',{month:'short',day:'numeric'}):'Unlocked'}</div>`:`<div class="bar"><i style="width:${pct(b.v/b.g)}%"></i></div><div class="d" style="color:var(--mute)">${Math.round(b.v)} / ${b.g}</div>`}</div>`).join('')}</div>`}};
+function xBadges(){return (XB.defs||[]).map(([e,n,d,f,g])=>{let v=0;try{v=+f()||0}catch(x){}const ok=v>=g||!!(S._bdg&&S._bdg[n]);return {e,n,d,v:ok?g:Math.min(v,g),g,ok}})}
+function xBadgeCheck(){if(!XB.defs)return;const fresh=!S._bdg||typeof S._bdg!=='object';if(fresh)S._bdg={};const nw=[];
+ (XB.defs||[]).forEach(([e,n,d,f,g])=>{let v=0;try{v=+f()||0}catch(x){}if(v>=g&&!S._bdg[n]){S._bdg[n]=xToday();nw.push(e+' '+n)}});
+ if(fresh||nw.length)save();if(nw.length&&!fresh)setTimeout(()=>{toast('🏅 Badge unlocked: '+nw[0]);xConfetti(nw[0].split(' ')[0])},350)}
+function xBadgeMini(){if(!XB.defs)return '';const st=xBadges(),ok=st.filter(b=>b.ok),nx=st.filter(b=>!b.ok).sort((a,b)=>b.v/b.g-a.v/a.g)[0];
+ return `<div class="card xbm"><div><h3>🏅 ${XB.label||"Badges"}<span class="x">${ok.length} / ${st.length}</span></h3><div class="em">${ok.slice(-6).map(b=>b.e).join('')||'—'}</div>${nx?`<small style="color:var(--mute)">Next: ${nx.e} ${esc(nx.n)} · ${Math.round(nx.v)}/${nx.g}</small><div class="bar" style="margin-top:6px"><i style="width:${pct(nx.v/nx.g)}%"></i></div>`:''}</div><button class="btn ghost sm" data-go="badges" style="align-self:flex-start;margin-top:12px">See all →</button></div>`}
+// ---- insights page ----
+X.insights=(after,tab,fn,sub)=>{addTab(after,tab);APP.P[tab[0]]=()=>`${head(tab[1],sub||'Your numbers, drawn for you. Everything updates on its own.')}${fn()}`};
+// ---- timers (several can run at once) ----
+const XT={list:[],iv:null,o:{}};
+function xBeep(){try{const a=new(window.AudioContext||window.webkitAudioContext)();[0,.35,.7].forEach(t=>{const o=a.createOscillator(),g=a.createGain();o.frequency.value=880;o.connect(g);g.connect(a.destination);g.gain.setValueAtTime(.001,a.currentTime+t);g.gain.exponentialRampToValueAtTime(.3,a.currentTime+t+.02);g.gain.exponentialRampToValueAtTime(.001,a.currentTime+t+.3);o.start(a.currentTime+t);o.stop(a.currentTime+t+.32)})}catch(e){}try{navigator.vibrate&&navigator.vibrate([200,100,200])}catch(e){}}
+const xFmt=s=>{s=Math.max(0,Math.ceil(s));const h=Math.floor(s/3600),m=Math.floor(s%3600/60),x=s%60;return (h?h+':'+String(m).padStart(2,'0'):m)+':'+String(x).padStart(2,'0')};
+function xRingBg(t){return `conic-gradient(var(--acc) ${((1-t.left/t.total)*360).toFixed(1)}deg,var(--acc-l) 0)`}
+function xTick(){let any=false,fin=false;XT.list.forEach(t=>{if(!t.run)return;t.left=Math.max(0,(t.end-Date.now())/1000);
+  if(t.left<=0){t.run=false;t.done=true;fin=true;xBeep();toast('⏰ '+t.label+' is done!');if(!Array.isArray(S.tlog))S.tlog=[];S.tlog.unshift({date:xToday(),label:t.label,min:Math.round(t.total/60)});S.tlog=S.tlog.slice(0,300);save()}else any=true;
+  const el=document.getElementById('xt-'+t.id);if(el){el.querySelector('.tm').textContent=xFmt(t.left);el.querySelector('.xring').style.background=xRingBg(t)}});
+ if(!any){clearInterval(XT.iv);XT.iv=null}if(fin&&page===XT.o.key)rerender()}
+function xTStart(){if(!XT.iv)XT.iv=setInterval(xTick,250)}
+X.timer=(after,tab,o)=>{XT.o=Object.assign({key:tab[0]},o);addTab(after,tab);if(!Array.isArray(S.tlog))S.tlog=[];
+ APP.P[tab[0]]=()=>{const lg=S.tlog||[],td=sum(lg.filter(x=>x.date===xToday()),x=>x.min),wk=xByDay(lg,'date',x=>x.min,7);
+  return `${head(o.title||tab[1],o.sub||'Tap a preset to start. Several timers can run at once.')}
+  <div class="card" style="margin-bottom:16px"><h3>Start a timer</h3><div class="xpre">${o.presets.map(([l,m])=>`<button class="chip" data-act="xtadd" data-l="${esc(l)}" data-m="${m}">▶ ${esc(l)} · ${m<1?Math.round(m*60)+' s':m+' min'}</button>`).join('')}</div>
+   <div class="addrow" style="margin-top:12px"><input class="fi" id="xtlab" placeholder="${esc(o.ph||'Name (optional)')}" style="flex:2"><input class="fi" id="xtmin" type="number" min="1" step="any" placeholder="Minutes" style="flex:1"><button class="btn" data-act="xtcustom">Start</button></div></div>
+  <div class="xt">${XT.list.map(t=>`<div class="card ${t.done?'done':''}" id="xt-${t.id}"><b style="font:600 18px var(--serif)">${esc(t.label)}</b><div class="xring" style="background:${xRingBg(t)}"><div class="tm">${t.done?'Done ✓':xFmt(t.left)}</div></div>
+   <div class="xbtns">${t.done?`<button class="btn sm" data-act="xtreset" data-id="${t.id}">↺ Again</button>`:`<button class="btn sm" data-act="xtgo" data-id="${t.id}">${t.run?'Pause':'Resume'}</button><button class="btn ghost sm" data-act="xtplus" data-id="${t.id}">+1 min</button>`}<button class="btn ghost sm" data-act="xtdel" data-id="${t.id}">×</button></div></div>`).join('')||'<div class="card empty">No timer running. Pick one above ⏱</div>'}</div>
+  ${o.log===false?'':`<div class="grid g2" style="margin-top:16px">${xCard(o.logTitle||'Minutes this week',bars(wk,xDays(7).map(xDl),130),`today ${td} min`)}${xCard('Recent sessions',`<div class="list">${lg.slice(0,6).map(x=>`<div class="it"><div style="flex:1">${esc(x.label)}</div><small style="color:var(--mute)">${x.min} min · ${new Date(x.date+'T12:00').toLocaleDateString('en-US',{month:'short',day:'numeric'})}</small></div>`).join('')||'<div class="empty" style="padding:12px">Finished timers show up here</div>'}</div>`,`${lg.length} total`)}</div>`}`}};
+// ---- spinner wheel ----
+const XW={rot:0,res:''};
+X.wheel=(after,tab,o)=>{XW.o=o;addTab(after,tab);
+ APP.P[tab[0]]=()=>{const L=xWOpts();return `${head(o.title||tab[1],o.sub||'Can’t decide? Let the wheel pick.')}
+ <div class="grid g21"><div class="card" style="padding:26px 16px">${L.length>1?`<div class="xwh"><div class="pt"></div>${xWheelSvg(L)}</div><div class="xwres" id="xwres">${esc(XW.res)}</div><div style="text-align:center;margin-top:10px"><button class="btn" data-act="xwspin">🎡 ${o.verb||'Spin the wheel'}</button></div>`:`<div class="empty">${o.empty||'Add a few items first'}</div>`}</div>
+ <div class="card"><h3>On the wheel<span class="x">${L.length}</span></h3><div class="list">${L.map(x=>`<div class="it">${esc(x)}</div>`).join('')}</div>${o.note?`<p style="color:var(--mute);font-size:12.5px;margin:12px 0 0">${o.note}</p>`:''}</div></div>`}};
+const xWOpts=()=>{let L=[];try{L=XW.o.opts().filter(Boolean).map(String)}catch(e){}return [...new Set(L)].slice(0,16)};
+const xDark=h=>{const m=/^#([0-9a-f]{6})$/i.exec(h||"");if(!m)return true;const n=parseInt(m[1],16);return (0.299*(n>>16)+0.587*(n>>8&255)+0.114*(n&255))<150};
+function xWheelSvg(L){const n=L.length,sg=360/n,R=150,c=160,P=a=>[c+R*Math.cos((a-90)*Math.PI/180),c+R*Math.sin((a-90)*Math.PI/180)];
+ return `<svg viewBox="0 0 320 320"><g id="xwg" style="transform-origin:160px 160px;transform:rotate(${XW.rot}deg)">${L.map((l,i)=>{const [x1,y1]=P(i*sg),[x2,y2]=P((i+1)*sg),m=i*sg+sg/2;
+  const th=m-90,lf=th>90&&th<270;return `<path d="M${c} ${c} L${x1.toFixed(1)} ${y1.toFixed(1)} A${R} ${R} 0 ${sg>180?1:0} 1 ${x2.toFixed(1)} ${y2.toFixed(1)}z" fill="${PAL[i%PAL.length]}" stroke="#fff" stroke-width="2"/><text transform="rotate(${lf?th-180:th} ${c} ${c})" x="${lf?c-R+12:c+R-12}" y="${c+4}" text-anchor="${lf?"start":"end"}" font-size="${n>10?10:12}" font-weight="700" fill="${xDark(PAL[i%PAL.length])?"#fff":"#3A3029"}">${esc(l.length>18?l.slice(0,17)+'…':l)}</text>`}).join('')}</g><circle cx="${c}" cy="${c}" r="22" style="fill:var(--card)" stroke="#fff" stroke-width="3"/><text x="${c}" y="${c+6}" text-anchor="middle" font-size="18">✨</text></svg>`}
+// ---- year in pixels ----
+X.pixels=(after,tab,o)=>{addTab(after,tab);
+ APP.P[tab[0]]=()=>{const y=new Date().getFullYear(),m=o.get(),C=o.colors;let h='<span></span>'+'JFMAMJJASOND'.split('').map(x=>`<b>${x}</b>`).join('');
+  for(let d=1;d<=31;d++){h+=`<span>${d}</span>`;for(let mo=0;mo<12;mo++){const dt=new Date(y,mo,d);if(dt.getMonth()!==mo){h+='<i class="na"></i>';continue}const k=`${y}-${String(mo+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`,v=m[k];h+=`<i title="${k}${v?': '+o.labels[v-1]:''}" style="${v?'background:'+C[v-1]:''}"></i>`}}
+  const cnt=o.labels.map((l,i)=>[l,Object.values(m).filter(v=>v===i+1).length]);
+  return `${head(tab[1],o.sub||'One little square for every day of the year.')}<div class="grid g21"><div class="card"><h3>${y}<span class="x">${Object.keys(m).filter(k=>k.startsWith(y)).length} days logged</span></h3><div class="xpx">${h}</div></div>
+  <div class="grid" style="align-content:start"><div class="card"><h3>Legend</h3><div class="list">${o.labels.map((l,i)=>`<div class="it"><i style="width:16px;height:16px;border-radius:4px;background:${C[i]};display:inline-block"></i><div style="flex:1">${l}</div><b>${cnt[i][1]}</b></div>`).join('')}</div></div>${o.side?o.side():''}</div></div>`}};
+// ---- breathing ----
+const XBR={on:false,pat:'box',iv:null};
+const XBP={box:['Box breathing',[['Breathe in',4],['Hold',4],['Breathe out',4],['Hold',4]]],calm:['4 · 7 · 8 relax',[['Breathe in',4],['Hold',7],['Breathe out',8]]],easy:['Easy calm',[['Breathe in',4],['Breathe out',6]]]};
+X.breathe=(after)=>{addTab(after,['breathe','Breathe','wind']);
+ APP.P.breathe=()=>`${head('Breathe','A one-minute reset. Follow the circle.')}<div class="grid g21"><div class="card" style="text-align:center"><div class="tabs" style="justify-content:center">${Object.entries(XBP).map(([k,[l]])=>`<button class="${XBR.pat===k?'on':''}" data-act="xbrpat" data-p="${k}">${l}</button>`).join('')}</div>
+  <div class="xbr"><div class="c" id="xbrc"></div><b id="xbrt">${XBR.on?'…':'Ready'}</b></div><button class="btn" data-act="xbrgo">${XBR.on?'Stop':'▶ Start'}</button><p style="color:var(--mute);font-size:13px;margin:12px 0 0" id="xbrn">${XBR.n?XBR.n+' breaths today':''}</p></div>
+  <div class="card"><h3>When to use it</h3><div class="list"><div class="it">😮‍💨 Before a hard conversation</div><div class="it">🛏 When you can’t fall asleep (try 4·7·8)</div><div class="it">💻 Between two tasks</div><div class="it">🌀 When everything feels like too much</div></div></div></div>`};
+function xBrRun(){const [,ph]=XBP[XBR.pat];let i=0;const step=()=>{if(!XBR.on)return;const [l,s]=ph[i%ph.length],c=$('#xbrc'),t=$('#xbrt');if(!c){XBR.on=false;return}
+ c.style.transitionDuration=s+'s';c.style.transform=l==='Breathe in'?'scale(1)':l==='Breathe out'?'scale(.55)':c.style.transform;let k=s;t.textContent=l+' · '+k;
+ clearInterval(XBR.iv);XBR.iv=setInterval(()=>{k--;if(k>0&&$('#xbrt'))$('#xbrt').textContent=l+' · '+k},1000);
+ if(i%ph.length===ph.length-1){XBR.n=(XBR.n||0)+1}i++;XBR.to=setTimeout(step,s*1000)};step()}
+// ---- water ----
+X.water=(after,o={})=>{const g=o.goal||8;XWG=g;addTab(after,['water',o.label||'Water','drop']);if(!S.water||typeof S.water!=='object'||Array.isArray(S.water))S.water={};
+ APP.P.water=()=>{const n=S.water[xToday()]||0,wk=xDays(7).map(d=>S.water[d]||0),hit=Object.values(S.water).filter(v=>v>=g).length;
+  return `${head(o.label||'Water',`Goal: ${g} glasses a day · goal reached ${hit} days`)}<div class="grid g21"><div class="card" style="text-align:center"><div style="font:600 46px var(--serif)">${n} <span style="font-size:20px;color:var(--mute)">/ ${g}</span></div><div class="xgl">${[...Array(Math.max(g,n))].map((_,i)=>`<span class="${i<n?'on':''}">💧</span>`).join('')}</div>
+  <div class="xbtns"><button class="btn" data-act="xwat" data-d="1">+ 1 glass</button><button class="btn ghost" data-act="xwat" data-d="-1">− 1</button></div>${n>=g?'<p style="margin:12px 0 0;font-weight:700;color:var(--acc)">Goal reached today 🎉</p>':''}</div>${xCard('Last 7 days',bars(wk,xDays(7).map(xDl),140))}</div>`}};
+// ---- actions ----
+Object.assign(CORE_ACT,{
+ xqnext:()=>{XQ.off++;rerender()},
+ xqfav:t=>{const q=t.dataset.q;S.favq=S.favq.includes(q)?S.favq.filter(x=>x!==q):[q,...S.favq];save();rerender();toast(S.favq.includes(q)?'Saved ♥':'Removed')},
+ xtadd:t=>{const m=+t.dataset.m;XT.list.unshift({id:uid(),label:t.dataset.l,total:m*60,left:m*60,end:Date.now()+m*6e4,run:true});xTStart();rerender()},
+ xtcustom:()=>{const m=+$('#xtmin').value;if(!(m>0)){toast('Type the minutes first');return}const l=$('#xtlab').value.trim()||(m+' min timer');XT.list.unshift({id:uid(),label:l,total:m*60,left:m*60,end:Date.now()+m*6e4,run:true});xTStart();rerender()},
+ xtgo:t=>{const x=XT.list.find(z=>z.id===t.dataset.id);if(!x)return;if(x.run){x.run=false;x.left=Math.max(0,(x.end-Date.now())/1000)}else{x.run=true;x.end=Date.now()+x.left*1000;xTStart()}rerender()},
+ xtplus:t=>{const x=XT.list.find(z=>z.id===t.dataset.id);if(!x)return;x.total+=60;x.left+=60;x.end+=6e4;rerender()},
+ xtreset:t=>{const x=XT.list.find(z=>z.id===t.dataset.id);if(!x)return;x.done=false;x.run=true;x.left=x.total;x.end=Date.now()+x.total*1000;xTStart();rerender()},
+ xtdel:t=>{XT.list=XT.list.filter(z=>z.id!==t.dataset.id);rerender()},
+ xwspin:()=>{const L=xWOpts(),n=L.length;if(n<2)return;const w=Math.floor(Math.random()*n),sg=360/n,ac=(w+.5)*sg,cur=((XW.rot%360)+360)%360,need=((360-ac-cur)%360+360)%360;XW.rot+=1440+need;
+  const g=document.getElementById('xwg'),r=$('#xwres');if(r)r.textContent='…';if(g){g.style.transition='transform 3.4s cubic-bezier(.17,.67,.15,1)';g.style.transform=`rotate(${XW.rot}deg)`}
+  setTimeout(()=>{XW.res=(XW.o.prefix||'')+L[w];const r2=$('#xwres');if(r2)r2.textContent=XW.res;xConfetti(XW.o.emoji||'🎉')},3500)},
+ xbrpat:t=>{XBR.pat=t.dataset.p;XBR.on=false;clearTimeout(XBR.to);clearInterval(XBR.iv);rerender()},
+ xbrgo:()=>{XBR.on=!XBR.on;clearTimeout(XBR.to);clearInterval(XBR.iv);rerender();if(XBR.on)setTimeout(xBrRun,50)},
+ xwat:t=>{const k=xToday();S.water[k]=Math.max(0,(S.water[k]||0)+(+t.dataset.d));save();rerender();if(+t.dataset.d>0&&S.water[k]===(XWG||8))xConfetti('💧')}});
+let XWG=8;
+// ---- dashboard row (quote + badges) & badge check on every render ----
+
+// ---- sections with sub-tabs (pro layout) ----
+// X.section(key,[[sub,label,fn]...]) · X.layout([[key,label,icon]...]) · X.dash(fn) adds a dashboard card
+X.section=(key,subs)=>{APP.P[key]=()=>{const cur=F["sub_"+key]||subs[0][0],s=subs.find(x=>x[0]===cur)||subs[0];let h="";try{h=s[2]()}catch(e){h=`<div class="card empty">${esc(e.message)}</div>`}
+ const bar=`<div class="tabs xsub">${subs.map(([k,l])=>`<button class="${k===s[0]?"on":""}" data-flt="sub_${key}:${k}">${l}</button>`).join("")}</div>`;
+ const i=h.indexOf(`<div class="top">`);if(i<0)return bar+h;const r=h.indexOf(`<div class="r">`,i),j=h.indexOf("</div></div>",r)+12;return h.slice(0,j)+bar+h.slice(j)}};
+X.go=(key,sub)=>{if(sub)F["sub_"+key]=sub;page=key;history.replaceState(null,"","#"+key);render()};
+X.layout=L=>{APP.pages=L};
+const XDC=[];X.dash=fn=>XDC.push(fn);
+function xTable(c,rows,cols,o={}){const w={chk:"40px",num:"84px",money:"100px",date:"145px",time:"105px",thumb:"56px",stars:"118px"};
+ return `<div class="tblw"><table class="tbl"><tr>${cols.map(k=>`<th class="${["num","money","calc"].includes(k[2])?"num":""}">${k[1]}</th>`).join("")}${o.nodel?"":"<th></th>"}</tr>${rows.map(x=>`<tr>${cols.map(k=>`<td style="${w[k[2]]?"width:"+w[k[2]]:""}${k[2]==="calc"?";text-align:right;white-space:nowrap;font-variant-numeric:tabular-nums":""}">${k[2]==="calc"?k[3](x):cellFor(c,x,k)}</td>`).join("")}${o.nodel?"":`<td>${del(c,x)}</td>`}</tr>`).join("")}</table>${rows.length?"":`<div class="empty">${o.empty||"Nothing yet"}</div>`}</div>`}
+Object.assign(CORE_ACT,{xgo:t=>X.go(t.dataset.k,t.dataset.s)});
+(function(){const s=document.createElement("style");s.textContent=`.xsub{margin:-4px 0 18px;overflow-x:auto;flex-wrap:nowrap;scrollbar-width:none}.xsub::-webkit-scrollbar{display:none}.xsub button{white-space:nowrap}
+.xday{display:flex;flex-direction:column;gap:8px}.xday.today{outline:2px solid var(--acc);outline-offset:-2px}.xday .dn{display:flex;justify-content:space-between;align-items:center}.xday .dn b{font:600 18px var(--serif)}.xday textarea{width:100%;min-height:150px;border:1px solid var(--line);border-radius:12px;padding:8px 10px;font:500 13px/1.5 var(--sans);background:transparent;color:inherit;resize:vertical}
+.xpill{display:inline-block;padding:3px 10px;border-radius:20px;background:var(--acc-l);color:var(--acc-d,var(--acc));font-size:12px;font-weight:700}
+.xmeter{display:grid;grid-template-columns:90px 1fr auto;gap:6px 10px;align-items:center;font-size:13px}.xmeter .t{height:9px;border-radius:6px;background:var(--soft);overflow:hidden}.xmeter .t i{display:block;height:100%;background:var(--acc);border-radius:6px}.xmeter .t i.over{background:var(--red,#C0503F)}
+.xcal{display:grid;grid-template-columns:repeat(7,1fr);gap:6px}.xcal .h{font-size:11px;color:var(--mute);text-align:center;font-weight:700}.xcal .c{min-height:76px;border:1px solid var(--line);border-radius:12px;padding:6px;font-size:11px;display:flex;flex-direction:column;gap:3px}.xcal .c.o{opacity:.35}.xcal .c.t{border-color:var(--acc);box-shadow:inset 0 0 0 1px var(--acc)}.xcal .c b{font-size:12px}.xcal .c span{border-radius:6px;padding:1px 5px;background:var(--acc-l);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.xcal .c span.p{background:transparent;border:1px dashed var(--line);color:var(--mute)}
+.xprog{display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:14px}.xprog .card.on{outline:2px solid var(--acc)}
+@media(max-width:720px){.xcal .c{min-height:54px;font-size:9px}.xcal .c span{padding:0 3px}}`;document.head.appendChild(s)})();
+
+// ---- gentle review ask: paid apps only, after 3 days of use, never with an incentive (Etsy rules) ----
+const XRV={k:KEY+'-rv',v:null};
+try{if(!DEMO){XRV.v=JSON.parse(localStorage.getItem(XRV.k)||'null');if(!XRV.v){XRV.v={first:Date.now(),snooze:0,done:0};localStorage.setItem(XRV.k,JSON.stringify(XRV.v))}}}catch(e){}
+const xrvSave=()=>{try{localStorage.setItem(XRV.k,JSON.stringify(XRV.v))}catch(e){}};
+X.dash(()=>{const v=XRV.v;if(!v||v.done||Date.now()-v.first<3*864e5)return '';
+ return `<div class="card" style="margin-bottom:16px;display:flex;gap:16px;align-items:center;flex-wrap:wrap;border:1px solid var(--line)"><div style="font-size:30px">💛</div><div style="flex:1;min-width:220px"><b style="font:600 18px var(--serif)">Enjoying ${esc(document.title)}?</b><div style="color:var(--mute);font-size:13.5px;margin-top:4px">If it helps you, a short review on Etsy means a lot to a small shop. Something not right? Message me on Etsy first and I’ll fix it.</div></div><div class="xbtns"><a class="btn sm" href="https://www.etsy.com/your/purchases" target="_blank" rel="noopener" data-act="xrvgo">Leave a review</a><button class="btn ghost sm" data-act="xrvlater">Not now</button><button class="btn ghost sm" data-act="xrvdone">Already did</button></div></div>`});
+Object.assign(CORE_ACT,{xrvgo:()=>{XRV.v.done=1;xrvSave();setTimeout(rerender,300)},xrvdone:()=>{XRV.v.done=1;xrvSave();rerender()},
+ xrvlater:()=>{XRV.v.snooze++;if(XRV.v.snooze>=2)XRV.v.done=1;else XRV.v.first=Date.now()+11*864e5;xrvSave();rerender()}});
+// ---- dashboard alerts (due soon, use soon…) ----
+const XA=[];X.alert=fn=>XA.push(fn);
+function xAlerts(){const L=[];XA.forEach(f=>{try{(f()||[]).forEach(x=>L.push(x))}catch(e){}});return L.length?`<div class="card" style="margin-bottom:16px;border-left:5px solid var(--acc)"><h3>🔔 Heads up<span class="x">${L.length}</span></h3><div class="list">${L.slice(0,6).map(x=>`<div class="it">${x}</div>`).join("")}</div></div>`:""}
+const xDaysTo=d=>d?Math.round((new Date(d+"T12:00")-new Date(xToday()+"T12:00"))/864e5):null;
+const _xview=view;
+view=function(){if(!Array.isArray(S.favq))S.favq=[];if(!Array.isArray(S.tlog))S.tlog=[];if(!S.water||typeof S.water!=="object"||Array.isArray(S.water))S.water={};const h=_xview();xBadgeCheck();if(page!=='dashboard'||S.focus)return h;const q=xQuoteCard(),b=xBadgeMini(),al=xAlerts();if(!q&&!b&&!al&&!XDC.length)return h;
+ const dx=XDC.map(f=>{try{return f()}catch(e){return ""}}).join("");const row=al+dx+(q||b?`<div class="grid ${q&&b?'g21':''}" style="margin-bottom:16px">${q}${b}</div>`:''),mk='<div style="height:16px"></div>',i=h.indexOf(mk);if(X.dashEnd)return h.replace(/(<div style="margin-top:16px"><div class="card"><h3>🧠 Brain dump)/,`<div style="margin-top:16px">${row}</div>$1`);return i>=0?h.slice(0,i+mk.length)+row+h.slice(i+mk.length):row+h};
+
+// ===== KIDS REWARD CHART PRO (parent app): today · chores · routines · rewards · money · screen time · kids · data · family =====
+const K_DEMO='The Miller Stars';
+let K_LIVE=false;try{K_LIVE=!!localStorage.getItem(KEY)&&S.name!==K_DEMO}catch(e){}
+const kSeed=f=>()=>K_LIVE?[]:f();
+const kAgo=n=>{const d=new Date();d.setDate(d.getDate()-n);return xIso(d)};
+const kMon=(o=0)=>{const d=new Date();d.setDate(d.getDate()-((d.getDay()+6)%7)+o*7);return xIso(d)};
+const kAddD=(iso,n)=>{const d=new Date(iso+'T12:00');d.setDate(d.getDate()+n);return xIso(d)};
+const kWeekIdx=()=>Math.round(new Date(kMon()+'T12:00').getTime()/(7*864e5));
+const KDN=['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'];
+const kLastPay=()=>{const pd=Math.max(0,KDN.indexOf(S.kPayDay||'Sunday')),d=new Date();d.setDate(d.getDate()-((d.getDay()-pd+7)%7));return xIso(d)};
+const KSLOTS=['Morning','After school','Bedtime'],KJARS=['Save','Spend','Give'],KFREQ=['Daily','Weekdays','Weekends','Weekly'];
+const kKid=n=>S.kids.find(k=>k.name===n)||{};
+const kM=v=>money(v,Math.round(v*100)%100!==0);
+// ---- arrays ----
+addTab('chart',['chores','Chores','check'],'chores',kSeed(()=>[['🛏','Make my bed','Emma',1,'Daily',0,0],['🐈','Feed the cat','Emma',2,'Daily',0,0],['🍽','Empty the dishwasher','Emma',3,'Weekdays',0,1],['👕','Fold & put away laundry','Emma',5,'Weekly',0,1],['🛏','Make my bed','Noah',1,'Daily',0,0],['🧸','Tidy toys before dinner','Noah',2,'Daily',0,0],['🌱','Water the plants','Noah',3,'Weekly',0,1],['🍴','Set the table','Emma',2,'Daily',1,0],['♻️','Take out recycling','Noah',3,'Weekly',1,0]].map(([emoji,name,kid,pts,freq,rot,appr])=>({emoji,name,kid,pts,freq,rot:!!rot,appr:!!appr,last:'',wait:''}))),{emoji:'✅',name:'New chore',kid:'',pts:1,freq:'Daily',rot:false,appr:false,last:'',wait:''});
+addTab('chores',['pending','Approvals','check'],'pending',kSeed(()=>[]),{});
+addTab('pending',['money','Money','budget'],'money',kSeed(()=>[]),{date:'',kid:'',jar:'Spend',amt:0,what:''});
+addTab('money',['sgoals','Savings goals','target'],'sgoals',kSeed(()=>[['Emma','🔔','Bike bell',8],['Emma','🧱','LEGO Friends treehouse',35],['Noah','🦖','Dinosaur dig kit',20]].map(([kid,emoji,name,target])=>({kid,emoji,name,target,done:false}))),{kid:'',emoji:'🎯',name:'New goal',target:20,done:false});
+addTab('sgoals',['screen','Screen time','moon'],'screen',kSeed(()=>[]),{date:'',kid:'',min:15,src:'Daily'});
+addTab('screen',['behav','Behavior notes','note'],'behav',kSeed(()=>[[0,'Noah','Positive','Shared his snack with a friend',1],[1,'Emma','Positive','Helped grandma carry groceries',2],[2,'Noah','Needs work','Hit his sister during a game. We talked it through.',0],[4,'Emma','Positive','Calm and brave at the dentist',2],[6,'Emma','Needs work','Rude words at dinner, apologized after',-1],[8,'Noah','Positive','Got dressed alone, first try',1]].map(([d,kid,kind,note,pts])=>({date:kAgo(d),kid,kind,note,pts}))),{date:'',kid:'',kind:'Positive',note:'',pts:0});
+APP.calmFrom=['routines'];
+APP.side=()=>`<svg viewBox="0 0 120 120"><circle cx="60" cy="60" r="40" fill="#FBE7D3"/><text x="60" y="78" font-size="48" text-anchor="middle">⭐</text></svg><div class="n">${S.kids.reduce((a,k)=>a+bal(k.name),0)}</div><small>points to spend</small>`;
+Object.assign(APP.defaults,{kids:{name:'New kid',age:6,emoji:'🦁',allow:0,sv:50,gv:10,scr:60},rewards:{emoji:'🎁',name:'New reward',kid:'',cost:20,got:false,when:'',rep:false},routines:{task:'New step',kid:'',slot:'Morning',done:false},log:{date:'',kid:'',why:'Bonus',stars:1}});
+// ---- demo ----
+const _kDemo=APP.demo;APP.demo=()=>{const s=_kDemo(),dow=d=>(new Date(kAgo(d)+'T12:00').getDay()+6)%7,wk=d=>Math.round(new Date(kMon()+'T12:00').getTime()/(7*864e5))-Math.ceil(Math.max(0,d-((new Date().getDay()+6)%7))/7);
+ Object.assign(s.kids[0],{allow:8,sv:50,gv:10,scr:60});Object.assign(s.kids[1],{allow:5,sv:40,gv:10,scr:45});
+ s.routines=[['Emma','Morning',['Get dressed','Brush teeth','Breakfast','Pack school bag']],['Emma','After school',['Snack & unpack','Homework','Read 20 minutes']],['Emma','Bedtime',['Shower','Lay out clothes','Brush teeth','Lights out 8:30']],['Noah','Morning',['Potty & wash hands','Get dressed','Brush teeth','Shoes & jacket on']],['Noah','After school',['Wash hands','Snack','Play outside']],['Noah','Bedtime',['Bath','Pajamas','Brush teeth','Story time']]].flatMap(([kid,slot,L])=>L.map(task=>({id:uid(),task,kid,slot,done:slot==='Morning'})));
+ s.log=[];const R=(a,b)=>((a*9301+b*49297)%233280)/233280;
+ for(let d=20;d>=1;d--){s.chores.forEach((c,i)=>{const w=dow(d);if(c.freq==='Weekdays'&&w>4||c.freq==='Weekends'&&w<5)return;if(c.freq==='Weekly'&&w!==5)return;const kid=c.rot?s.kids[(wk(d)+s.chores.filter(x=>x.rot).indexOf(c))%2].name:c.kid;if(R(d,i)<.78)s.log.push({id:uid(),date:kAgo(d),kid,why:c.name,stars:c.pts,cid:c.id})});
+  s.kids.forEach((k,j)=>KSLOTS.forEach((sl,m)=>{if(R(d+j,m+7)<.6)s.log.push({id:uid(),date:kAgo(d),kid:k.name,why:sl+' routine complete',stars:2,src:'routine'})}))}
+ s.chores.forEach(c=>{if(c.freq==='Daily'&&c.pts<=1){c.last=xToday();s.log.push({id:uid(),date:xToday(),kid:c.kid,why:c.name,stars:c.pts,cid:c.id})}});
+ s.kids.forEach(k=>s.log.push({id:uid(),date:xToday(),kid:k.name,why:'Morning routine complete',stars:2,src:'routine'}));
+ s.behav.filter(b=>b.pts).forEach(b=>s.log.push({id:uid(),date:b.date,kid:b.kid,why:(b.pts>0?'Kindness: ':'Behavior: ')+b.note,stars:b.pts,bid:b.id}));
+ s.log.sort((a,b)=>b.date.localeCompare(a.date));
+ const dw=s.chores.find(c=>c.name==='Empty the dishwasher'),wp=s.chores.find(c=>c.name==='Water the plants');
+ if(dw){dw.wait=xToday();s.pending.push({id:uid(),date:xToday(),kid:'Emma',what:dw.name,pts:dw.pts,cid:dw.id})}if(wp){wp.wait=xToday();s.pending.push({id:uid(),date:xToday(),kid:'Noah',what:wp.name,pts:wp.pts,cid:wp.id})}
+ s.rewards=[['🍦','Ice cream trip','Emma',120,false,0],['🎬','Pick the family movie','Emma',60,false,1],['🎨','New art set','Emma',300,false,0],['🛌','Stay up 30 min late','Emma',50,false,1],['🧸','Small toy','Noah',250,false,0],['🤸','Trampoline park','Noah',400,false,0],['🛝','Park with dad','Noah',40,false,1],['🍕','Choose dinner','Noah',50,false,1],['🎳','Bowling with mom','Emma',150,true,0],['🛝','Park with dad','Noah',40,true,0],['🍕','Choose dinner','Noah',50,true,0]].map(([emoji,name,kid,cost,got,rep],i)=>({id:uid(),emoji,name,kid,cost,got,rep:!!rep,when:got?kAgo(3+i):''}));
+ [['Emma',10],['Emma',9],['Noah',4],['Emma',2],['Noah',1]].forEach(([kid,d])=>s.rewards.push({id:uid(),emoji:'📱',name:'Screen time +15 min',kid,cost:5,got:true,when:kAgo(d),scr:15,rep:false}));
+ s.money=[];const lp=(()=>{const pd=0,d=new Date();d.setDate(d.getDate()-((d.getDay()-pd+7)%7));return xIso(d)})();
+ for(let w=4;w>=0;w--){const dt=kAddD(lp,-w*7);s.kids.forEach(k=>{const a=k.allow,sp=100-k.sv-k.gv;[['Save',k.sv],['Spend',sp],['Give',k.gv]].forEach(([j,p])=>s.money.push({id:uid(),date:dt,kid:k.name,jar:j,amt:Math.round(a*p)/100,what:'Allowance'}))})}
+ [[18,'Emma','Spend',-6,'Pokémon cards'],[12,'Noah','Spend',-3,'Bouncy ball'],[9,'Emma','Give',-2,'Animal shelter jar'],[15,'Emma','Save',5,'Birthday money from Aunt Kate'],[6,'Noah','Spend',-2.5,'Stickers']].forEach(([d,kid,jar,amt,what])=>s.money.push({id:uid(),date:kAgo(d),kid,jar,amt,what}));
+ s.screen=[];for(let d=6;d>=0;d--)s.kids.forEach((k,j)=>{const m=d?[45,60,30,60,40,50,35][(d+j)%7]-j*10:30-j*10;if(m>0)s.screen.push({id:uid(),date:kAgo(d),kid:k.name,min:m,src:'Daily'});if(d&&(d+j)%3===0)s.screen.push({id:uid(),date:kAgo(d),kid:k.name,min:15,src:'Bonus'})});
+ s.kRtHist={};for(let d=14;d>=1;d--){const o={};s.kids.forEach((k,j)=>{const t=s.routines.filter(r=>r.kid===k.name).length;o[k.name]=[Math.round(t*(.55+R(d,j+3)*.45)),t]});s.kRtHist[kAgo(d)]=o}
+ s.kRtDay=xToday();s.kPaid=lp;s.kPayDay='Sunday';s.kRtBon={};s.kids.forEach(k=>s.kRtBon[xToday()+'|'+k.name+'|Morning']=1);return s};
+try{if(!localStorage.getItem(KEY))S=APP.demo()}catch(e){}
+// ---- automation on open: daily routine reset, weekly allowance ----
+(function(){const t=xToday();if(!S.kRtHist||typeof S.kRtHist!=='object')S.kRtHist={};if(!S.kRtBon||typeof S.kRtBon!=='object')S.kRtBon={};
+ if(S.kRtDay&&S.kRtDay!==t){const o={};S.kids.forEach(k=>{const L=S.routines.filter(r=>r.kid===k.name);o[k.name]=[L.filter(r=>r.done).length,L.length]});S.kRtHist[S.kRtDay]=o;S.routines.forEach(r=>r.done=false);
+  Object.keys(S.kRtHist).filter(k=>k<kAgo(90)).forEach(k=>delete S.kRtHist[k]);Object.keys(S.kRtBon).filter(k=>k.slice(0,10)<t).forEach(k=>delete S.kRtBon[k])}
+ S.kRtDay=t;const lp=kLastPay();if(!S.kPaid)S.kPaid=lp;else if(S.kAuto!=='Off'&&S.kPaid<lp){const n=kPay(lp);S.kPaid=lp;if(n)setTimeout(()=>toast('Allowance paid into the jars ✓'),700)}save()})();
+function kPay(date){let n=0;S.kids.forEach(k=>{const a=xNum(k.allow);if(!a)return;const sv=xNum(k.sv??50),gv=xNum(k.gv??10),sp=Math.max(0,100-sv-gv);[['Save',sv],['Spend',sp],['Give',gv]].forEach(([j,p])=>{const v=Math.round(a*p)/100;if(v)S.money.push({id:uid(),date,kid:k.name,jar:j,amt:v,what:'Allowance'})});n++});return n}
+// ---- computed ----
+const kWho=c=>{if(!c.rot||S.kids.length<2)return c.kid;const R=S.chores.filter(x=>x.rot),i=R.indexOf(c);return S.kids[((kWeekIdx()+i)%S.kids.length+S.kids.length)%S.kids.length].name};
+const kDueToday=c=>{const d=(new Date().getDay()+6)%7;return c.freq==='Weekdays'?d<5:c.freq==='Weekends'?d>=5:true};
+const kDone=c=>c.freq==='Weekly'?(c.last||'')>=kMon():c.last===xToday();
+const kWait=c=>!kDone(c)&&(c.freq==='Weekly'?(c.wait||'')>=kMon():c.wait===xToday());
+const kChoresOf=k=>S.chores.filter(c=>kWho(c)===k&&kDueToday(c));
+const kRt=(k,sl)=>{const L=S.routines.filter(r=>r.kid===k&&r.slot===sl);return [L.filter(r=>r.done).length,L.length]};
+const kPts=(k,a,b)=>sum(S.log.filter(l=>l.kid===k&&l.date>=a&&l.date<b),l=>l.stars)+sum(S.chart.filter(c=>c.kid===k),c=>Object.keys(c.log||{}).filter(d=>d>=a&&d<b).length);
+const kJar=(k,j)=>Math.round(sum(S.money.filter(m=>m.kid===k&&m.jar===j),m=>m.amt)*100)/100;
+function kGoals(k){let left=Math.max(0,kJar(k,'Save'));return S.sgoals.filter(g=>g.kid===k&&!g.done).map(g=>{const t=xNum(g.target),v=Math.min(left,t);left-=v;return {g,v,t}})}
+const kWeeklySave=k=>{const x=kKid(k);return xNum(x.allow)*xNum(x.sv??50)/100};
+function kScr(k){const x=kKid(k),base=xNum(x.scr)||0,t=xToday(),ub=sum(S.screen.filter(s=>s.kid===k&&s.date===t&&s.src!=='Bonus'),s=>s.min),bank=sum(S.rewards.filter(r=>r.kid===k&&r.got&&r.scr),r=>r.scr)-sum(S.screen.filter(s=>s.kid===k&&s.src==='Bonus'),s=>s.min);return {base,ub,bank:Math.max(0,bank),left:Math.max(0,base-ub)+Math.max(0,bank),used:sum(S.screen.filter(s=>s.kid===k&&s.date===t),s=>s.min)}}
+const kSrc=l=>l.cid?'Chores':l.src==='routine'||/routine complete/.test(l.why||'')?'Routines':l.bid?'Behavior':'Bonus';
+function kWeek(k,o){const a=kMon(o),b=kMon(o+1),L=S.log.filter(l=>l.kid===k&&l.date>=a&&l.date<b),days=Object.entries(S.kRtHist||{}).filter(([d])=>d>=a&&d<b).map(([d,v])=>v[k]).filter(Boolean),tr=o===0?[...days,[S.routines.filter(r=>r.kid===k&&r.done).length,S.routines.filter(r=>r.kid===k).length]]:days;
+ return {a,b,pts:kPts(k,a,b),chores:L.filter(l=>l.cid).length,src:xGroup(L,kSrc,l=>l.stars),rt:sum(tr,v=>v[1])?Math.round(sum(tr,v=>v[0])/sum(tr,v=>v[1])*100):0,rew:S.rewards.filter(r=>r.kid===k&&r.got&&r.when>=a&&r.when<b),saved:sum(S.money.filter(m=>m.kid===k&&m.jar==='Save'&&m.date>=a&&m.date<b),m=>m.amt),scr:sum(S.screen.filter(s=>s.kid===k&&s.date>=a&&s.date<b),s=>s.min),pos:S.behav.filter(x=>x.kid===k&&x.kind==='Positive'&&x.date>=a&&x.date<b).length,neg:S.behav.filter(x=>x.kid===k&&x.kind!=='Positive'&&x.date>=a&&x.date<b).length}}
+function kRtBonus(k,sl){const [d,t]=kRt(k,sl),key=xToday()+'|'+k+'|'+sl;if(!S.kRtBon||typeof S.kRtBon!=='object')S.kRtBon={};if(t&&d===t&&!S.kRtBon[key]){const p=S.kRtPts===undefined||S.kRtPts===''?2:xNum(S.kRtPts);S.kRtBon[key]=1;if(p){S.log.unshift({id:uid(),date:xToday(),kid:k,why:sl+' routine complete',stars:p,src:'routine'});toast('✓ '+k+': '+sl.toLowerCase()+' routine done · +'+p+' pts')}}}
+const BADGES=[[5,'🌱','First steps'],[15,'⭐','Star helper'],[30,'🚀','Rocket'],[50,'🏅','Champion'],[75,'🦸','Superhero'],[100,'👑','Legend'],[150,'🌈','Rainbow'],[200,'🏆','Hall of fame'],[300,'💎','Diamond'],[500,'🌟','Shining star']];
+// ---- styles ----
+(function(){const s=document.createElement('style');s.textContent=`.kcol .kh{display:flex;align-items:center;gap:12px;margin-bottom:12px}.kcol .kav{width:52px;height:52px;border-radius:50%;background:var(--acc-l);display:grid;place-items:center;font-size:28px;flex:none}
+.kcol .kb{margin-left:auto;text-align:right;font:700 28px/1 var(--serif);color:var(--acc-d,var(--acc))}.kcol .kb small{display:block;font:600 11px var(--sans);color:var(--mute);letter-spacing:.06em}
+.kch{display:flex;align-items:center;gap:10px;padding:7px 0;border-bottom:1px solid var(--soft);font-size:13.5px}.kch:last-child{border:0}.kch .kt{width:28px;height:28px;border-radius:50%;border:2px solid var(--line);background:transparent;cursor:pointer;flex:none;display:grid;place-items:center;font-size:13px;color:#fff;padding:0}
+.kch .kt.on{background:var(--acc);border-color:var(--acc)}.kch .kt.wait{background:#F3E3B5;border-color:#E2C46F;color:#7A5B12}.kch .kp{margin-left:auto;font-weight:700;color:var(--acc-d,var(--acc));white-space:nowrap;font-size:12.5px}
+.kmini{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-top:10px}.kmini>div{background:var(--acc-l);border-radius:12px;padding:8px 10px;font-size:12px}.kmini b{display:block;font:600 17px var(--serif)}
+.ksoft{background:var(--acc-l);border-radius:14px;padding:12px 14px}.kline{display:flex;justify-content:space-between;gap:10px;font-size:13px;padding:6px 0;border-bottom:1px solid var(--soft)}.kline:last-child{border:0}.kline span{color:var(--mute)}
+.kjar{text-align:center;padding:14px 8px;border-radius:16px;background:var(--acc-l)}.kjar b{display:block;font:600 26px var(--serif);margin:4px 0}.kjar small{color:var(--mute);font-size:12px}
+@media print{.calmnext,.xsub,.addrow{display:none!important}}`;document.head.appendChild(s)})();
+// ---- shared bits ----
+const kChoreRow=c=>{const d=kDone(c),w=kWait(c);return `<div class="kch"><button class="kt ${d?'on':w?'wait':''}" data-act="${d?'kundo':w?'xgo':'kchore'}" data-id="${c.id}" ${w?'data-k="chores" data-s="approve"':''} title="${d?'Undo':w?'Waiting for approval':'Mark done'}">${d?'✓':w?'⏳':''}</button><div style="flex:1;${d?'color:var(--mute);text-decoration:line-through':''}">${esc(c.emoji||'')} ${esc(c.name)}${c.freq==='Weekly'?' <small style="color:var(--mute)">· this week</small>':''}${c.rot?' <small style="color:var(--mute)">· rotates</small>':''}</div><span class="kp">+${xNum(c.pts)}</span></div>`};
+const kKidSel=(id,v)=>`<select class="fi" id="${id}">${S.kids.map(k=>`<option ${k.name===v?'selected':''}>${esc(k.name)}</option>`).join('')}</select>`;
+const kRtBar=(k,sl)=>{const [d,t]=kRt(k,sl);return t?`<span>${sl}</span><div class="t"><i style="width:${t?d/t*100:0}%"></i></div><b>${d}/${t}</b>`:''};
+const kNone=`<div class="card"><h3>Add your first child</h3><p style="color:var(--mute)">Each child gets their own chores, routines, points, jars and screen time.</p><button class="btn" data-act="xgo" data-k="kidsx" data-s="profiles">Add a child</button></div>`;
+// ---- dashboard ----
+APP.P.dashboard=()=>{if(!S.kids.length)return head('Today','Chores, routines and rewards for the whole family.')+kNone;
+ const P=S.pending,t=xToday(),ready=S.rewards.filter(r=>!r.got&&bal(r.kid)>=xNum(r.cost)),doneN=sum(S.kids,k=>kChoresOf(k.name).filter(kDone).length),allN=sum(S.kids,k=>kChoresOf(k.name).length);
+ return `${head('Today',new Date().toLocaleDateString('en-US',{weekday:'long',month:'long',day:'numeric'})+` · ${doneN} of ${allN} chores done`,`<button class="btn ghost sm" data-act="xgo" data-k="kidsx" data-s="week">${ic('chart',14)} Week</button>`)}
+ ${P.length?`<div class="card" style="margin-bottom:16px;border-left:5px solid #E2C46F"><h3>Waiting for your OK<span class="x">${P.length}</span></h3><div class="list">${P.slice(0,5).map(p=>`<div class="it"><span style="font-size:20px">${esc(kKid(p.kid).emoji||'')}</span><div style="flex:1"><b>${esc(p.kid)}</b> · ${esc(p.what)}<small>${fmtS(p.date)} · +${p.pts} pts</small></div><button class="btn sm" data-act="kok" data-id="${p.id}">Approve</button><button class="btn ghost sm" data-act="kno" data-id="${p.id}">Not yet</button></div>`).join('')}</div></div>`:''}
+ <div class="grid g${Math.min(3,Math.max(2,S.kids.length))}">${S.kids.map(k=>{const L=kChoresOf(k.name),sc=kScr(k.name),n=nextRew(k.name),b=bal(k.name),g=kGoals(k.name)[0];
+  return `<div class="card kcol"><div class="kh"><div class="kav">${esc(k.emoji||'🙂')}</div><div><h3 style="margin:0">${esc(k.name)}</h3><small style="color:var(--mute)">${xNum(k.age)?k.age+' years · ':''}${kPts(k.name,t,kAddD(t,1))} pts today</small></div><div class="kb">${b}<small>POINTS</small></div></div>
+  ${L.length?L.map(kChoreRow).join(''):'<div class="kch" style="color:var(--mute)">No chores today 🌿</div>'}
+  <div class="xmeter" style="margin-top:12px">${KSLOTS.map(sl=>kRtBar(k.name,sl)).join('')}</div>
+  <div class="kmini"><div>Screen left<b>${sc.left} min</b></div><div>Save jar<b>${kM(kJar(k.name,'Save'))}</b></div><div>Spend jar<b>${kM(kJar(k.name,'Spend'))}</b></div></div>
+  ${n?`<div style="margin-top:12px;font-size:12.5px;color:var(--mute)">Next reward: ${esc(n.emoji)} ${esc(n.name)} · ${b>=xNum(n.cost)?'ready to claim ✓':(xNum(n.cost)-b)+' pts to go'}</div><div class="bar" style="margin-top:6px"><i style="width:${pct(Math.min(1,b/(xNum(n.cost)||1)))}%"></i></div>`:g?`<div style="margin-top:12px;font-size:12.5px;color:var(--mute)">Saving for ${esc(g.g.emoji||'')} ${esc(g.g.name)} · ${kM(g.v)} of ${kM(g.t)}</div><div class="bar" style="margin-top:6px"><i style="width:${pct(g.v/(g.t||1))}%"></i></div>`:''}</div>`}).join('')}</div>
+ <div class="grid g3" style="margin-top:16px"><div class="card"><h3>Ready to claim<span class="x">${ready.length}</span></h3>${ready.slice(0,5).map(r=>`<div class="rw"><div class="e">${esc(r.emoji)}</div><div>${esc(r.name)}<small style="display:block;color:var(--mute);font-size:12px">${esc(r.kid)} · ${r.cost} pts</small></div><button class="btn sm" style="margin-left:auto" data-act="redeem" data-id="${r.id}">Claim</button></div>`).join('')||(()=>{const c=S.rewards.filter(r=>!r.got).sort((a,b)=>(xNum(a.cost)-bal(a.kid))-(xNum(b.cost)-bal(b.kid)))[0];return c?`<p style="color:var(--mute);font-size:13px;margin:0">Closest: ${esc(c.emoji)} <b>${esc(c.name)}</b> for ${esc(c.kid)}, ${xNum(c.cost)-bal(c.kid)} pts to go.</p>`:'<p style="color:var(--mute);font-size:13px;margin:0">Add rewards in the store so points have a goal.</p>'})()}</div>
+ <div class="card"><h3>Habit chart today<span class="x">1 pt per tick</span></h3><div class="list">${S.chart.slice(0,6).map(c=>`<div class="it"><button data-act="tick" data-c="chart" data-id="${c.id}" data-k="${t}" style="width:26px;height:26px;border-radius:50%;border:2px solid ${c.log&&c.log[t]?'transparent':'var(--line)'};background:${c.log&&c.log[t]?(c.col||'var(--acc)'):'transparent'};color:#fff;cursor:pointer;flex:none">${c.log&&c.log[t]?'✓':''}</button><div style="flex:1">${esc(c.name)}<small>${esc(c.kid)}</small></div></div>`).join('')||'<div class="it" style="color:var(--mute)">Add habits in Chores → Habit chart.</div>'}</div></div>
+ <div class="card"><h3>This week<span class="x">points</span></h3>${xHBars(S.kids.map(k=>[(k.emoji||'')+' '+k.name,kWeek(k.name,0).pts]),v=>v+' pts')}<div class="kline" style="margin-top:10px"><span>Allowance</span><b>${S.kAuto==='Off'?'manual':'every '+(S.kPayDay||'Sunday')}</b></div><div class="kline"><span>Weekly chores reset</span><b>Monday</b></div></div></div>`};
+// ---- chores ----
+const kBoard=()=>`${head('Chore board',`Daily chores reset each morning, weekly chores every Monday. Rotating chores switch kids each week.`,`<button class="btn" data-act="xgo" data-k="chores" data-s="list">${ic('plus',15)} Manage chores</button>`)}
+ ${S.kids.length?`<div class="grid g${Math.min(3,Math.max(2,S.kids.length))}">${S.kids.map(k=>{const L=S.chores.filter(c=>kWho(c)===k.name),T=L.filter(kDueToday),W=L.filter(c=>c.freq==='Weekly');return `<div class="card kcol"><div class="kh"><div class="kav">${esc(k.emoji||'🙂')}</div><h3 style="margin:0">${esc(k.name)}</h3><div class="kb">${T.filter(kDone).length}/${T.length}<small>DONE</small></div></div>
+  <small style="color:var(--mute);font-weight:700;letter-spacing:.08em">TODAY</small>${T.filter(c=>c.freq!=='Weekly').map(kChoreRow).join('')||'<div class="kch" style="color:var(--mute)">Nothing daily today</div>'}
+  <small style="color:var(--mute);font-weight:700;letter-spacing:.08em;display:block;margin-top:12px">THIS WEEK</small>${W.map(kChoreRow).join('')||'<div class="kch" style="color:var(--mute)">No weekly chores</div>'}</div>`}).join('')}</div>`:kNone}
+ <div class="card" style="margin-top:16px;background:var(--acc-l);border:0"><h3>How points flow</h3><p style="font-size:13px;margin:0;line-height:1.55">Tap the circle when a chore is done. Chores marked “needs OK” wait in <b>Approvals</b> (⏳) until you approve them. Points add up in the Rewards store, where kids spend them on rewards and screen time.</p></div>`;
+const kList=()=>`${head('Chore list',`${S.chores.length} chores · points, frequency, rotation and approval`,`<button class="btn" data-act="addrow" data-c="chores">${ic('plus',15)} Add chore</button>`)}
+ <div class="card">${xTable('chores',S.chores,[['emoji','','sel',['✅','🛏','🧸','🍽','🍴','🐈','🐶','🌱','♻️','🧺','👕','🧹','🚿','📚','🎒','🪥','🗑','🚗']],['name','Chore'],['kid','Kid','sel',[['','—']].concat(kidNames())],['pts','Points','num'],['freq','How often','sel',KFREQ],['rot','Rotate','chk'],['appr','Needs OK','chk'],['_w','This week','calc',c=>esc(kWho(c)||'—')]])}</div>
+ <p style="color:var(--mute);font-size:12.5px;margin-top:12px">Tip: younger kids, 1–2 points for small jobs; bigger jobs 3–5. Rotating chores ignore the Kid column and take turns each week.</p>`;
+const kApprove=()=>{const H=S.log.filter(l=>l.cid&&xDaysTo(l.date)>-7).slice(0,12);
+ return `${head('Approvals',`${S.pending.length} waiting · approve to add the points`,S.pending.length?`<button class="btn" data-act="kokall">Approve all</button>`:'')}
+ <div class="grid g21"><div class="card"><h3>Waiting</h3>${S.pending.map(p=>`<div class="it"><span style="font-size:22px">${esc(kKid(p.kid).emoji||'')}</span><div style="flex:1"><b>${esc(p.kid)}</b> · ${esc(p.what)}<small>${fmtS(p.date)} · +${p.pts} pts</small></div><button class="btn sm" data-act="kok" data-id="${p.id}">Approve</button><button class="btn ghost sm" data-act="kno" data-id="${p.id}">Not yet</button></div>`).join('')||'<div class="empty">All caught up. Nothing to check.</div>'}</div>
+ <div class="card"><h3>Approved this week</h3><div class="list">${H.map(l=>`<div class="it"><div style="flex:1">${esc(l.why)}<small>${esc(l.kid)} · ${fmtS(l.date)}</small></div><b>+${l.stars}</b></div>`).join('')||'<div class="it" style="color:var(--mute)">Nothing yet this week</div>'}</div></div></div>`};
+const kHabit=()=>`${head('Habit chart','Tap a square each day they do it. Each square = 1 point.',`<button class="btn" data-act="addrow" data-c="chart">${ic('plus',15)} Add habit</button>`)}${gridTracker({c:'chart',t:'This month',label:'Habit'})}
+ <div class="card" style="margin-top:16px"><h3>Who does what</h3>${xTable('chart',S.chart,[['name','Habit'],['kid','Kid','sel',kidNames()]])}</div>`;
+// ---- routines ----
+const kRoutines=()=>{const sl=fv('krs',(()=>{const h=new Date().getHours();return h<11?'Morning':h<17?'After school':'Bedtime'})());if(!F.krs)F.krs=sl;const bonus=S.kRtPts===undefined||S.kRtPts===''?2:xNum(S.kRtPts);
+ return `${head('Routines',`Steps reset every morning. Finishing a whole routine adds ${bonus} bonus points.`,`<button class="btn ghost sm" data-act="print">${ic('print',14)} Print</button>`)}
+ ${tabs('krs',KSLOTS.map(s=>[s,s]))}
+ ${S.kids.length?`<div class="grid g${Math.min(3,Math.max(2,S.kids.length))}">${S.kids.map(k=>{const L=S.routines.filter(r=>r.kid===k.name&&r.slot===sl),[d,t]=kRt(k.name,sl);return `<div class="card kcol"><div class="kh"><div class="kav">${esc(k.emoji||'🙂')}</div><h3 style="margin:0">${esc(k.name)}</h3><div class="kb">${d}/${t}<small>${t&&d===t?'DONE ✓':'STEPS'}</small></div></div><div class="bar" style="margin-bottom:8px"><i style="width:${pct(t?d/t:0)}%"></i></div>
+  ${L.map((r,i)=>`<div class="kch"><button class="kt ${r.done?'on':''}" data-act="krt" data-id="${r.id}">${r.done?'✓':i+1}</button><div style="flex:1;${r.done?'color:var(--mute);text-decoration:line-through':''}">${esc(r.task)}</div></div>`).join('')||'<div class="kch" style="color:var(--mute)">No steps yet</div>'}
+  <button class="btn ghost sm" style="margin-top:10px" data-act="kaddrt" data-kid="${esc(k.name)}" data-sl="${sl}">+ Add step</button></div>`}).join('')}</div>`:kNone}`};
+const kRtManage=()=>tablePage({c:'routines',t:'Manage steps',s:'Every step of every routine, for every child.',cols:[['task','Step'],['kid','Kid','sel',kidNames()],['slot','When','sel',KSLOTS.concat(['Weekend'])],['done','Done today','chk']],filter:['kid',kidNames()],addLabel:'Add step'});
+const kRtHistory=()=>{const d=xDays(14),H=S.kRtHist||{},v=(k,x)=>{if(x===xToday()){const [a,b]=KSLOTS.reduce((s,sl)=>{const r=kRt(k,sl);return [s[0]+r[0],s[1]+r[1]]},[0,0]);return b?Math.round(a/b*100):0}const h=(H[x]||{})[k];return h&&h[1]?Math.round(h[0]/h[1]*100):0};
+ return `${head('Routine history','Completion every day, saved automatically when the steps reset.')}<div class="grid g2">${S.kids.map(k=>xCard(esc(k.emoji||'')+' '+esc(k.name),bars(d.map(x=>v(k.name,x)),d.map(x=>x.slice(8)),130),'% of steps · 14 days')).join('')}${xCard('Average this week',xHBars(S.kids.map(k=>[k.name,kWeek(k.name,0).rt]),x=>x+'%'))}</div>`};
+// ---- rewards ----
+const kStore=()=>{const f=fv('krk',S.kids[0]?S.kids[0].name:''),L=S.rewards.filter(r=>!r.got&&(!f||r.kid===f)).sort((a,b)=>xNum(a.cost)-xNum(b.cost)),b=bal(f);
+ return `${head('Rewards store',`${esc(f)} has ${b} points to spend`,`<button class="btn" data-act="addrow" data-c="rewards">${ic('plus',15)} Add reward</button>`)}
+ ${tabs('krk',S.kids.map(k=>[k.name,(k.emoji||'')+' '+k.name+' · '+bal(k.name)]))}
+ <div class="grid g21"><div class="card"><h3>Spend points<span class="x">↻ = can be bought again</span></h3>${L.map(r=>`<div class="rw"><div class="e">${esc(r.emoji)}</div><div>${esc(r.name)}${r.rep?' ↻':''}<div class="bar" style="width:140px;margin-top:6px"><i style="width:${pct(Math.min(1,b/(xNum(r.cost)||1)))}%"></i></div></div><span class="c">${r.cost} pts</span><button class="btn sm${b>=xNum(r.cost)?'':' ghost'}" data-act="redeem" data-id="${r.id}">${b>=xNum(r.cost)?'Claim':(xNum(r.cost)-b)+' to go'}</button></div>`).join('')||'<div class="empty">No rewards yet for '+esc(f)+'</div>'}</div>
+ <div class="grid" style="align-content:start"><div class="card"><h3>Screen time</h3><p style="font-size:13px;color:var(--mute);margin:0 0 10px">${xNum(S.kScrRate)||5} points = 15 extra minutes</p><button class="btn" data-act="kscrbuy" data-kid="${esc(f)}">📱 Buy 15 min</button></div>
+ <div class="card"><h3>Reward ideas</h3><p style="font-size:13px;margin:0;line-height:1.55">Experiences beat things: pick the movie, stay up 30 min, baking day, a picnic, one-on-one time with a parent, choose dinner, a friend sleepover.</p></div></div></div>
+ <div class="card" style="margin-top:16px"><h3>Edit rewards</h3>${xTable('rewards',S.rewards.filter(r=>!r.got),[['emoji','','sel',REWE.concat(['🎁','🌟','🍪','🚲','🛌','🎳','📱'])],['name','Reward'],['kid','For','sel',kidNames()],['cost','Points','num'],['rep','Repeat','chk']])}</div>`};
+const kLog=()=>tablePage({c:'log',t:'Points log',s:`Every point and why · ${S.log.length} entries`,cols:[['date','Date','date'],['kid','Kid','sel',kidNames()],['why','Why'],['stars','Points','num']],addLabel:'Give bonus points',sort:(a,b)=>(b.date||'').localeCompare(a.date||''),filter:['kid',kidNames()]});
+const kBadges=()=>`${head('Badges','Unlocked by total points earned. They never go away, even after spending.')}
+ <div class="grid">${S.kids.map(k=>{const e=earned(k.name),nx=BADGES.find(b=>b[0]>e);return `<div class="card"><h3>${esc(k.emoji||'')} ${esc(k.name)}<span class="x">${e} points earned in total</span></h3>
+  <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(104px,1fr));gap:10px">${BADGES.map(([n,em,t])=>{const on=e>=n;return `<div style="text-align:center;padding:12px 6px;border-radius:14px;background:${on?'var(--acc-l)':'var(--soft)'};${on?'':'filter:grayscale(1);opacity:.45'}"><div style="font-size:32px">${em}</div><b style="font-size:12.5px">${t}</b><div style="font-size:11px;color:var(--mute)">${n} pts</div></div>`}).join('')}</div>
+  ${nx?`<p style="color:var(--mute);margin:12px 0 0">${nx[0]-e} more points to unlock ${nx[1]} ${nx[2]}.</p>`:'<p style="margin:12px 0 0">Every badge unlocked.</p>'}</div>`}).join('')||kNone}</div>`;
+const kClaimed=()=>{const L=S.rewards.filter(r=>r.got).sort((a,b)=>(b.when||'').localeCompare(a.when||''));
+ return `${head('Claimed rewards',`${L.length} rewards · ${sum(L,r=>r.cost)} points spent`)}<div class="grid g21"><div class="card">${xTable('rewards',L,[['emoji','','sel',REWE.concat(['🎁','🌟','🍪','🚲','🛌','🎳','📱'])],['name','Reward'],['kid','Kid','sel',kidNames()],['cost','Points','num'],['when','Date','date']],{empty:'Nothing claimed yet'})}</div>${xCard('Points spent by kid',xHBars(S.kids.map(k=>[k.name,spent(k.name)]),v=>v+' pts'))}</div>`};
+// ---- money ----
+const kJars=()=>{const t=S.kids;return `${head('Jars',`Allowance is split automatically: Save, Spend, Give · ${S.kAuto==='Off'?'paid manually':'paid every '+(S.kPayDay||'Sunday')}`,`<button class="btn ghost" data-act="kpaynow">Pay allowance now</button>`)}
+ <div class="card" style="margin-bottom:16px"><h3>Add or spend money</h3><div class="addrow" style="margin:0">${kKidSel('kmk')}<select class="fi" id="kmj">${KJARS.map(j=>`<option>${j}</option>`).join('')}</select><select class="fi" id="kms"><option value="-1">Spend / take out</option><option value="1">Add money</option></select><input class="fi" id="kma" type="number" step="0.01" placeholder="Amount"><input class="fi" id="kmw" placeholder="What for?" style="flex:2"><button class="btn" data-act="kmon">Save</button></div></div>
+ ${t.length?`<div class="grid g${Math.min(3,Math.max(2,t.length))}">${t.map(k=>{const sv=xNum(k.sv??50),gv=xNum(k.gv??10);return `<div class="card kcol"><div class="kh"><div class="kav">${esc(k.emoji||'🙂')}</div><div><h3 style="margin:0">${esc(k.name)}</h3><small style="color:var(--mute)">${kM(xNum(k.allow))} a week · ${sv}% save · ${100-sv-gv}% spend · ${gv}% give</small></div><div class="kb">${kM(KJARS.reduce((a,j)=>a+kJar(k.name,j),0))}<small>TOTAL</small></div></div>
+  <div class="grid g3" style="gap:8px">${KJARS.map(j=>`<div class="kjar"><small>${j==='Save'?'🐷':j==='Spend'?'👛':'💝'} ${j.toUpperCase()}</small><b>${kM(kJar(k.name,j))}</b></div>`).join('')}</div>
+  ${kGoals(k.name).slice(0,2).map(g=>`<div style="margin-top:12px;font-size:13px">${esc(g.g.emoji||'')} ${esc(g.g.name)} <span style="float:right;color:var(--mute)">${kM(g.v)} / ${kM(g.t)}</span></div><div class="bar" style="margin-top:6px"><i style="width:${pct(g.v/(g.t||1))}%"></i></div>`).join('')}</div>`}).join('')}</div>`:kNone}`};
+const kGoalsPage=()=>`${head('Savings goals','Goals fill up from the Save jar, in order. The app tells you when each one is reachable.',`<button class="btn" data-act="addrow" data-c="sgoals">${ic('plus',15)} Add goal</button>`)}
+ <div class="grid g${Math.min(3,Math.max(2,S.kids.length||2))}">${S.kids.map(k=>{const G=kGoals(k.name),w=kWeeklySave(k.name);return `<div class="card"><h3>${esc(k.emoji||'')} ${esc(k.name)}<span class="x">${kM(kJar(k.name,'Save'))} saved · +${kM(w)}/week</span></h3>${G.map(g=>{const r=g.t-g.v,wk=w?Math.ceil(r/w):null;return `<div style="padding:10px 0;border-bottom:1px solid var(--soft)"><div style="display:flex;gap:10px;align-items:center"><span style="font-size:24px">${esc(g.g.emoji||'🎯')}</span><div style="flex:1"><b>${esc(g.g.name)}</b><small style="display:block;color:var(--mute)">${r<=0?'Ready to buy!':wk?'About '+wk+' week'+(wk>1?'s':'')+' to go · '+fmtS(kAddD(xToday(),wk*7)):'Set an allowance to see the date'}</small></div><b>${kM(g.v)} / ${kM(g.t)}</b></div><div class="bar" style="margin-top:8px"><i style="width:${pct(g.v/(g.t||1))}%"></i></div>${r<=0?`<button class="btn sm" style="margin-top:8px" data-act="kgoal" data-id="${g.g.id}">Buy it: take ${kM(g.t)} from Save</button>`:''}</div>`}).join('')||'<div class="empty">No goal yet</div>'}</div>`}).join('')||kNone}</div>
+ <div class="card" style="margin-top:16px"><h3>All goals</h3>${xTable('sgoals',S.sgoals,[['emoji','','sel',['🎯','🧱','🔔','🦖','🚲','🎮','📚','🧸','🎨','⚽','🎧','🛹']],['name','Goal'],['kid','Kid','sel',kidNames()],['target','Price','money'],['done','Bought','chk']])}</div>`;
+const kTx=()=>tablePage({c:'money',t:'Transactions',s:`${S.money.length} entries · allowance, gifts and spending`,cols:[['date','Date','date'],['kid','Kid','sel',kidNames()],['jar','Jar','sel',KJARS],['amt','Amount','money'],['what','What']],addLabel:'Add entry',sort:(a,b)=>(b.date||'').localeCompare(a.date||''),filter:['kid',kidNames()]});
+const kAllow=()=>`${head('Allowance settings','How much each child gets and how it is split. Spend = what is left after Save and Give.')}
+ <div class="card">${xTable('kids',S.kids,[['emoji','','sel',KIDE],['name','Name'],['allow','Weekly $','money'],['sv','Save %','num'],['gv','Give %','num'],['_s','Spend %','calc',k=>Math.max(0,100-xNum(k.sv??50)-xNum(k.gv??10))+'%'],['_y','Per year','calc',k=>kM(xNum(k.allow)*52)]],{nodel:1})}</div>
+ <div class="grid g2" style="margin-top:16px"><div class="card"><h3>Payday</h3>${SETF('kPayDay','DAY OF THE WEEK','text',KDN)}${SETF('kAuto','AUTOMATIC PAYMENT','text',['On','Off'])}<p style="color:var(--mute);font-size:12.5px;margin:10px 0 0">When on, the app pays every child on payday the first time you open it. Last paid: ${fmtS(S.kPaid)}.</p></div>
+ <div class="card" style="background:var(--acc-l);border:0"><h3>A common rule</h3><p style="font-size:13px;margin:0;line-height:1.55">About $1 per year of age per week. Many families split 40–50% save, 40% spend and 10% give. Let kids make small spending mistakes: it’s cheap tuition.</p></div></div>`;
+// ---- screen time ----
+const kScreen=()=>`${head('Screen time today','Daily minutes reset each morning. Extra minutes are bought with points and roll over.')}
+ ${S.kids.length?`<div class="grid g${Math.min(3,Math.max(2,S.kids.length))}">${S.kids.map(k=>{const s=kScr(k.name);return `<div class="card kcol"><div class="kh"><div class="kav">${esc(k.emoji||'🙂')}</div><h3 style="margin:0">${esc(k.name)}</h3><div class="kb">${s.left}<small>MIN LEFT</small></div></div>
+  <div class="xmeter"><span>Daily</span><div class="t"><i style="width:${s.base?Math.min(100,s.ub/s.base*100):0}%"></i></div><b>${s.ub} / ${s.base}</b></div><div class="kline" style="margin-top:8px"><span>Bonus bank</span><b>${s.bank} min</b></div>
+  <div class="xbtns" style="justify-content:flex-start;margin-top:12px">${[15,30,60].map(m=>`<button class="btn ghost sm" data-act="kscruse" data-kid="${esc(k.name)}" data-m="${m}">Used ${m}</button>`).join('')}<button class="btn sm" data-act="kscrbuy" data-kid="${esc(k.name)}">+15 for ${xNum(S.kScrRate)||5} pts</button></div></div>`}).join('')}</div>`:kNone}
+ <div class="grid g2" style="margin-top:16px">${xCard('Minutes per day',bars(xDays(7).map(d=>sum(S.screen.filter(s=>s.date===d),s=>s.min)),xDays(7).map(xDl),130),'all kids · 7 days')}<div class="card"><h3>Rules</h3><div class="grid g2" style="gap:0 12px"><div>${SETF('kScrRate','POINTS FOR 15 EXTRA MIN','number')}</div></div>${xTable('kids',S.kids,[['name','Kid'],['scr','Daily minutes','num']],{nodel:1})}<p style="color:var(--mute);font-size:12px;margin:8px 0 0">AAP guidance: under 2, video chat only; 2–5 years, about 1 hour of quality shows a day; older kids, a consistent family plan.</p></div></div>`;
+const kScrLog=()=>tablePage({c:'screen',t:'Screen time log',s:'Every session, daily or bonus minutes.',cols:[['date','Date','date'],['kid','Kid','sel',kidNames()],['min','Minutes','num'],['src','From','sel',['Daily','Bonus']]],addLabel:'Add session',sort:(a,b)=>(b.date||'').localeCompare(a.date||'')});
+// ---- kids ----
+const kProfiles=()=>`${head('Kids',`${S.kids.length} children · each with their own points, jars and routines`,`<button class="btn" data-act="addrow" data-c="kids">${ic('plus',15)} Add child</button>`)}
+ <div class="grid g${Math.min(3,Math.max(2,S.kids.length||2))}">${S.kids.map(k=>`<div class="card"><div style="display:flex;align-items:center;gap:8px">${sel('kids',k,'emoji',KIDE,{cls:'fi',st:'width:74px;font-size:22px'})}${inp('kids',k,'name',{st:'font:600 22px var(--serif)'})}${del('kids',k)}</div>
+  <div class="grid g2" style="gap:8px;margin-top:10px"><div><label class="f">AGE</label>${inp('kids',k,'age',{num:1,cls:'fi'})}</div><div><label class="f">ALLOWANCE / WEEK</label>${inp('kids',k,'allow',{num:1,cls:'fi'})}</div><div><label class="f">SAVE %</label>${inp('kids',k,'sv',{num:1,cls:'fi'})}</div><div><label class="f">GIVE %</label>${inp('kids',k,'gv',{num:1,cls:'fi'})}</div><div><label class="f">SCREEN MIN / DAY</label>${inp('kids',k,'scr',{num:1,cls:'fi'})}</div><div><label class="f">POINTS</label><div style="font:600 22px var(--serif);padding:6px 0">${bal(k.name)} <small style="font:500 12px var(--sans);color:var(--mute)">of ${earned(k.name)} earned</small></div></div></div></div>`).join('')}</div>
+ <p style="color:var(--mute);font-size:12.5px;margin-top:12px">Renaming a child keeps their history only if you also rename them in old entries. Pick the final name early.</p>`;
+const kSummary=()=>{const o=+(F.kwo||0),a=kMon(o);
+ return `${head('Weekly summary',`Week of ${fmtS(a)} – ${fmtS(kAddD(a,6))}`,`<button class="btn ghost sm" data-flt="kwo:${o-1}">‹</button><button class="btn ghost sm" data-flt="kwo:0">This week</button><button class="btn ghost sm" data-flt="kwo:${Math.min(0,o+1)}">›</button><button class="btn ghost sm" data-act="print">${ic('print',14)} Print</button>`)}
+ <div class="grid g${Math.min(3,Math.max(2,S.kids.length||2))}">${S.kids.map(k=>{const w=kWeek(k.name,o),p=kWeek(k.name,o-1),d=w.pts-p.pts;return `<div class="card kcol"><div class="kh"><div class="kav">${esc(k.emoji||'🙂')}</div><h3 style="margin:0">${esc(k.name)}</h3><div class="kb">${w.pts}<small>PTS · LAST WEEK ${p.pts}</small></div></div>
+  ${[['Chores done',w.chores],['Routines completed',w.rt+'%'],['Rewards claimed',w.rew.length?w.rew.map(r=>esc(r.emoji)).join(' '):'—'],['Saved',kM(w.saved)],['Screen time',Math.floor(w.scr/60)+'h '+w.scr%60+'m'],['Behavior',w.pos+' 👍 · '+w.neg+' to work on']].map(([l,v])=>`<div class="kline"><span>${l}</span><b>${v}</b></div>`).join('')}
+  <div style="margin-top:12px">${xDonut(w.src.map(([s,v])=>[s,v,v+' pts']))}</div></div>`}).join('')||kNone}</div>
+ <div class="card" style="margin-top:16px;background:var(--acc-l);border:0"><h3>Sunday check-in</h3><p style="font-size:13px;margin:0;line-height:1.55">Five minutes with each child: one thing they did great, one thing to try next week, and let them pick next week’s reward goal.</p></div>`};
+const kBehav=()=>{const L=S.behav.slice().sort((a,b)=>(b.date||'').localeCompare(a.date||''));
+ return `${head('Behavior notes','Notice the good more than the bad. Notes can add or remove points.')}
+ <div class="card" style="margin-bottom:16px"><h3>Quick note</h3><div class="addrow" style="margin:0">${kKidSel('kbk')}<select class="fi" id="kbt"><option>Positive</option><option>Needs work</option></select><input class="fi" id="kbn" placeholder="What happened?" style="flex:3"><input class="fi" id="kbp" type="number" placeholder="± points" style="max-width:110px"><button class="btn" data-act="kbeh">Save</button></div></div>
+ <div class="grid g21"><div class="card">${xTable('behav',L,[['date','Date','date'],['kid','Kid','sel',kidNames()],['kind','Type','sel',['Positive','Needs work']],['note','Note'],['pts','Pts','num']])}</div>
+ <div class="grid" style="align-content:start">${xCard('Last 30 days',xHBars(S.kids.flatMap(k=>[[k.name+' 👍',S.behav.filter(b=>b.kid===k.name&&b.kind==='Positive'&&xDaysTo(b.date)>-30).length],[k.name+' · work on',S.behav.filter(b=>b.kid===k.name&&b.kind!=='Positive'&&xDaysTo(b.date)>-30).length]])))}<div class="card" style="background:var(--acc-l);border:0"><h3>The 5-to-1 idea</h3><p style="font-size:13px;margin:0;line-height:1.55">Aim for about five positive notes for every correction. Kids repeat what gets noticed.</p></div></div></div>`};
+// ---- data ----
+const kWeeks=n=>[...Array(n)].map((_,i)=>i-n+1);
+const kDataOv=()=>{const W=kWeeks(8),hm={};S.log.forEach(l=>{if(l.date)hm[l.date]=(hm[l.date]||0)+xNum(l.stars)});S.chart.forEach(c=>Object.keys(c.log||{}).forEach(d=>hm[d]=(hm[d]||0)+1));
+ return `${head('Overview','The whole family, week by week.')}<div class="grid g4" style="margin-bottom:16px">${kpi('star',sum(S.kids,k=>earned(k.name)),'points earned in total')}${kpi('gift',S.rewards.filter(r=>r.got).length,'rewards claimed')}${kpi('check',S.log.filter(l=>l.cid).length,'chores done')}${kpi('budget',kM(sum(S.money.filter(m=>m.jar==='Save'),m=>m.amt)),'in Save jars')}</div>
+ <div class="grid g2">${xCard('Points per week',bars(W.map(o=>sum(S.kids,k=>kPts(k.name,kMon(o),kMon(o+1)))),W.map(o=>o?o+'w':'now'),140),'all kids')}${xCard('Where points come from',xDonut(xGroup(S.log.filter(l=>xNum(l.stars)>0),kSrc,l=>l.stars).map(([k,v])=>[k,v,v+' pts'])))}${xCard('Points calendar',xHeat(hm,16),'darker = more points')}${xCard('Top chores',xHBars(xGroup(S.log.filter(l=>l.cid),l=>l.why).slice(0,7),v=>v+'×'))}</div>`};
+const kDataKid=()=>{const f=fv('kdk',S.kids[0]?S.kids[0].name:''),W=kWeeks(8),d=xDays(14),L=S.log.filter(l=>l.kid===f);
+ return `${head('Per child','Pick a child to see their trends.')}${tabs('kdk',S.kids.map(k=>[k.name,(k.emoji||'')+' '+k.name]))}
+ <div class="grid g4" style="margin-bottom:16px">${kpi('star',bal(f),'points to spend')}${kpi('medal',earned(f),'earned in total')}${kpi('time',kWeek(f,0).rt+'%','routines this week',kWeek(f,0).rt/100)}${kpi('budget',kM(KJARS.reduce((a,j)=>a+kJar(f,j),0)),'in all jars')}</div>
+ <div class="grid g2">${xCard('Points per week',bars(W.map(o=>kPts(f,kMon(o),kMon(o+1))),W.map(o=>o?o+'w':'now'),140))}${xCard('Points per day',xLine(d.map(x=>kPts(f,x,kAddD(x,1))),d.map(x=>x.slice(5))),'14 days')}${xCard('By source',xDonut(xGroup(L.filter(l=>xNum(l.stars)>0),kSrc,l=>l.stars).map(([k,v])=>[k,v,v+' pts'])))}${xCard('Screen minutes',bars(xDays(7).map(x=>sum(S.screen.filter(s=>s.kid===f&&s.date===x),s=>s.min)),xDays(7).map(xDl),140,'#7A8FB8'),'7 days')}</div>`};
+const kDataMoney=()=>{const M=xByMonth(S.money.filter(m=>m.amt>0&&m.what==='Allowance'),'date',m=>m.amt,6);
+ return `${head('Money','Where the money goes.')}<div class="grid g2">${xCard('Jars, all kids',xDonut(KJARS.map(j=>[j,Math.max(0,sum(S.kids,k=>kJar(k.name,j))),kM(sum(S.kids,k=>kJar(k.name,j)))])))}${xCard('Allowance paid per month',bars(M.map(x=>x[1]),M.map(x=>x[0]),140))}${xCard('Spending',`<div class="list">${S.money.filter(m=>m.amt<0).sort((a,b)=>(b.date||'').localeCompare(a.date||'')).slice(0,7).map(m=>`<div class="it"><div style="flex:1">${esc(m.what||m.jar)}<small>${esc(m.kid)} · ${m.jar} · ${fmtS(m.date)}</small></div><b>${kM(m.amt)}</b></div>`).join('')||'<div class="it" style="color:var(--mute)">No spending yet</div>'}</div>`)}${xCard('Given away',xHBars(S.kids.map(k=>[k.name,-sum(S.money.filter(m=>m.kid===k.name&&m.jar==='Give'&&m.amt<0),m=>m.amt)]),v=>kM(v)))}</div>`};
+// ---- sections ----
+X.timer('routines',['timers','Timers','timer'],{title:'Timers',sub:'Make transitions easier: a visible countdown helps.',presets:[['Brush teeth',2],['Get dressed',5],['Tidy-up race',10],['Calm-down',3],['Homework block',20],['Screen time',30]],logTitle:'Timed minutes this week'});
+X.section('chores',[['board','Chore board',kBoard],['approve','Approvals',kApprove],['list','Chore list',kList],['habit','Habit chart',kHabit]]);
+X.section('routinesx',[['today','Checklists',kRoutines],['manage','Manage steps',kRtManage],['history','History',kRtHistory],['timer','Timers',()=>APP.P.timers()]]);
+X.section('rewardsx',[['store','Store',kStore],['log','Points log',kLog],['badges','Badges',kBadges],['claimed','Claimed',kClaimed]]);
+X.section('moneyx',[['jars','Jars',kJars],['goals','Savings goals',kGoalsPage],['tx','Transactions',kTx],['allow','Allowance',kAllow]]);
+X.section('screenx',[['today','Today',kScreen],['log','Log',kScrLog]]);
+X.section('kidsx',[['profiles','Profiles',kProfiles],['week','Weekly summary',kSummary],['behav','Behavior notes',kBehav]]);
+X.section('data',[['overview','Overview',kDataOv],['kid','Per child',kDataKid],['money','Money',kDataMoney]]);
+X.section('family',[['photos','Proud moments',()=>memPage('Proud moments','little wins worth remembering',APP.memArt)],['notes','Notes',()=>notesPage('Notes','Family rules, reward ideas and reminders.')]]);
+X.quotes([['Catch them being good.'],['Connection before correction.'],['Small jobs, done often, build big confidence.'],['Consistency beats intensity.'],['Kids do well if they can.','Ross Greene']]);
+X.dashEnd=1;
+APP.settingsFields=()=>SETF('name','TITLE')+heroField('PHOTO (dashboard)')+`<div class="grid g2" style="gap:0 12px"><div>${SETF('kPayDay','ALLOWANCE PAYDAY','text',KDN)}</div><div>${SETF('kAuto','PAY AUTOMATICALLY','text',['On','Off'])}</div><div>${SETF('kRtPts','ROUTINE BONUS POINTS','number')}</div><div>${SETF('kScrRate','POINTS FOR 15 SCREEN MIN','number')}</div><div>${SETF('cur','CURRENCY','text',['$','€','£','CA$','A$'])}</div></div>`;
+APP.onChange=(c,it,f)=>{if(c==='routines'&&f==='done'&&it.done)kRtBonus(it.kid,it.slot)};
+APP.counts=()=>{const o={};if(S.pending.length)o.chores=S.pending.length;const r=S.rewards.filter(x=>!x.got&&bal(x.kid)>=xNum(x.cost)).length;if(r)o.rewardsx=r;return o};
+// ---- actions ----
+const kAddLog=(kid,why,stars,extra)=>S.log.unshift(Object.assign({id:uid(),date:xToday(),kid,why,stars},extra||{}));
+Object.assign(APP.act,{
+ kchore:t=>{const c=S.chores.find(x=>x.id===t.dataset.id);if(!c)return;const k=kWho(c);if(c.appr){c.wait=xToday();S.pending.unshift({id:uid(),date:xToday(),kid:k,what:c.name,pts:xNum(c.pts),cid:c.id});save();rerender();toast('Sent for your OK ⏳')}else{c.last=xToday();kAddLog(k,c.name,xNum(c.pts),{cid:c.id});save();rerender();toast(k+' +'+xNum(c.pts)+' pts')}},
+ kundo:t=>{const c=S.chores.find(x=>x.id===t.dataset.id);if(!c)return;const a=c.freq==='Weekly'?kMon():xToday(),i=S.log.findIndex(l=>l.cid===c.id&&l.date>=a);if(i>=0)S.log.splice(i,1);c.last='';c.wait='';save();rerender();toast('Undone')},
+ kok:t=>{const p=S.pending.find(x=>x.id===t.dataset.id);if(!p)return;const c=S.chores.find(x=>x.id===p.cid);if(c){c.last=p.date;c.wait=''}kAddLog(p.kid,p.what,p.pts,{cid:p.cid,date:p.date});S.pending=S.pending.filter(x=>x!==p);save();rerender();toast('Approved · +'+p.pts+' pts for '+p.kid)},
+ kno:t=>{const p=S.pending.find(x=>x.id===t.dataset.id);if(!p)return;const c=S.chores.find(x=>x.id===p.cid);if(c)c.wait='';S.pending=S.pending.filter(x=>x!==p);save();rerender();toast('Sent back to the list')},
+ kokall:()=>{const n=S.pending.length;S.pending.slice().forEach(p=>{const c=S.chores.find(x=>x.id===p.cid);if(c){c.last=p.date;c.wait=''}kAddLog(p.kid,p.what,p.pts,{cid:p.cid,date:p.date})});S.pending=[];save();rerender();toast(n+' approved')},
+ krt:t=>{const r=S.routines.find(x=>x.id===t.dataset.id);if(!r)return;r.done=!r.done;if(r.done)kRtBonus(r.kid,r.slot);save();rerender()},
+ kaddrt:t=>{const v=prompt('New step');if(!v)return;S.routines.push({id:uid(),task:v,kid:t.dataset.kid,slot:t.dataset.sl,done:false});save();rerender()},
+ redeem:t=>{const r=S.rewards.find(x=>x.id===t.dataset.id);if(!r)return;const c=xNum(r.cost);if(bal(r.kid)<c){toast(r.kid+' needs '+(c-bal(r.kid))+' more points');return}if(r.rep)S.rewards.push(Object.assign({},r,{id:uid(),got:true,when:xToday(),rep:false,from:r.id}));else{r.got=true;r.when=xToday()}save();rerender();toast(r.kid+' claimed '+r.name+' ✓')},
+ kscrbuy:t=>{const k=t.dataset.kid,c=xNum(S.kScrRate)||5;if(!k)return;if(bal(k)<c){toast(k+' needs '+(c-bal(k))+' more points');return}S.rewards.push({id:uid(),emoji:'📱',name:'Screen time +15 min',kid:k,cost:c,got:true,when:xToday(),scr:15,rep:false});save();rerender();toast('+15 min for '+k)},
+ kscruse:t=>{const k=t.dataset.kid,m=+t.dataset.m,s=kScr(k),fb=Math.min(m,Math.max(0,s.base-s.ub)),fx=m-fb;if(fx>s.bank){toast('Only '+s.left+' min left today');return}if(fb)S.screen.unshift({id:uid(),date:xToday(),kid:k,min:fb,src:'Daily'});if(fx)S.screen.unshift({id:uid(),date:xToday(),kid:k,min:fx,src:'Bonus'});save();rerender();toast(k+': '+(s.left-m)+' min left')},
+ kpaynow:()=>{if(!confirm('Pay this week’s allowance to every child now?'))return;const n=kPay(xToday());save();rerender();toast(n?'Allowance paid into the jars ✓':'Set an allowance in Money → Allowance first')},
+ kmon:()=>{const k=$('#kmk').value,a=Math.abs(+$('#kma').value)*(+$('#kms').value);if(!k||!a){toast('Pick a child and an amount');return}const j=$('#kmj').value;if(a<0&&kJar(k,j)+a<0&&!confirm('Not enough in the '+j+' jar. Save anyway?'))return;S.money.unshift({id:uid(),date:xToday(),kid:k,jar:j,amt:a,what:$('#kmw').value||(a<0?'Spent':'Added')});save();rerender();toast('Saved · '+j+' jar: '+kM(kJar(k,j)))},
+ kgoal:t=>{const g=S.sgoals.find(x=>x.id===t.dataset.id);if(!g)return;S.money.unshift({id:uid(),date:xToday(),kid:g.kid,jar:'Save',amt:-xNum(g.target),what:'Bought: '+g.name});g.done=true;save();rerender();toast('Goal reached: '+g.name)},
+ kbeh:()=>{const k=$('#kbk').value,n=$('#kbn').value.trim(),p=+$('#kbp').value||0,kind=$('#kbt').value;if(!k||!n){toast('Write a short note');return}const b={id:uid(),date:xToday(),kid:k,kind,note:n,pts:p};S.behav.unshift(b);if(p)kAddLog(k,(p>0?'Kindness: ':'Behavior: ')+n,p,{bid:b.id});save();rerender();toast('Note saved'+(p?' · '+(p>0?'+':'')+p+' pts':''))}});
+X.layout([['dashboard','Today','home'],['chores','Chores','check'],['routinesx','Routines','time'],['rewardsx','Rewards','gift'],['moneyx','Money','budget'],['screenx','Screen time','moon'],['kidsx','Kids','guests'],['data','Data','chart'],['family','Family','heart'],['settings','Settings','set']]);
 
 boot();
 </script>
