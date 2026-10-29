@@ -249,6 +249,8 @@ html[data-theme=dark] .btn.ghost,html[data-theme=dark] .chip{background:#262320;
 html[data-theme=dark] .cm{background:#262320;color:#F1EBE2}
 html[data-theme=dark] .onb{background:#2E2925;border-color:#4A3F37;color:#F1EBE2}
 
+.tblw{overflow-x:auto;max-width:100%}.card{min-width:0}
+
 :root{--bg:#F3F7F6;--acc:#3E8E86;--acc-l:#DCEEEB;--acc-d:#2A6A63;--blush:#3E8E86;--blush-l:#DCEEEB;--gold:#C9A24D}
 .hero{background:radial-gradient(120% 140% at 85% 20%,#DCEEEB 0,transparent 55%),linear-gradient(120deg,#FDFBF8,#DCEEEB)}
 [data-acc=sage]{--acc:#6E8B74;--acc-l:#E1EBE3;--acc-d:#4F6955}[data-acc=rose]{--acc:#B5546B;--acc-l:#F5DEE3;--acc-d:#8E3B50}[data-acc=navy]{--acc:#34507A;--acc-l:#DEE5F0;--acc-d:#243A5A}[data-acc=gold]{--acc:#B8914E;--acc-l:#F3EAD8;--acc-d:#8E6E36}[data-acc=plum]{--acc:#7A4A6B;--acc-l:#EEDFE9;--acc-d:#5A3450}
@@ -611,11 +613,18 @@ function tablePage(o){let rows=S[o.c];if(o.filter){const v=fv(o.c+'f','all');if(
  ${o.side?`<div class="grid g21"><div class="card">${ft}${tbl}</div><div class="grid" style="align-content:start">${o.side}</div></div>`:`<div class="card">${ft}${tbl}</div>`}`}
 function gridTracker(o){const t=new Date(),y=t.getFullYear(),m=t.getMonth(),nd=new Date(y,m+1,0).getDate(),pre=`${y}-${String(m+1).padStart(2,'0')}-`;
  const streak=x=>{let s=0;for(let d=t.getDate();d>0;d--){if(x.log&&x.log[pre+String(d).padStart(2,'0')])s++;else if(d!==t.getDate())break}return s};
- return `<div class="card"><h3>${o.t}<span class="x">${t.toLocaleDateString('en-US',{month:'long',year:'numeric'})}</span></h3><div class="tblw"><table class="tbl" style="font-size:12px"><tr><th>${o.label||'Item'}</th>${[...Array(nd)].map((_,i)=>`<th style="text-align:center;padding:4px 2px">${i+1}</th>`).join('')}<th class="num">🔥</th></tr>
- ${S[o.c].map(x=>`<tr><td style="min-width:150px">${inp(o.c,x,o.f||'name',{st:'font-weight:600'})}</td>${[...Array(nd)].map((_,i)=>{const k=pre+String(i+1).padStart(2,'0'),on=x.log&&x.log[k];return `<td style="padding:2px;text-align:center"><button data-act="tick" data-c="${o.c}" data-id="${x.id}" data-k="${k}" style="width:20px;height:20px;border-radius:6px;border:1px solid var(--line);background:${on?(x.col||'var(--acc)'):'transparent'};cursor:pointer;padding:0"></button></td>`}).join('')}<td class="num"><b>${streak(x)}</b></td></tr>`).join('')}</table></div></div>`}
+ return `<div class="card"><h3>${o.t}<span class="x">${t.toLocaleDateString('en-US',{month:'long',year:'numeric'})}</span></h3><div class="tblw"><table class="tbl" style="font-size:12px"><tr><th>${o.label||'Item'}</th>${[...Array(nd)].map((_,i)=>`<th style="text-align:center;padding:4px 0;font-size:10px;letter-spacing:0">${i+1}</th>`).join('')}<th class="num">🔥</th></tr>
+ ${S[o.c].map(x=>`<tr><td style="min-width:110px;width:150px">${inp(o.c,x,o.f||'name',{st:'font-weight:600'})}</td>${[...Array(nd)].map((_,i)=>{const k=pre+String(i+1).padStart(2,'0'),on=x.log&&x.log[k];return `<td style="padding:1px;text-align:center"><button data-act="tick" data-c="${o.c}" data-id="${x.id}" data-k="${k}" style="width:100%;max-width:22px;min-width:12px;aspect-ratio:1;height:auto;border-radius:5px;border:1px solid var(--line);background:${on?(x.col||'var(--acc)'):'transparent'};cursor:pointer;padding:0;display:block;margin:0 auto"></button></td>`}).join('')}<td class="num"><b>${streak(x)}</b></td></tr>`).join('')}</table></div></div>`}
 function logDemo(days,p){const t=new Date(),y=t.getFullYear(),m=t.getMonth(),o={};for(let d=1;d<=Math.min(days,t.getDate());d++)if(Math.random()<p)o[`${y}-${String(m+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`]=1;return o}
 Object.assign(CORE_ACT,{addrow:t=>{const c=t.dataset.c;S[c].unshift(Object.assign(JSON.parse(JSON.stringify(((APP.defaults||{})[c])||{})),{id:uid()}));save();rerender()},
  tick:t=>{const it=S[t.dataset.c].find(x=>x.id===t.dataset.id);it.log=it.log||{};if(it.log[t.dataset.k])delete it.log[t.dataset.k];else it.log[t.dataset.k]=1;save();rerender()}});
+// ---- extra tabs added after launch (used by <app>/post.js) ----
+// addTab(after, [key,label,icon], arrayKey, seed(), defaults, keepSeedOnFreshStart)
+function addTab(after,tab,arr,seed,def,keep){const i=APP.pages.findIndex(p=>p[0]===after);APP.pages.splice(i<0?APP.pages.length-2:i+1,0,tab);if(!arr)return;
+ if(!APP.arrays.includes(arr))APP.arrays.push(arr);const mk=()=>seed?seed().map(x=>Object.assign({id:uid()},x)):[];
+ if(!Array.isArray(S[arr]))S[arr]=mk();APP.defaults=APP.defaults||{};APP.defaults[arr]=def||{};
+ const _d=APP.demo;APP.demo=()=>{const s=_d();s[arr]=mk();return s};const _b=APP.blank;APP.blank=()=>{const s=_b();s[arr]=keep?mk():[];return s}}
+const isoAgo=n=>{const d=new Date();d.setDate(d.getDate()-n);return d.toISOString().slice(0,10)};
 
 // ===== CALM LAYER: next small step, 5-min timer, stuck helper, brain dump, quick add, onboarding, focus mode, help =====
 if(!Array.isArray(S.dump))S.dump=[];
@@ -670,6 +679,425 @@ Object.assign(CORE_ACT,{
 (function(){const f=document.createElement('button');f.className='fab';f.dataset.act='quickadd';f.title='Quick add';f.textContent='+';document.body.appendChild(f);
  const db=$('#demobar');if(db&&window.ETSY_URL){db.innerHTML=`✨ <b>Free demo</b> · try anything, your data never leaves your browser · <a href="${window.ETSY_URL}" target="_blank" rel="noopener" style="color:inherit;font-weight:700;text-decoration:underline">Get the full app on Etsy →</a>`}})();
 
+// ===== EXTRAS: quotes, badges, insights (charts), timers, spinner wheel, year in pixels, breathing, water =====
+// Used from <app>/post.js:  X.quotes(list,{tab}) · X.badges(after,defs) · X.insights(after,tab,fn) · X.timer(after,tab,o)
+//                           X.wheel(after,tab,o) · X.pixels(after,tab,o) · X.breathe(after) · X.water(after,o)
+I.medal='<circle cx="12" cy="15" r="6"/><path d="M8.5 3.5L12 9l3.5-5.5"/><path d="M12 12.6l.9 1.7 1.9.3-1.4 1.3.3 1.9-1.7-.9-1.7.9.3-1.9-1.4-1.3 1.9-.3z"/>';
+I.spin='<circle cx="12" cy="12" r="9"/><path d="M12 3v9l6.4 6.4M12 12L5.6 18.4M12 12H3"/>';
+I.quote='<path d="M5 7h5v5c0 3-1.6 5-4.5 6M14 7h5v5c0 3-1.6 5-4.5 6"/>';
+I.drop='<path d="M12 3s6 6.5 6 11a6 6 0 0 1-12 0c0-4.5 6-11 6-11z"/>';
+I.wind='<path d="M3 8h11a3 3 0 1 0-3-3M3 12h16a3 3 0 1 1-3 3M3 16h7"/>';
+I.grid='<rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5"/><rect x="14" y="14" width="7" height="7" rx="1.5"/>';
+(function(){const s=document.createElement('style');s.textContent=`
+.xq{background:var(--acc-l);border:0;position:relative}.xq .qk{font:700 11px var(--sans);letter-spacing:.14em;color:var(--acc-d,var(--acc))}
+.xq .qt{font:600 21px/1.35 var(--serif);margin:8px 0 6px}.xq .qa{font-size:12.5px;color:var(--mute)}.xq .qb{display:flex;gap:6px;margin-top:12px;flex-wrap:wrap}
+.xbm{display:flex;flex-direction:column;justify-content:space-between}.xbm .em{font-size:30px;letter-spacing:4px;margin:8px 0}
+.xbg{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:12px}
+.xb{text-align:center;padding:16px 12px}.xb .e{font-size:36px;width:68px;height:68px;border-radius:50%;display:grid;place-items:center;margin:0 auto 8px;background:var(--acc-l)}
+.xb.lock .e{filter:grayscale(1);opacity:.4;background:var(--soft)}.xb b{display:block;font:600 16px/1.2 var(--serif)}.xb small{color:var(--mute);font-size:12px;display:block;margin-top:4px;line-height:1.35}
+.xb .d{font-size:11px;color:var(--acc);font-weight:700;margin-top:8px}.xb .bar{margin-top:10px}
+.xt{display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:14px}.xt .card{text-align:center}
+.xring{width:164px;height:164px;border-radius:50%;margin:6px auto 12px;display:grid;place-items:center}
+.xring>div{width:134px;height:134px;border-radius:50%;background:var(--card);display:grid;place-items:center;font:600 32px var(--serif)}
+.xt .card.done .xring>div{color:var(--acc)}.xbtns{display:flex;gap:6px;justify-content:center;flex-wrap:wrap}
+.xpre{display:flex;gap:8px;flex-wrap:wrap;margin:4px 0 2px}
+.xhb{display:grid;grid-template-columns:minmax(80px,140px) 1fr auto;gap:8px 10px;align-items:center;font-size:13px}.xhb .t{height:10px;border-radius:6px;background:var(--soft);overflow:hidden}.xhb .t i{display:block;height:100%;border-radius:6px;background:var(--acc)}.xhb b{font-variant-numeric:tabular-nums}
+.xheat{display:grid;grid-auto-flow:column;grid-template-rows:repeat(7,1fr);gap:3px;overflow-x:auto}.xheat i{width:14px;height:14px;border-radius:3px;background:var(--soft);display:block}
+.xpx{display:grid;grid-template-columns:22px repeat(12,1fr);gap:3px;font-size:10px;color:var(--mute);text-align:center}.xpx i{display:block;aspect-ratio:1;border-radius:3px;background:var(--soft);max-width:26px;margin:0 auto;width:100%}
+.xpx i.na{background:transparent}
+.xwh{position:relative;width:min(340px,86vw);margin:0 auto}.xwh svg{width:100%;display:block}.xwh .pt{position:absolute;left:50%;top:-6px;transform:translateX(-50%);width:0;height:0;border-left:13px solid transparent;border-right:13px solid transparent;border-top:24px solid var(--ink);z-index:2}
+.xwres{text-align:center;font:600 24px var(--serif);min-height:34px;margin-top:14px}
+.xbr{width:230px;height:230px;border-radius:50%;margin:24px auto;display:grid;place-items:center;background:radial-gradient(circle,var(--acc-l) 0,var(--acc-l) 55%,transparent 56%);position:relative}
+.xbr .c{position:absolute;inset:30px;border-radius:50%;background:var(--acc);opacity:.85;transform:scale(.55);transition:transform 4s ease-in-out}
+.xbr b{position:relative;color:#fff;font:600 22px var(--serif);text-shadow:0 1px 6px rgba(0,0,0,.25)}
+.xgl{display:flex;gap:6px;flex-wrap:wrap;justify-content:center;font-size:34px;margin:12px 0}.xgl span{opacity:.22;filter:grayscale(1)}.xgl span.on{opacity:1;filter:none}
+.xconf{position:fixed;top:-40px;font-size:26px;z-index:99;pointer-events:none;animation:xfall 1.7s ease-in forwards}@keyframes xfall{to{transform:translateY(110vh) rotate(540deg);opacity:.3}}
+@media(max-width:720px){.xq .qt{font-size:18px}.xring{width:140px;height:140px}.xring>div{width:112px;height:112px;font-size:27px}}`;document.head.appendChild(s)})();
+const X={};
+const xIso=d=>`${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,"0")}-${String(d.getDate()).padStart(2,"0")}`;
+const xToday=()=>xIso(new Date());
+const xDays=n=>[...Array(n)].map((_,i)=>{const d=new Date();d.setDate(d.getDate()-(n-1-i));return xIso(d)});
+const xNum=v=>+String(v??'').replace(/[^\d.-]/g,'')||0;
+const xCnt=(k,f)=>(S[k]||[]).filter(f||(()=>true)).length;
+const xTicks=k=>sum(S[k]||[],x=>Object.keys(x.log||{}).length);
+function xBest(k){const d=new Set();(S[k]||[]).forEach(x=>Object.keys(x.log||{}).forEach(z=>d.add(z)));let b=0,c=0,p=null;[...d].sort().forEach(z=>{const t=new Date(z+'T12:00');c=p&&Math.round((t-p)/864e5)===1?c+1:1;p=t;b=Math.max(b,c)});return b}
+function xByDay(arr,df,vf,n){const m={};arr.forEach(x=>{const d=x[df];if(d)m[d]=(m[d]||0)+(vf?+vf(x)||0:1)});return xDays(n).map(d=>m[d]||0)}
+function xByMonth(arr,df,vf,n){const now=new Date(),out=[];for(let i=n-1;i>=0;i--){const d=new Date(now.getFullYear(),now.getMonth()-i,1),k=xIso(d).slice(0,7);out.push([d.toLocaleDateString('en-US',{month:'short'}),sum(arr.filter(x=>String(x[df]||'').slice(0,7)===k),x=>vf?vf(x):1)])}return out}
+function xGroup(arr,kf,vf){const m={};arr.forEach(x=>{const k=kf(x)||'Other';m[k]=(m[k]||0)+(vf?+vf(x)||0:1)});return Object.entries(m).sort((a,b)=>b[1]-a[1])}
+const xDl=d=>new Date(d+'T12:00').toLocaleDateString('en-US',{weekday:'short'}).slice(0,2);
+// ---- charts ----
+function xLine(vals,labels,o={}){const W=320,H=o.h||150,p=18,n=vals.length;if(!n)return '<div class="empty">No data yet</div>';
+ const mn=o.zero?0:Math.min(...vals),mx=Math.max(...vals),r=(mx-mn)||1,X0=i=>p+(n<2?(W-2*p)/2:i*(W-2*p)/(n-1)),Y=v=>H-p-(v-mn)/r*(H-2*p-8);
+ const pts=vals.map((v,i)=>`${X0(i).toFixed(1)},${Y(v).toFixed(1)}`).join(' ');
+ return `<svg viewBox="0 0 ${W} ${H+14}" style="width:100%;height:auto;display:block"><polygon points="${X0(0)},${H-p} ${pts} ${X0(n-1)},${H-p}" style="fill:var(--acc);opacity:.12"/><polyline points="${pts}" fill="none" style="stroke:var(--acc)" stroke-width="2.4" stroke-linejoin="round" stroke-linecap="round"/>
+ ${vals.map((v,i)=>`<circle cx="${X0(i)}" cy="${Y(v)}" r="3.2" style="fill:var(--card);stroke:var(--acc)" stroke-width="2"/>`).join('')}
+ ${labels.map((l,i)=>(n<=12||i%Math.ceil(n/8)===0)?`<text x="${X0(i)}" y="${H+8}" text-anchor="middle" font-size="9" fill="#8C8378">${esc(l)}</text>`:'').join('')}
+ <text x="${p}" y="11" font-size="9" fill="#8C8378">${o.fmt?o.fmt(mx):Math.round(mx*10)/10}</text></svg>`}
+function xHBars(rows,fmt){const m=Math.max(1,...rows.map(r=>r[1]));return rows.length?`<div class="xhb">${rows.map(([k,v])=>`<span>${esc(k)}</span><div class="t"><i style="width:${Math.max(2,v/m*100)}%"></i></div><b>${fmt?fmt(v):Math.round(v*10)/10}</b>`).join('')}</div>`:'<div class="empty">No data yet</div>'}
+const XPAL=()=>X.pal||(PAL.length>=6?PAL:["var(--acc)","#E07A5F","#B8914E","#7A8FB8","#81B29A","#B5546B","#8C8378","#D8A25E"]);
+function xDonut(rows,center,lab){const t=rows.filter(r=>r[1]>0),P=XPAL();return t.length?`<div style="display:flex;gap:18px;align-items:center;flex-wrap:wrap;justify-content:center">${donut(t.map(([k,v],i)=>({v,c:P[i%P.length]})),160,center,lab||'')}<div class="legend">${t.map(([k,v,d],i)=>`<span><i style="background:${P[i%P.length]}"></i>${esc(k)}<b>${d!=null?d:v}</b></span>`).join('')}</div></div>`:'<div class="empty">No data yet</div>'}
+function xHeat(map,weeks){weeks=weeks||18;const t=new Date(),st=new Date(t);st.setDate(t.getDate()-t.getDay()-7*(weeks-1));const mx=Math.max(1,...Object.values(map));let s='';
+ for(let i=0;i<weeks*7;i++){const d=new Date(st);d.setDate(st.getDate()+i);const k=xIso(d),v=map[k]||0;s+=d>t?'<i style="background:transparent"></i>':`<i title="${k}: ${v}" style="${v?`background:var(--acc);opacity:${(.3+.7*v/mx).toFixed(2)}`:''}"></i>`}
+ return `<div class="xheat">${s}</div><div style="display:flex;justify-content:space-between;font-size:11px;color:var(--mute);margin-top:6px"><span>${weeks} weeks ago</span><span>Today</span></div>`}
+const xCard=(t,body,x)=>`<div class="card"><h3>${t}${x?`<span class="x">${x}</span>`:''}</h3>${body}</div>`;
+function xConfetti(e){return;const em=[e||'🎉','✨','⭐','🎊'];for(let i=0;i<22;i++){const s=document.createElement('span');s.className='xconf';s.textContent=em[i%em.length];s.style.left=Math.random()*100+'vw';s.style.animationDelay=Math.random()*.5+'s';document.body.appendChild(s);setTimeout(()=>s.remove(),2600)}}
+// ---- quotes of the day ----
+const XQ={list:null,off:0,tab:null};
+X.quotes=(list,o={})=>{XQ.list=list;if(!Array.isArray(S.favq))S.favq=[];
+ if(o.tab){addTab(o.tab,['inspire',o.label||'Inspiration','quote'],'myq',null,{q:'',by:''});
+  APP.P.inspire=()=>`${head(o.label||'Inspiration',o.sub||'Words to come back to. Tap ♡ to keep your favorites.',`<button class="btn" data-act="addrow" data-c="myq">${ic('plus',15)} Add my own</button>`)}
+  ${S.myq.length?`<h3 style="margin:4px 0 10px">My words</h3><div class="grid g3">${S.myq.map(q=>`<div class="card xq"><div style="display:flex;justify-content:flex-end">${del('myq',q)}</div><textarea data-c="myq" data-id="${q.id}" data-f="q" placeholder="Write a quote or mantra…" style="width:100%;min-height:70px;border:0;background:transparent;font:600 19px/1.35 var(--serif);resize:vertical">${esc(q.q)}</textarea>${inp('myq',q,'by',{ph:'— who said it',st:'font-size:12.5px;background:transparent;border:0'})}</div>`).join('')}</div>`:''}
+  <h3 style="margin:18px 0 10px">${S.favq.length?'Favorites first':'All quotes'}</h3><div class="grid g3">${XQ.list.slice().sort((a,b)=>S.favq.includes(b[0])-S.favq.includes(a[0])).map(([q,a])=>{const f=S.favq.includes(q);return `<div class="card xq" style="${f?'':'background:var(--card);border:1px solid var(--line)'}"><div class="qt" style="font-size:18px">“${esc(q)}”</div><div style="display:flex;justify-content:space-between;align-items:center"><span class="qa">${a?'— '+esc(a):''}</span><button class="btn ghost sm" data-act="xqfav" data-q="${esc(q)}">${f?'♥':'♡'}</button></div></div>`}).join('')}</div>`}};
+function xQuoteCard(){const L=XQ.list;if(!L||!L.length)return '';const d=Math.floor((Date.now()-new Date(new Date().getFullYear(),0,0))/864e5),[q,a]=L[(d+XQ.off)%L.length],f=S.favq.includes(q);
+ return `<div class="card xq"><div class="qk">QUOTE OF THE DAY</div><div class="qt">“${esc(q)}”</div>${a?`<div class="qa">— ${esc(a)}</div>`:''}<div class="qb"><button class="btn ghost sm" data-act="xqnext">↻ Another</button><button class="btn ghost sm" data-act="xqfav" data-q="${esc(q)}">${f?'♥ Saved':'♡ Save'}</button>${APP.pages.some(p=>p[0]==='inspire')?'<button class="btn ghost sm" data-go="inspire">All quotes →</button>':''}</div></div>`}
+// ---- badges ----
+const XB={defs:null};
+X.badges=(after,defs,label)=>{XB.defs=defs;XB.label=label||"Badges";addTab(after,['badges',label||'Badges','medal']);
+ const _c=APP.counts;APP.counts=()=>{const c=_c?_c():{};c.badges=xBadges().filter(b=>b.ok).length;return c};
+ APP.P.badges=()=>{const st=xBadges(),ok=st.filter(b=>b.ok).length,nx=st.filter(b=>!b.ok).sort((a,b)=>b.v/b.g-a.v/a.g)[0];
+  return `${head(label||'Badges',`${ok} of ${st.length} unlocked · they unlock on their own as you use the app`)}
+  <div class="grid g21" style="margin-bottom:16px"><div class="card"><h3>Your collection<span class="x">${pct(ok/st.length)}%</span></h3><div class="bar"><i style="width:${pct(ok/st.length)}%"></i></div><div style="font-size:26px;letter-spacing:4px;margin-top:12px">${st.filter(b=>b.ok).map(b=>b.e).join('')||'<span style="font-size:14px;color:var(--mute);letter-spacing:0">Your first badge is close…</span>'}</div></div>
+  <div class="card xq">${nx?`<div class="qk">NEXT UP</div><div class="qt" style="font-size:19px">${nx.e} ${esc(nx.n)}</div><div class="qa">${esc(nx.d)} · ${Math.round(nx.v)} / ${nx.g}</div><div class="bar" style="margin-top:10px"><i style="width:${pct(nx.v/nx.g)}%"></i></div>`:'<div class="qt">All badges unlocked! 🏆</div>'}</div></div>
+  <div class="xbg">${st.map(b=>`<div class="card xb ${b.ok?'':'lock'}"><div class="e">${b.e}</div><b>${esc(b.n)}</b><small>${esc(b.d)}</small>${b.ok?`<div class="d">✓ ${S._bdg&&S._bdg[b.n]?new Date(S._bdg[b.n]+'T12:00').toLocaleDateString('en-US',{month:'short',day:'numeric'}):'Unlocked'}</div>`:`<div class="bar"><i style="width:${pct(b.v/b.g)}%"></i></div><div class="d" style="color:var(--mute)">${Math.round(b.v)} / ${b.g}</div>`}</div>`).join('')}</div>`}};
+function xBadges(){return (XB.defs||[]).map(([e,n,d,f,g])=>{let v=0;try{v=+f()||0}catch(x){}const ok=v>=g||!!(S._bdg&&S._bdg[n]);return {e,n,d,v:ok?g:Math.min(v,g),g,ok}})}
+function xBadgeCheck(){if(!XB.defs)return;const fresh=!S._bdg||typeof S._bdg!=='object';if(fresh)S._bdg={};const nw=[];
+ (XB.defs||[]).forEach(([e,n,d,f,g])=>{let v=0;try{v=+f()||0}catch(x){}if(v>=g&&!S._bdg[n]){S._bdg[n]=xToday();nw.push(e+' '+n)}});
+ if(fresh||nw.length)save();if(nw.length&&!fresh)setTimeout(()=>{toast('🏅 Badge unlocked: '+nw[0]);xConfetti(nw[0].split(' ')[0])},350)}
+function xBadgeMini(){if(!XB.defs)return '';const st=xBadges(),ok=st.filter(b=>b.ok),nx=st.filter(b=>!b.ok).sort((a,b)=>b.v/b.g-a.v/a.g)[0];
+ return `<div class="card xbm"><div><h3>🏅 ${XB.label||"Badges"}<span class="x">${ok.length} / ${st.length}</span></h3><div class="em">${ok.slice(-6).map(b=>b.e).join('')||'—'}</div>${nx?`<small style="color:var(--mute)">Next: ${nx.e} ${esc(nx.n)} · ${Math.round(nx.v)}/${nx.g}</small><div class="bar" style="margin-top:6px"><i style="width:${pct(nx.v/nx.g)}%"></i></div>`:''}</div><button class="btn ghost sm" data-go="badges" style="align-self:flex-start;margin-top:12px">See all →</button></div>`}
+// ---- insights page ----
+X.insights=(after,tab,fn,sub)=>{addTab(after,tab);APP.P[tab[0]]=()=>`${head(tab[1],sub||'Your numbers, drawn for you. Everything updates on its own.')}${fn()}`};
+// ---- timers (several can run at once) ----
+const XT={list:[],iv:null,o:{}};
+function xBeep(){try{const a=new(window.AudioContext||window.webkitAudioContext)();[0,.35,.7].forEach(t=>{const o=a.createOscillator(),g=a.createGain();o.frequency.value=880;o.connect(g);g.connect(a.destination);g.gain.setValueAtTime(.001,a.currentTime+t);g.gain.exponentialRampToValueAtTime(.3,a.currentTime+t+.02);g.gain.exponentialRampToValueAtTime(.001,a.currentTime+t+.3);o.start(a.currentTime+t);o.stop(a.currentTime+t+.32)})}catch(e){}try{navigator.vibrate&&navigator.vibrate([200,100,200])}catch(e){}}
+const xFmt=s=>{s=Math.max(0,Math.ceil(s));const h=Math.floor(s/3600),m=Math.floor(s%3600/60),x=s%60;return (h?h+':'+String(m).padStart(2,'0'):m)+':'+String(x).padStart(2,'0')};
+function xRingBg(t){return `conic-gradient(var(--acc) ${((1-t.left/t.total)*360).toFixed(1)}deg,var(--acc-l) 0)`}
+function xTick(){let any=false,fin=false;XT.list.forEach(t=>{if(!t.run)return;t.left=Math.max(0,(t.end-Date.now())/1000);
+  if(t.left<=0){t.run=false;t.done=true;fin=true;xBeep();toast('⏰ '+t.label+' is done!');if(!Array.isArray(S.tlog))S.tlog=[];S.tlog.unshift({date:xToday(),label:t.label,min:Math.round(t.total/60)});S.tlog=S.tlog.slice(0,300);save()}else any=true;
+  const el=document.getElementById('xt-'+t.id);if(el){el.querySelector('.tm').textContent=xFmt(t.left);el.querySelector('.xring').style.background=xRingBg(t)}});
+ if(!any){clearInterval(XT.iv);XT.iv=null}if(fin&&page===XT.o.key)rerender()}
+function xTStart(){if(!XT.iv)XT.iv=setInterval(xTick,250)}
+X.timer=(after,tab,o)=>{XT.o=Object.assign({key:tab[0]},o);addTab(after,tab);if(!Array.isArray(S.tlog))S.tlog=[];
+ APP.P[tab[0]]=()=>{const lg=S.tlog||[],td=sum(lg.filter(x=>x.date===xToday()),x=>x.min),wk=xByDay(lg,'date',x=>x.min,7);
+  return `${head(o.title||tab[1],o.sub||'Tap a preset to start. Several timers can run at once.')}
+  <div class="card" style="margin-bottom:16px"><h3>Start a timer</h3><div class="xpre">${o.presets.map(([l,m])=>`<button class="chip" data-act="xtadd" data-l="${esc(l)}" data-m="${m}">▶ ${esc(l)} · ${m<1?Math.round(m*60)+' s':m+' min'}</button>`).join('')}</div>
+   <div class="addrow" style="margin-top:12px"><input class="fi" id="xtlab" placeholder="${esc(o.ph||'Name (optional)')}" style="flex:2"><input class="fi" id="xtmin" type="number" min="1" step="any" placeholder="Minutes" style="flex:1"><button class="btn" data-act="xtcustom">Start</button></div></div>
+  <div class="xt">${XT.list.map(t=>`<div class="card ${t.done?'done':''}" id="xt-${t.id}"><b style="font:600 18px var(--serif)">${esc(t.label)}</b><div class="xring" style="background:${xRingBg(t)}"><div class="tm">${t.done?'Done ✓':xFmt(t.left)}</div></div>
+   <div class="xbtns">${t.done?`<button class="btn sm" data-act="xtreset" data-id="${t.id}">↺ Again</button>`:`<button class="btn sm" data-act="xtgo" data-id="${t.id}">${t.run?'Pause':'Resume'}</button><button class="btn ghost sm" data-act="xtplus" data-id="${t.id}">+1 min</button>`}<button class="btn ghost sm" data-act="xtdel" data-id="${t.id}">×</button></div></div>`).join('')||'<div class="card empty">No timer running. Pick one above ⏱</div>'}</div>
+  ${o.log===false?'':`<div class="grid g2" style="margin-top:16px">${xCard(o.logTitle||'Minutes this week',bars(wk,xDays(7).map(xDl),130),`today ${td} min`)}${xCard('Recent sessions',`<div class="list">${lg.slice(0,6).map(x=>`<div class="it"><div style="flex:1">${esc(x.label)}</div><small style="color:var(--mute)">${x.min} min · ${new Date(x.date+'T12:00').toLocaleDateString('en-US',{month:'short',day:'numeric'})}</small></div>`).join('')||'<div class="empty" style="padding:12px">Finished timers show up here</div>'}</div>`,`${lg.length} total`)}</div>`}`}};
+// ---- spinner wheel ----
+const XW={rot:0,res:''};
+X.wheel=(after,tab,o)=>{XW.o=o;addTab(after,tab);
+ APP.P[tab[0]]=()=>{const L=xWOpts();return `${head(o.title||tab[1],o.sub||'Can’t decide? Let the wheel pick.')}
+ <div class="grid g21"><div class="card" style="padding:26px 16px">${L.length>1?`<div class="xwh"><div class="pt"></div>${xWheelSvg(L)}</div><div class="xwres" id="xwres">${esc(XW.res)}</div><div style="text-align:center;margin-top:10px"><button class="btn" data-act="xwspin">🎡 ${o.verb||'Spin the wheel'}</button></div>`:`<div class="empty">${o.empty||'Add a few items first'}</div>`}</div>
+ <div class="card"><h3>On the wheel<span class="x">${L.length}</span></h3><div class="list">${L.map(x=>`<div class="it">${esc(x)}</div>`).join('')}</div>${o.note?`<p style="color:var(--mute);font-size:12.5px;margin:12px 0 0">${o.note}</p>`:''}</div></div>`}};
+const xWOpts=()=>{let L=[];try{L=XW.o.opts().filter(Boolean).map(String)}catch(e){}return [...new Set(L)].slice(0,16)};
+const xDark=h=>{const m=/^#([0-9a-f]{6})$/i.exec(h||"");if(!m)return true;const n=parseInt(m[1],16);return (0.299*(n>>16)+0.587*(n>>8&255)+0.114*(n&255))<150};
+function xWheelSvg(L){const n=L.length,sg=360/n,R=150,c=160,P=a=>[c+R*Math.cos((a-90)*Math.PI/180),c+R*Math.sin((a-90)*Math.PI/180)];
+ return `<svg viewBox="0 0 320 320"><g id="xwg" style="transform-origin:160px 160px;transform:rotate(${XW.rot}deg)">${L.map((l,i)=>{const [x1,y1]=P(i*sg),[x2,y2]=P((i+1)*sg),m=i*sg+sg/2;
+  const th=m-90,lf=th>90&&th<270;return `<path d="M${c} ${c} L${x1.toFixed(1)} ${y1.toFixed(1)} A${R} ${R} 0 ${sg>180?1:0} 1 ${x2.toFixed(1)} ${y2.toFixed(1)}z" fill="${PAL[i%PAL.length]}" stroke="#fff" stroke-width="2"/><text transform="rotate(${lf?th-180:th} ${c} ${c})" x="${lf?c-R+12:c+R-12}" y="${c+4}" text-anchor="${lf?"start":"end"}" font-size="${n>10?10:12}" font-weight="700" fill="${xDark(PAL[i%PAL.length])?"#fff":"#3A3029"}">${esc(l.length>18?l.slice(0,17)+'…':l)}</text>`}).join('')}</g><circle cx="${c}" cy="${c}" r="22" style="fill:var(--card)" stroke="#fff" stroke-width="3"/><text x="${c}" y="${c+6}" text-anchor="middle" font-size="18">✨</text></svg>`}
+// ---- year in pixels ----
+X.pixels=(after,tab,o)=>{addTab(after,tab);
+ APP.P[tab[0]]=()=>{const y=new Date().getFullYear(),m=o.get(),C=o.colors;let h='<span></span>'+'JFMAMJJASOND'.split('').map(x=>`<b>${x}</b>`).join('');
+  for(let d=1;d<=31;d++){h+=`<span>${d}</span>`;for(let mo=0;mo<12;mo++){const dt=new Date(y,mo,d);if(dt.getMonth()!==mo){h+='<i class="na"></i>';continue}const k=`${y}-${String(mo+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`,v=m[k];h+=`<i title="${k}${v?': '+o.labels[v-1]:''}" style="${v?'background:'+C[v-1]:''}"></i>`}}
+  const cnt=o.labels.map((l,i)=>[l,Object.values(m).filter(v=>v===i+1).length]);
+  return `${head(tab[1],o.sub||'One little square for every day of the year.')}<div class="grid g21"><div class="card"><h3>${y}<span class="x">${Object.keys(m).filter(k=>k.startsWith(y)).length} days logged</span></h3><div class="xpx">${h}</div></div>
+  <div class="grid" style="align-content:start"><div class="card"><h3>Legend</h3><div class="list">${o.labels.map((l,i)=>`<div class="it"><i style="width:16px;height:16px;border-radius:4px;background:${C[i]};display:inline-block"></i><div style="flex:1">${l}</div><b>${cnt[i][1]}</b></div>`).join('')}</div></div>${o.side?o.side():''}</div></div>`}};
+// ---- breathing ----
+const XBR={on:false,pat:'box',iv:null};
+const XBP={box:['Box breathing',[['Breathe in',4],['Hold',4],['Breathe out',4],['Hold',4]]],calm:['4 · 7 · 8 relax',[['Breathe in',4],['Hold',7],['Breathe out',8]]],easy:['Easy calm',[['Breathe in',4],['Breathe out',6]]]};
+X.breathe=(after)=>{addTab(after,['breathe','Breathe','wind']);
+ APP.P.breathe=()=>`${head('Breathe','A one-minute reset. Follow the circle.')}<div class="grid g21"><div class="card" style="text-align:center"><div class="tabs" style="justify-content:center">${Object.entries(XBP).map(([k,[l]])=>`<button class="${XBR.pat===k?'on':''}" data-act="xbrpat" data-p="${k}">${l}</button>`).join('')}</div>
+  <div class="xbr"><div class="c" id="xbrc"></div><b id="xbrt">${XBR.on?'…':'Ready'}</b></div><button class="btn" data-act="xbrgo">${XBR.on?'Stop':'▶ Start'}</button><p style="color:var(--mute);font-size:13px;margin:12px 0 0" id="xbrn">${XBR.n?XBR.n+' breaths today':''}</p></div>
+  <div class="card"><h3>When to use it</h3><div class="list"><div class="it">😮‍💨 Before a hard conversation</div><div class="it">🛏 When you can’t fall asleep (try 4·7·8)</div><div class="it">💻 Between two tasks</div><div class="it">🌀 When everything feels like too much</div></div></div></div>`};
+function xBrRun(){const [,ph]=XBP[XBR.pat];let i=0;const step=()=>{if(!XBR.on)return;const [l,s]=ph[i%ph.length],c=$('#xbrc'),t=$('#xbrt');if(!c){XBR.on=false;return}
+ c.style.transitionDuration=s+'s';c.style.transform=l==='Breathe in'?'scale(1)':l==='Breathe out'?'scale(.55)':c.style.transform;let k=s;t.textContent=l+' · '+k;
+ clearInterval(XBR.iv);XBR.iv=setInterval(()=>{k--;if(k>0&&$('#xbrt'))$('#xbrt').textContent=l+' · '+k},1000);
+ if(i%ph.length===ph.length-1){XBR.n=(XBR.n||0)+1}i++;XBR.to=setTimeout(step,s*1000)};step()}
+// ---- water ----
+X.water=(after,o={})=>{const g=o.goal||8;XWG=g;addTab(after,['water',o.label||'Water','drop']);if(!S.water||typeof S.water!=='object'||Array.isArray(S.water))S.water={};
+ APP.P.water=()=>{const n=S.water[xToday()]||0,wk=xDays(7).map(d=>S.water[d]||0),hit=Object.values(S.water).filter(v=>v>=g).length;
+  return `${head(o.label||'Water',`Goal: ${g} glasses a day · goal reached ${hit} days`)}<div class="grid g21"><div class="card" style="text-align:center"><div style="font:600 46px var(--serif)">${n} <span style="font-size:20px;color:var(--mute)">/ ${g}</span></div><div class="xgl">${[...Array(Math.max(g,n))].map((_,i)=>`<span class="${i<n?'on':''}">💧</span>`).join('')}</div>
+  <div class="xbtns"><button class="btn" data-act="xwat" data-d="1">+ 1 glass</button><button class="btn ghost" data-act="xwat" data-d="-1">− 1</button></div>${n>=g?'<p style="margin:12px 0 0;font-weight:700;color:var(--acc)">Goal reached today 🎉</p>':''}</div>${xCard('Last 7 days',bars(wk,xDays(7).map(xDl),140))}</div>`}};
+// ---- actions ----
+Object.assign(CORE_ACT,{
+ xqnext:()=>{XQ.off++;rerender()},
+ xqfav:t=>{const q=t.dataset.q;S.favq=S.favq.includes(q)?S.favq.filter(x=>x!==q):[q,...S.favq];save();rerender();toast(S.favq.includes(q)?'Saved ♥':'Removed')},
+ xtadd:t=>{const m=+t.dataset.m;XT.list.unshift({id:uid(),label:t.dataset.l,total:m*60,left:m*60,end:Date.now()+m*6e4,run:true});xTStart();rerender()},
+ xtcustom:()=>{const m=+$('#xtmin').value;if(!(m>0)){toast('Type the minutes first');return}const l=$('#xtlab').value.trim()||(m+' min timer');XT.list.unshift({id:uid(),label:l,total:m*60,left:m*60,end:Date.now()+m*6e4,run:true});xTStart();rerender()},
+ xtgo:t=>{const x=XT.list.find(z=>z.id===t.dataset.id);if(!x)return;if(x.run){x.run=false;x.left=Math.max(0,(x.end-Date.now())/1000)}else{x.run=true;x.end=Date.now()+x.left*1000;xTStart()}rerender()},
+ xtplus:t=>{const x=XT.list.find(z=>z.id===t.dataset.id);if(!x)return;x.total+=60;x.left+=60;x.end+=6e4;rerender()},
+ xtreset:t=>{const x=XT.list.find(z=>z.id===t.dataset.id);if(!x)return;x.done=false;x.run=true;x.left=x.total;x.end=Date.now()+x.total*1000;xTStart();rerender()},
+ xtdel:t=>{XT.list=XT.list.filter(z=>z.id!==t.dataset.id);rerender()},
+ xwspin:()=>{const L=xWOpts(),n=L.length;if(n<2)return;const w=Math.floor(Math.random()*n),sg=360/n,ac=(w+.5)*sg,cur=((XW.rot%360)+360)%360,need=((360-ac-cur)%360+360)%360;XW.rot+=1440+need;
+  const g=document.getElementById('xwg'),r=$('#xwres');if(r)r.textContent='…';if(g){g.style.transition='transform 3.4s cubic-bezier(.17,.67,.15,1)';g.style.transform=`rotate(${XW.rot}deg)`}
+  setTimeout(()=>{XW.res=(XW.o.prefix||'')+L[w];const r2=$('#xwres');if(r2)r2.textContent=XW.res;xConfetti(XW.o.emoji||'🎉')},3500)},
+ xbrpat:t=>{XBR.pat=t.dataset.p;XBR.on=false;clearTimeout(XBR.to);clearInterval(XBR.iv);rerender()},
+ xbrgo:()=>{XBR.on=!XBR.on;clearTimeout(XBR.to);clearInterval(XBR.iv);rerender();if(XBR.on)setTimeout(xBrRun,50)},
+ xwat:t=>{const k=xToday();S.water[k]=Math.max(0,(S.water[k]||0)+(+t.dataset.d));save();rerender();if(+t.dataset.d>0&&S.water[k]===(XWG||8))xConfetti('💧')}});
+let XWG=8;
+// ---- dashboard row (quote + badges) & badge check on every render ----
+
+// ---- sections with sub-tabs (pro layout) ----
+// X.section(key,[[sub,label,fn]...]) · X.layout([[key,label,icon]...]) · X.dash(fn) adds a dashboard card
+X.section=(key,subs)=>{APP.P[key]=()=>{const cur=F["sub_"+key]||subs[0][0],s=subs.find(x=>x[0]===cur)||subs[0];let h="";try{h=s[2]()}catch(e){h=`<div class="card empty">${esc(e.message)}</div>`}
+ const bar=`<div class="tabs xsub">${subs.map(([k,l])=>`<button class="${k===s[0]?"on":""}" data-flt="sub_${key}:${k}">${l}</button>`).join("")}</div>`;
+ const i=h.indexOf(`<div class="top">`);if(i<0)return bar+h;const r=h.indexOf(`<div class="r">`,i),j=h.indexOf("</div></div>",r)+12;return h.slice(0,j)+bar+h.slice(j)}};
+X.go=(key,sub)=>{if(sub)F["sub_"+key]=sub;page=key;history.replaceState(null,"","#"+key);render()};
+X.layout=L=>{APP.pages=L};
+const XDC=[];X.dash=fn=>XDC.push(fn);
+function xTable(c,rows,cols,o={}){const w={chk:"40px",num:"84px",money:"100px",date:"145px",time:"105px",thumb:"56px",stars:"118px"};
+ return `<div class="tblw"><table class="tbl"><tr>${cols.map(k=>`<th class="${["num","money","calc"].includes(k[2])?"num":""}">${k[1]}</th>`).join("")}${o.nodel?"":"<th></th>"}</tr>${rows.map(x=>`<tr>${cols.map(k=>`<td style="${w[k[2]]?"width:"+w[k[2]]:""}${k[2]==="calc"?";text-align:right;white-space:nowrap;font-variant-numeric:tabular-nums":""}">${k[2]==="calc"?k[3](x):cellFor(c,x,k)}</td>`).join("")}${o.nodel?"":`<td>${del(c,x)}</td>`}</tr>`).join("")}</table>${rows.length?"":`<div class="empty">${o.empty||"Nothing yet"}</div>`}</div>`}
+Object.assign(CORE_ACT,{xgo:t=>X.go(t.dataset.k,t.dataset.s)});
+(function(){const s=document.createElement("style");s.textContent=`.xsub{margin:-4px 0 18px;overflow-x:auto;flex-wrap:nowrap;scrollbar-width:none}.xsub::-webkit-scrollbar{display:none}.xsub button{white-space:nowrap}
+.xday{display:flex;flex-direction:column;gap:8px}.xday.today{outline:2px solid var(--acc);outline-offset:-2px}.xday .dn{display:flex;justify-content:space-between;align-items:center}.xday .dn b{font:600 18px var(--serif)}.xday textarea{width:100%;min-height:150px;border:1px solid var(--line);border-radius:12px;padding:8px 10px;font:500 13px/1.5 var(--sans);background:transparent;color:inherit;resize:vertical}
+.xpill{display:inline-block;padding:3px 10px;border-radius:20px;background:var(--acc-l);color:var(--acc-d,var(--acc));font-size:12px;font-weight:700}
+.xmeter{display:grid;grid-template-columns:90px 1fr auto;gap:6px 10px;align-items:center;font-size:13px}.xmeter .t{height:9px;border-radius:6px;background:var(--soft);overflow:hidden}.xmeter .t i{display:block;height:100%;background:var(--acc);border-radius:6px}.xmeter .t i.over{background:var(--red,#C0503F)}
+.xcal{display:grid;grid-template-columns:repeat(7,1fr);gap:6px}.xcal .h{font-size:11px;color:var(--mute);text-align:center;font-weight:700}.xcal .c{min-height:76px;border:1px solid var(--line);border-radius:12px;padding:6px;font-size:11px;display:flex;flex-direction:column;gap:3px}.xcal .c.o{opacity:.35}.xcal .c.t{border-color:var(--acc);box-shadow:inset 0 0 0 1px var(--acc)}.xcal .c b{font-size:12px}.xcal .c span{border-radius:6px;padding:1px 5px;background:var(--acc-l);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.xcal .c span.p{background:transparent;border:1px dashed var(--line);color:var(--mute)}
+.xprog{display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:14px}.xprog .card.on{outline:2px solid var(--acc)}
+@media(max-width:720px){.xcal .c{min-height:54px;font-size:9px}.xcal .c span{padding:0 3px}}`;document.head.appendChild(s)})();
+
+// ---- gentle review ask: paid apps only, after 3 days of use, never with an incentive (Etsy rules) ----
+const XRV={k:KEY+'-rv',v:null};
+try{if(!DEMO){XRV.v=JSON.parse(localStorage.getItem(XRV.k)||'null');if(!XRV.v){XRV.v={first:Date.now(),snooze:0,done:0};localStorage.setItem(XRV.k,JSON.stringify(XRV.v))}}}catch(e){}
+const xrvSave=()=>{try{localStorage.setItem(XRV.k,JSON.stringify(XRV.v))}catch(e){}};
+X.dash(()=>{const v=XRV.v;if(!v||v.done||Date.now()-v.first<3*864e5)return '';
+ return `<div class="card" style="margin-bottom:16px;display:flex;gap:16px;align-items:center;flex-wrap:wrap;border:1px solid var(--line)"><div style="font-size:30px">💛</div><div style="flex:1;min-width:220px"><b style="font:600 18px var(--serif)">Enjoying ${esc(document.title)}?</b><div style="color:var(--mute);font-size:13.5px;margin-top:4px">If it helps you, a short review on Etsy means a lot to a small shop. Something not right? Message me on Etsy first and I’ll fix it.</div></div><div class="xbtns"><a class="btn sm" href="https://www.etsy.com/your/purchases" target="_blank" rel="noopener" data-act="xrvgo">Leave a review</a><button class="btn ghost sm" data-act="xrvlater">Not now</button><button class="btn ghost sm" data-act="xrvdone">Already did</button></div></div>`});
+Object.assign(CORE_ACT,{xrvgo:()=>{XRV.v.done=1;xrvSave();setTimeout(rerender,300)},xrvdone:()=>{XRV.v.done=1;xrvSave();rerender()},
+ xrvlater:()=>{XRV.v.snooze++;if(XRV.v.snooze>=2)XRV.v.done=1;else XRV.v.first=Date.now()+11*864e5;xrvSave();rerender()}});
+// ---- dashboard alerts (due soon, use soon…) ----
+const XA=[];X.alert=fn=>XA.push(fn);
+function xAlerts(){const L=[];XA.forEach(f=>{try{(f()||[]).forEach(x=>L.push(x))}catch(e){}});return L.length?`<div class="card" style="margin-bottom:16px;border-left:5px solid var(--acc)"><h3>🔔 Heads up<span class="x">${L.length}</span></h3><div class="list">${L.slice(0,6).map(x=>`<div class="it">${x}</div>`).join("")}</div></div>`:""}
+const xDaysTo=d=>d?Math.round((new Date(d+"T12:00")-new Date(xToday()+"T12:00"))/864e5):null;
+const _xview=view;
+view=function(){if(!Array.isArray(S.favq))S.favq=[];if(!Array.isArray(S.tlog))S.tlog=[];if(!S.water||typeof S.water!=="object"||Array.isArray(S.water))S.water={};const h=_xview();xBadgeCheck();if(page!=='dashboard'||S.focus)return h;const q=xQuoteCard(),b=xBadgeMini(),al=xAlerts();if(!q&&!b&&!al&&!XDC.length)return h;
+ const dx=XDC.map(f=>{try{return f()}catch(e){return ""}}).join("");const row=al+dx+(q||b?`<div class="grid ${q&&b?'g21':''}" style="margin-bottom:16px">${q}${b}</div>`:''),mk='<div style="height:16px"></div>',i=h.indexOf(mk);if(X.dashEnd)return h.replace(/(<div style="margin-top:16px"><div class="card"><h3>🧠 Brain dump)/,`<div style="margin-top:16px">${row}</div>$1`);return i>=0?h.slice(0,i+mk.length)+row+h.slice(i+mk.length):row+h};
+
+// ===== CLEANING PRO: today (auto list) · speed clean (5/15/30/60 plans, wheel, timer) · rooms (dirtiness, all tasks, upcoming, daily reset) · family (fair split, kids chart) · laundry · projects (seasonal deep clean, big jobs, declutter) · supplies · data · photos & notes =====
+const C_FQ={'Daily':1,'Every 2 days':2,'Twice a week':3,'Weekly':7,'Every 2 weeks':14,'Monthly':30,'Every 3 months':91,'Seasonal':91,'Twice a year':182,'Yearly':365};
+const C_FL=Object.keys(C_FQ);
+const C_SH={'Full share':1,'Half share':.5,'Small share (kid)':.25};
+const C_GUEST=['Kitchen','Bathroom','Living room','Entry'];
+const cD=n=>{const d=new Date();d.setDate(d.getDate()-n);return xIso(d)};
+const cAdd=(iso,n)=>{const d=new Date(iso+'T12:00');d.setDate(d.getDate()+Math.round(n));return xIso(d)};
+const cWd=()=>(new Date().getDay()+6)%7;
+const cMon=()=>cD(cWd());
+const cInt=t=>C_FQ[t.freq]||7;
+const cName=t=>t.task||t.load||'';
+const cMin=t=>xNum(t.min)||(t.load?10:30);
+function cNext(t){if(t.last)return cAdd(t.last,cInt(t));const i=WD.indexOf(t.day);if(i>=0&&i<7)return cAdd(cMon(),i);return xToday()}
+const cDueIn=t=>xDaysTo(cNext(t));
+function cLvl(t){if(!t.last){const d=cDueIn(t);return d>0?Math.max(0,1-d/cInt(t)):1+(-d)/cInt(t)}return Math.max(0,(xDaysTo(xToday())-xDaysTo(t.last))/cInt(t))}
+const cClean=t=>Math.max(0,Math.min(1,1.3-cLvl(t)));
+const cCol=l=>l<.6?'#5BA88B':l<1?'#D9A441':l<1.6?'#E07A5F':'#C0503F';
+function cStatus(t){const d=cDueIn(t);return d<0?(-d)+(d===-1?' day':' days')+' overdue':d===0?'Due today':d===1?'Tomorrow':'In '+d+' days'}
+const cAll=()=>[...S.tasks.map(t=>['tasks',t]),...S.deep.map(t=>['deep',t])];
+const cDue=()=>cAll().filter(([c,t])=>cDueIn(t)<=0).sort((a,b)=>cLvl(b[1])-cLvl(a[1]));
+const cRooms=()=>{const s=[...new Set([...ROOMS,...S.tasks.map(t=>t.room),...S.deep.map(t=>t.room)].filter(Boolean))];return s.filter(r=>S.tasks.some(t=>t.room===r)||S.deep.some(t=>t.room===r))};
+const cRoomScore=r=>{const L=cAll().filter(([c,t])=>t.room===r);return L.length?sum(L,([c,t])=>cClean(t))/L.length:1};
+const cHome=()=>{const L=cAll();return L.length?sum(L,([c,t])=>cClean(t))/L.length:1};
+const cWho=()=>[''].concat(S.fam.map(p=>p.name).filter(Boolean),['Everyone']);
+const cWeekMin=t=>cMin(t)*7/cInt(t);
+// ---- complete / undo ----
+function cComplete(c,t,silent){const td=xToday();if(t.last!==td)t.prev=t.last||'';t.last=td;t.done=true;
+ if(!S.clog.some(x=>x.tid===t.id&&x.date===td))S.clog.unshift({id:uid(),date:td,t:cName(t),room:t.room||'Laundry',min:cMin(t),who:t.who||'',tid:t.id});S.clog=S.clog.slice(0,1500);if(!silent)save()}
+function cUndo(t){const td=xToday();if(t.last===td){t.last=t.prev||'';S.clog=S.clog.filter(x=>!(x.tid===t.id&&x.date===td))}else{t.prev=t.last||'';t.last=cAdd(td,-cInt(t))}}
+// keep "done" = done for the current cycle; reset happens on its own when the task is due again
+function cSync(){['tasks','deep','laundry'].forEach(c=>(S[c]||[]).forEach(t=>{if(c!=='laundry'&&!t.freq)t.freq=c==='deep'?'Monthly':'Weekly';if(c==='laundry'&&!t.freq)t.freq='Weekly';
+  if(t.done&&!t.last){const i=WD.indexOf(t.day);t.last=i>=0&&i<cWd()?cAdd(cMon(),i):xToday()}
+  if(t.done&&cDueIn(t)<=0&&t.last!==xToday())cComplete(c,t,1);t.done=cDueIn(t)>0}));
+ (S.supplies||[]).forEach(x=>{if(!x.lvl)x.lvl=x.got?'Full':'Out'});
+ const sn=cSeason();if(S.ssn!==sn){if(S.ssn)S.season.forEach(x=>x.done=false);S.ssn=sn}
+ if(!S.dcStart)S.dcStart=cD(S.declutter.filter(x=>x.done).length)}
+function cSeason(){const m=new Date().getMonth(),y=new Date().getFullYear();return (m<2||m===11?'Winter':m<5?'Spring':m<8?'Summer':'Fall')+' '+(m===11?y+1:y)}
+// ---- seeds ----
+const C_TASKS=[['Wipe counters & stovetop','Kitchen','Daily',5,'Me'],['Run & empty dishwasher','Kitchen','Daily',10,'Alex'],['Sweep kitchen floor','Kitchen','Every 2 days',5,'Emma'],['Clean sink & faucet','Kitchen','Twice a week',5,'Me'],['Clean microwave','Kitchen','Weekly',5,'Noah'],['Mop kitchen floor','Kitchen','Weekly',15,'Alex'],['Wipe appliance fronts','Kitchen','Weekly',10,'Me'],['Clean out the fridge','Kitchen','Weekly',15,'Alex'],['Wipe cabinet doors','Kitchen','Monthly',20,'Me'],
+ ['Wipe sink & mirror','Bathroom','Twice a week',5,'Me'],['Clean toilet','Bathroom','Weekly',10,'Alex'],['Scrub shower & tub','Bathroom','Weekly',20,'Me'],['Mop bathroom floor','Bathroom','Weekly',10,'Alex'],['Wash bath mats & towels','Bathroom','Every 2 weeks',5,'Me'],
+ ['Change bed sheets','Bedroom','Weekly',15,'Me'],['Vacuum bedrooms','Bedroom','Weekly',15,'Alex'],['Dust nightstands & dressers','Bedroom','Every 2 weeks',10,'Emma'],['Declutter nightstand','Bedroom','Monthly',10,'Me'],
+ ['Tidy & fluff cushions','Living room','Every 2 days',5,'Noah'],['Vacuum living room','Living room','Weekly',20,'Alex'],['Dust shelves & TV','Living room','Every 2 weeks',10,'Emma'],['Wipe switches & door handles','Whole house','Monthly',10,'Me'],
+ ['Shoes & coats away','Entry','Twice a week',5,'Noah'],['Sweep entry','Entry','Weekly',5,'Emma'],['Clean front door & glass','Entry','Monthly',10,'Alex'],
+ ['Clean lint trap','Laundry','Weekly',2,'Me'],['Washer hot clean cycle','Laundry','Monthly',15,'Alex'],['Water plants','Outdoor','Twice a week',5,'Emma'],['Sweep porch','Outdoor','Every 2 weeks',10,'Alex'],
+ ['Empty all trash bins','Whole house','Weekly',10,'Noah'],['Dust baseboards','Whole house','Monthly',25,'Me']];
+const C_F=[.4,1.2,.9,1.6,.5,.95,.7,1.3,.3,.85,.6,.6,1.4,.2,.9,.75,.95,.45,1.15,.65,1.8,.35,.8,.55,.7,.8,.25,1.5,.6,.9,.9];
+function cSeedTasks(staggered){return C_TASKS.map(([task,room,freq,min,who],i)=>{const n=C_FQ[freq],f=staggered?((i*37)%90)/100:C_F[i%C_F.length];return {id:uid(),task,room,freq,min,who:staggered?'Me':who,day:'Any day',last:cD(Math.round(n*f)),done:false}})}
+function cSeedDeep(){return [['Clean the oven','Kitchen','Monthly',45,24],['Descale kettle & coffee maker','Kitchen','Monthly',15,5],['Deep clean grout','Bathroom','Monthly',40,38],['Clean behind the fridge','Kitchen','Seasonal',30,70],['Wash pillows & duvets','Bedroom','Seasonal',30,95],['Wash windows','Whole house','Seasonal',60,50],['Flip & vacuum mattress','Bedroom','Twice a year',20,120],['Replace HVAC filter','Whole house','Every 3 months',10,85]].map(([task,room,freq,min,ago])=>({id:uid(),task,room,freq,min,last:cD(ago),done:false}))}
+function cSeedLog(s){const o=[],nm={};s.fam.forEach(p=>nm[p.name]=1);[...s.tasks,...s.deep].forEach(t=>{const n=C_FQ[t.freq]||7;let d=-xDaysTo(t.last);while(d<=56){o.push({id:uid(),date:cD(d),t:t.task,room:t.room,min:t.min||30,who:t.who||'',tid:t.id});d+=n+((d*7)%3===0&&n>2?1:0)}});
+ (s.laundry||[]).forEach(t=>{const n=C_FQ[t.freq]||7;let d=-xDaysTo(t.last);while(d<=56){o.push({id:uid(),date:cD(d),t:t.load,room:'Laundry',min:t.min||10,who:t.who||'',tid:t.id});d+=n}});return o.sort((a,b)=>b.date.localeCompare(a.date))}
+const C_FAM=[['Me','Full share','#3E8E86'],['Alex','Full share','#4F8FBF'],['Emma','Small share (kid)','#B5546B'],['Noah','Small share (kid)','#B8914E']];
+const C_SUP=[['All-purpose spray','General','Full','Target',4.49],['Dish soap','Kitchen','Low','Costco',3.99],['Microfiber cloths','General','Full','Amazon',12.99],['Trash bags','General','Out','Costco',15.99],['Laundry pods','Laundry','Low','Costco',19.99],['Toilet cleaner','Bathroom','Half','Target',3.49],['Sponges','Kitchen','Out','Target',4.99],['Glass cleaner','General','Half','Target',3.99],['Dishwasher tablets','Kitchen','Half','Costco',17.99],['Mop pads','Floors','Full','Amazon',14.99],['Stain remover','Laundry','Low','Target',5.49],['Baking soda','General','Full','Walmart',1.99],['White vinegar','General','Half','Walmart',3.29],['Paper towels','General','Low','Costco',21.99]];
+// ---- tabs / arrays ----
+(function(){let ex=false;try{ex=!!localStorage.getItem(KEY)}catch(e){}
+ if(ex&&!Array.isArray(S.fam)){const w=[...new Set(S.tasks.map(t=>t.who).filter(x=>x&&!/^(everyone|kids)$/i.test(x)))];S.fam=(w.length?w:['Me']).map((n,i)=>({id:uid(),name:n,w:'Full share',col:PAL[i%PAL.length]}))}
+ if(ex&&!Array.isArray(S.clog))S.clog=[]})();
+addTab('daily',['_fam','Family','guests'],'fam',()=>C_FAM.map(([name,w,col])=>({name,w,col})),{name:'New person',w:'Full share',col:'#81B29A'});
+addTab('daily',['_clog','History','chart'],'clog',null,{date:xToday(),t:'',room:'Kitchen',min:10,who:''});
+addTab('daily',['_laundry','Laundry','drop'],'laundry',()=>[['Darks','Weekly','Monday','Cold',15,'Me',3],['Whites & lights','Weekly','Thursday','Warm',15,'Alex',6],['Towels','Weekly','Saturday','Hot',10,'Me',8],['Bed sheets','Weekly','Sunday','Hot',15,'Alex',4],['Kids’ clothes','Twice a week','Any day','Cold',15,'Me',2],['Workout clothes','Twice a week','Any day','Cold',10,'Alex',4],['Delicates (hand wash)','Every 2 weeks','Any day','Cold',20,'Me',9],['Kitchen towels & cloths','Weekly','Any day','Hot',10,'Me',5]].map(([load,freq,day,temp,min,who,ago])=>({load,freq,day,temp,min,who,last:cD(ago),done:false})),{load:'New load',freq:'Weekly',day:'Any day',temp:'Cold',min:10,who:'',last:'',done:false},true);
+addTab('daily',['_season','Seasonal','leaf'],'season',()=>[['Kitchen','Empty & wipe every cabinet and drawer',1],['Kitchen','Degrease range hood & filter',1],['Kitchen','Clean oven, racks & stovetop knobs',0],['Kitchen','Pull out & clean behind appliances',0],['Kitchen','Wash the trash can',1],['Bathroom','Wash shower curtain & liner',1],['Bathroom','Toss expired meds & products',0],['Bathroom','Clean exhaust fan cover',0],['Bedroom','Wash pillows, duvets & mattress pad',0],['Bedroom','Swap seasonal clothes & donate',1],['Bedroom','Clean under the beds',0],['Living room','Wash or steam curtains',0],['Living room','Shampoo rugs & upholstery',0],['Living room','Dust ceiling fans & light fixtures',1],['Whole house','Wash windows & screens',0],['Whole house','Wipe walls, doors & trim',0],['Whole house','Vacuum vents & replace HVAC filter',1],['Whole house','Test smoke & CO detectors',1],['Whole house','Dust blinds',0],['Laundry','Clean dryer vent & washer filter',0],['Outdoor','Clean patio furniture',0],['Outdoor','Clear gutters & sweep porch',0]].map(([room,task,d])=>({room,task,done:!!d})),{room:'Kitchen',task:'New task',done:false},true);
+addTab('deep',['_declutter','30-day declutter','box'],'declutter',()=>['Junk drawer','Fridge & freezer','Shoes by the door','Bathroom cabinet','Old towels','Spice rack','Coffee mugs','Nightstand','Makeup & skincare','Kids’ broken toys','Food storage lids','Coat closet','Under the sink','Old magazines','Phone photos (50)','Charging cables','Linen closet','Expired pantry food','Socks without pairs','Car glovebox','Desk','Email inbox (50)','Tupperware','Books to donate','Kitchen gadgets','Bags & purses','Holiday decor box','Hair products','Bookshelf','Walk through & celebrate'].map((t,i)=>({day:i+1,task:t,done:false,out:''})),{day:31,task:'New spot',done:false,out:''},true);
+APP.defaults.tasks={task:'New task',room:'Kitchen',freq:'Weekly',day:'Any day',who:'',min:10,last:'',done:false};
+APP.defaults.deep={task:'New big job',room:'Kitchen',freq:'Monthly',min:30,last:'',done:false};
+APP.defaults.supplies={item:'New item',cat:'General',lvl:'Full',store:'',price:'',got:true};
+APP.defaults.declutter={day:31,task:'New spot',done:false,out:''};
+// first visit (demo): realistic data
+function cDemoPatch(s){s.fam=C_FAM.map(([name,w,col])=>({id:uid(),name,w,col}));s.tasks=cSeedTasks();s.deep=cSeedDeep();
+ s.supplies=C_SUP.map(([item,cat,lvl,store,price])=>({id:uid(),item,cat,lvl,store,price,got:lvl==='Full'||lvl==='Half'}));
+ s.declutter.forEach((x,i)=>{x.done=i<11;x.out=i<11?[6,14,4,9,3,7,11,5,8,2,10][i]:''});s.dcStart=cD(11);
+ s.clog=cSeedLog(s);s.ssn=cSeason();return s}
+let cFirst=false;try{cFirst=!localStorage.getItem(KEY)}catch(e){}
+if(cFirst)cDemoPatch(S);
+const _cd=APP.demo;APP.demo=()=>cDemoPatch(_cd());
+const _cb=APP.blank;APP.blank=()=>{const s=_cb();s.tasks=cSeedTasks(true);s.fam=[{id:uid(),name:'Me',w:'Full share',col:'#3E8E86'}];s.clog=[];s.chores=[];s.dcStart=xToday();
+ s.supplies=C_SUP.map(([item,cat,,store])=>({id:uid(),item,cat,lvl:'Full',store,price:'',got:true}));s.daily=[['Make the bed'],['Dishes & wipe counters'],['10-minute tidy'],['One load of laundry']].map(([n],i)=>({id:uid(),name:n,log:{},col:['#3E8E86','#E07A5F','#4F8FBF','#B8914E'][i]}));return s};
+cSync();
+const _cv=view;view=function(){cSync();return _cv()};
+// ---- css ----
+(function(){const s=document.createElement('style');s.textContent=`.cck{width:26px;height:26px;border-radius:50%;border:2px solid var(--line);background:transparent;cursor:pointer;flex:none;display:grid;place-items:center;color:#fff;font-size:13px;padding:0}.cck:hover{border-color:var(--acc);background:var(--acc-l)}.cck.on{background:var(--acc);border-color:var(--acc)}
+.cdirt{height:4px;border-radius:3px;background:var(--soft);overflow:hidden;margin-top:6px;max-width:220px}.cdirt i{display:block;height:100%;border-radius:3px}
+.cst{font-size:12px;font-weight:700;white-space:nowrap}.cbig{font:600 40px/1 var(--serif)}.cnum{width:24px;height:24px;border-radius:50%;background:var(--acc-l);color:var(--acc-d,var(--acc));display:grid;place-items:center;font-size:12px;font-weight:700;flex:none}
+.croom h3 .btn{margin-left:auto}.cspd{display:grid;grid-template-columns:repeat(4,1fr);gap:10px}.cspd button{border:1px solid var(--line);background:var(--card);border-radius:16px;padding:14px 8px;cursor:pointer;text-align:center;color:inherit}.cspd button b{display:block;font:600 26px var(--serif)}.cspd button small{color:var(--mute);font-size:12px}.cspd button.on{border-color:var(--acc);background:var(--acc-l)}
+.cdot{display:inline-block;width:10px;height:10px;border-radius:50%;margin-right:6px;vertical-align:middle}
+@media(max-width:720px){.cspd{grid-template-columns:repeat(2,1fr)}}`;document.head.appendChild(s)})();
+// ---- shared bits ----
+function cRow(c,t,o={}){const l=cLvl(t),on=t.last===xToday();return `<div class="it"><button class="cck ${on?'on':''}" data-act="${on?'cundo':'cdone'}" data-c="${c}" data-id="${t.id}" title="${on?'Undo':'Mark done'}">${on?'✓':''}</button><div style="flex:1;min-width:0"><span class="${on?'done':''}" style="font-weight:600">${esc(cName(t))}</span><small>${esc(c==='laundry'?(t.temp||'')+' wash':t.room||'')} · ${cMin(t)} min${t.who?' · '+esc(t.who):''}${o.freq?' · '+esc(t.freq):''}</small>${o.bar===false?'':`<div class="cdirt"><i style="width:${Math.min(100,l*100)}%;background:${cCol(l)}"></i></div>`}</div><span class="cst" style="color:${on?'var(--acc)':cCol(l)}">${on?'Done today':cStatus(t)}</span></div>`}
+const cBar=(v,col)=>`<div class="bar" style="margin-top:6px"><i style="width:${pct(v)}%;background:${col||'var(--acc)'}"></i></div>`;
+const cWeek=n=>{const o=[];for(let i=n-1;i>=0;i--){const a=cAdd(cMon(),-7*i),b=cAdd(a,7);o.push({l:i?'-'+i+'w':'now',L:S.clog.filter(x=>x.date>=a&&x.date<b)})}return o};
+const cFam=n=>S.fam.find(p=>p.name===n);
+// ---- dashboard ----
+APP.P.dashboard=()=>{const due=cDue(),k=xToday(),dl=S.daily.filter(h=>!(h.log&&h.log[k])),home=cHome(),w7=S.clog.filter(x=>xDaysTo(x.date)>-7),doneT=cAll().filter(([c,t])=>t.last===k),
+ lau=S.laundry.filter(t=>cDueIn(t)<=0).sort((a,b)=>cLvl(b)-cLvl(a)),ld=S.declutter.find(x=>!x.done),dcDay=Math.min(30,Math.max(1,1-xDaysTo(S.dcStart))),buy=S.supplies.filter(x=>!x.got||x.lvl==='Low'||x.lvl==='Out');
+ const up=cAll().filter(([c,t])=>cDueIn(t)>0).sort((a,b)=>cDueIn(a[1])-cDueIn(b[1])).slice(0,4);
+ return `${head('Today',new Date().toLocaleDateString('en-US',{weekday:'long',month:'long',day:'numeric'})+' · home '+pct(home)+'% clean',`<button class="btn" data-act="xgo" data-k="speed" data-s="plan">⚡ Speed clean</button>`)}
+ <div class="grid g21"><div class="card"><h3>Due today<span class="x">${due.length} tasks · ${sum(due,([c,t])=>cMin(t))} min</span></h3>
+  ${dl.length?`<div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:6px">${dl.map(h=>`<button class="chip" data-act="tick" data-c="daily" data-id="${h.id}" data-k="${k}">○ ${esc(h.name)}</button>`).join('')}</div>`:''}
+  <div class="list">${due.slice(0,8).map(([c,t])=>cRow(c,t)).join('')}${doneT.slice(0,3).map(([c,t])=>cRow(c,t,{bar:false})).join('')}</div>
+  ${due.length>8?`<button class="btn ghost sm" style="margin-top:10px" data-act="xgo" data-k="rooms" data-s="today">+ ${due.length-8} more due</button>`:''}
+  ${due.length?'':`<div style="font:600 22px var(--serif);margin:8px 0 4px">All caught up 🌿</div><p style="color:var(--mute);margin:0 0 10px;font-size:13.5px">Nothing is due. Coming up next:</p><div class="list">${up.map(([c,t])=>cRow(c,t)).join('')}</div>`}</div>
+ <div class="grid" style="align-content:start"><div class="card"><h3>Home cleanliness<span class="x">updates on its own</span></h3><div style="display:flex;align-items:center;gap:14px;margin-bottom:10px"><div class="cbig" style="color:${cCol(1-home)}">${pct(home)}%</div><small style="color:var(--mute)">${due.length?'Clear the oldest tasks first. They count the most.':'Everything is fresh.'}</small></div>
+  <div class="xhb">${cRooms().map(r=>{const v=cRoomScore(r);return `<span>${esc(r)}</span><div class="t"><i style="width:${Math.max(3,v*100)}%;background:${cCol(1-v)}"></i></div><b>${pct(v)}%</b>`}).join('')}</div></div>
+ <div class="card"><h3>Short on time?</h3><div class="cspd">${[5,15,30,60].map(m=>`<button data-act="cspgo" data-m="${m}"><b>${m}</b><small>minutes</small></button>`).join('')}</div><p style="color:var(--mute);font-size:12.5px;margin:10px 0 0">The app picks the most overdue tasks that fit.</p></div></div></div>
+ <div class="grid g4" style="margin-top:16px">${kpi('check',due.length,'tasks due · '+sum(due,([c,t])=>cMin(t))+' min')}${kpi('flame',w7.length,'tasks done in 7 days')}${kpi('timer',sum(w7,x=>x.min)+' min','cleaned in 7 days')}${kpi('cart',buy.length,'supplies to reorder')}</div>
+ <div class="grid g3" style="margin-top:16px"><div class="card"><h3>Laundry<span class="x">${lau.length} due</span></h3><div class="list">${(lau.length?lau:S.laundry.slice().sort((a,b)=>cDueIn(a)-cDueIn(b))).slice(0,4).map(t=>cRow('laundry',t,{bar:false})).join('')||'<div class="empty">Add your laundry loads</div>'}</div></div>
+ <div class="card"><h3>Who does what today</h3><div class="list">${S.fam.map(p=>{const m=due.filter(([c,t])=>t.who===p.name);return `<div class="it"><span class="cdot" style="background:${p.col||'var(--acc)'}"></span><div style="flex:1">${esc(p.name)}<small>${m.length?m.slice(0,2).map(([c,t])=>esc(cName(t))).join(' · ')+(m.length>2?' +'+(m.length-2):''):'Nothing due'}</small></div><b>${sum(m,([c,t])=>cMin(t))} min</b></div>`}).join('')}</div></div>
+ <div class="card"><h3>Declutter · day ${dcDay}<span class="x">${S.declutter.filter(x=>x.done).length}/30</span></h3>${ld?`<div style="font:600 21px var(--serif);margin:4px 0 10px">${esc(ld.task)}</div><button class="btn sm" data-act="cdcl" data-id="${ld.id}">✓ Done</button><button class="btn ghost sm" data-act="xgo" data-k="projects" data-s="declutter">See all 30</button>`:'<div style="font:600 21px var(--serif)">Challenge complete ✓</div>'}${cBar(S.declutter.filter(x=>x.done).length/30)}<small style="color:var(--mute);display:block;margin-top:8px">${cSeason().split(' ')[0]} deep clean: ${S.season.filter(x=>x.done).length} of ${S.season.length} done</small></div></div>`};
+// ---- speed clean ----
+function cPlan(B,mode,room){let pool=cAll().filter(([c,t])=>t.last!==xToday());if(mode==='guests')pool=pool.filter(([c,t])=>C_GUEST.includes(t.room));if(mode==='room')pool=pool.filter(([c,t])=>t.room===room);
+ pool.sort((a,b)=>cLvl(b[1])-cLvl(a[1]));let left=B;const out=[];pool.forEach(x=>{const m=cMin(x[1]);if(m<=left&&(cLvl(x[1])>=.5||mode!=='due')){out.push(x);left-=m}});
+ if(left>=5)pool.forEach(x=>{const m=cMin(x[1]);if(!out.includes(x)&&m<=left){out.push(x);left-=m}});const ro=cRooms();return out.sort((a,b)=>ro.indexOf(a[1].room)-ro.indexOf(b[1].room))}
+const cTimerCards=pre=>XT.list.filter(t=>t.label.startsWith(pre)).map(t=>`<div class="card ${t.done?'done':''}" id="xt-${t.id}" style="text-align:center"><b style="font:600 18px var(--serif)">${esc(t.label)}</b><div class="xring" style="background:${xRingBg(t)}"><div class="tm">${t.done?'Done ✓':xFmt(t.left)}</div></div><div class="xbtns">${t.done?'':`<button class="btn sm" data-act="xtgo" data-id="${t.id}">${t.run?'Pause':'Resume'}</button><button class="btn ghost sm" data-act="xtplus" data-id="${t.id}">+1 min</button>`}<button class="btn ghost sm" data-act="xtdel" data-id="${t.id}">×</button></div></div>`).join('');
+const cSpeed=()=>{const B=+fv('cspd','15'),mode=fv('cmode','due'),ro=cRooms(),room=fv('croom',ro[0]),P=cPlan(B,mode,room),tot=sum(P,([c,t])=>cMin(t)),tm=cTimerCards('Speed clean');
+ return `${head('Speed clean','Pick your time. The app builds the plan from what is most overdue.',`<button class="btn" data-act="cspstart" data-m="${B}">▶ Start ${B}-min timer</button>`)}
+ <div class="cspd" style="margin-bottom:14px">${[[5,'Quick reset'],[15,'Tidy up'],[30,'Proper clean'],[60,'Power hour']].map(([m,l])=>`<button class="${B===m?'on':''}" data-flt="cspd:${m}"><b>${m} min</b><small>${l}</small></button>`).join('')}</div>
+ <div class="grid g21"><div class="card"><h3>Your ${B}-minute plan<span class="x">${P.length} tasks · ${tot} min</span></h3>${tabs('cmode',[['due','Most overdue'],['guests','Guests coming'],['room','One room']])}${mode==='room'?tabs('croom',ro.map(r=>[r,r])):''}
+  <div class="list">${P.map(([c,t],i)=>`<div style="display:flex;gap:10px;align-items:center"><span class="cnum">${i+1}</span><div style="flex:1">${cRow(c,t)}</div></div>`).join('')||'<div class="empty">Nothing fits. Try a longer time.</div>'}</div>
+  <p style="color:var(--mute);font-size:12.5px;margin:12px 0 0">Sorted room by room so you don’t walk back and forth. Tick each one as you go.</p></div>
+ <div class="grid" style="align-content:start">${tm?`<div class="xt" style="grid-template-columns:1fr">${tm}</div>`:''}<div class="card" style="background:var(--acc-l);border:0"><h3>How to speed clean</h3><div class="list" style="font-size:13px"><div class="it">1 · Grab a caddy: spray, cloth, trash bag.</div><div class="it">2 · Work top to bottom, left to right.</div><div class="it">3 · Clutter first, then surfaces, then floors.</div><div class="it">4 · When the timer rings, stop. It counts.</div></div></div>
+ ${mode==='guests'?'':`<div class="card"><h3>Guests in an hour?</h3><p style="font-size:13px;color:var(--mute);margin:0 0 10px">Only the rooms people see: entry, living room, guest bathroom, kitchen.</p><button class="btn ghost sm" data-flt="cmode:guests">Show guest plan</button></div>`}</div></div>`};
+X.timer('daily',['timers','Sprints','timer'],{title:'Cleaning sprints',sub:'Set a timer, clean until it rings, then stop.',presets:[['5-minute reset',5],['15-minute tidy',15],['Bathroom blitz',20],['Kitchen reset',20],['Laundry fold',15],['Power hour',60]],logTitle:'Minutes cleaned this week'});
+X.wheel('daily',['wheel','Where do I start?','spin'],{title:'Where do I start?',sub:'Too much to do? Spin, then do only what it lands on.',verb:'Spin',prefix:'Start with: ',empty:'Nothing is due. Enjoy your clean home.',note:'The wheel shows your most overdue tasks. When nothing is due, it shows your rooms.',opts:()=>{const d=cDue().slice(0,10).map(([c,t])=>cName(t));return d.length>=2?d:cRooms()}});
+X.section('speed',[['plan','Speed clean',cSpeed],['wheel','Where do I start?',()=>APP.P.wheel()],['timer','Timer',()=>APP.P.timers()]]);
+// ---- rooms ----
+const cToday=()=>{const due=cDue(),k=xToday(),done=cAll().filter(([c,t])=>t.last===k);
+ return `${head('Today’s list',`Built on its own from what is due · ${due.length} tasks · ${sum(due,([c,t])=>cMin(t))} min`,`<button class="btn ghost sm" data-act="xgo" data-k="speed" data-s="plan">⚡ Short on time?</button>`)}
+ <div class="grid g21"><div class="card"><h3>Due & overdue<span class="x">oldest first</span></h3><div class="list">${due.map(([c,t])=>cRow(c,t,{freq:1})).join('')||'<div class="empty">All caught up 🌿</div>'}</div></div>
+ <div class="grid" style="align-content:start"><div class="card"><h3>Daily reset<span class="x">${S.daily.filter(h=>h.log&&h.log[k]).length}/${S.daily.length}</span></h3><div class="list">${S.daily.map(h=>{const on=h.log&&h.log[k];return `<div class="it"><button class="cck ${on?'on':''}" data-act="tick" data-c="daily" data-id="${h.id}" data-k="${k}">${on?'✓':''}</button><div style="flex:1" class="${on?'done':''}">${esc(h.name)}</div></div>`}).join('')}</div></div>
+ <div class="card"><h3>Done today<span class="x">${done.length}</span></h3><div class="list">${done.map(([c,t])=>cRow(c,t,{bar:false})).join('')||'<div class="empty" style="padding:12px">Tick a task and it lands here</div>'}</div></div></div></div>`};
+const cByRoom=()=>{const ro=cRooms(),r=fv('crm','all'),L=r==='all'?ro:[r];
+ return `${head('Rooms',`Each bar fills up as a room gets dirtier. Home ${pct(cHome())}% clean.`,`<button class="btn" data-act="addrow" data-c="tasks">${ic('plus',15)} Add task</button>`)}${tabs('crm',[['all','All rooms']].concat(ro.map(x=>[x,x])))}
+ <div class="grid g2">${L.map(rm=>{const T=cAll().filter(([c,t])=>t.room===rm).sort((a,b)=>cLvl(b[1])-cLvl(a[1])),v=cRoomScore(rm);return `<div class="card croom"><h3 style="display:flex;align-items:center;gap:8px">${esc(rm)}<span class="xpill" style="background:${cCol(1-v)}22;color:${cCol(1-v)}">${pct(v)}% clean</span><button class="btn ghost sm" data-act="croomdone" data-r="${esc(rm)}">✓ All clean</button></h3><div class="list">${T.map(([c,t])=>cRow(c,t,{freq:1})).join('')}</div></div>`}).join('')}</div>`};
+const cTasks=()=>{const ro=cRooms(),r=fv('ctr','all'),R=S.tasks.filter(t=>r==='all'||t.room===r).sort((a,b)=>cDueIn(a)-cDueIn(b));
+ return `${head('All tasks',`${S.tasks.length} tasks · ${Math.round(sum(S.tasks,cWeekMin)/60*10)/10} h of cleaning a week on average`,`<button class="btn ghost sm" data-act="print">${ic('print',14)} Print</button><button class="btn" data-act="addrow" data-c="tasks">${ic('plus',15)} Add task</button>`)}
+ <div class="card">${tabs('ctr',[['all','All']].concat(ro.map(x=>[x,x])))}${xTable('tasks',R,[['done','','chk'],['task','Task'],['room','Room','sel',[...new Set(ROOMS.concat(ro))]],['freq','How often','sel',C_FL],['who','Who','sel',cWho()],['min','Min','num'],['last','Last done','date'],['_n','Next','calc',t=>fmtS(cNext(t))],['_s','Status','calc',t=>`<span class="cst" style="color:${cCol(cLvl(t))}">${cStatus(t)}</span>`]])}
+ <p style="color:var(--mute);font-size:12.5px;margin:12px 0 0">Next date = last done + how often. Tick a task and it resets on its own when it’s due again.</p></div>`};
+const cUpcoming=()=>{const k=xToday(),st=cMon(),days=[...Array(14)].map((_,i)=>cAdd(st,i)),m={};
+ cAll().concat(S.laundry.map(t=>['laundry',t])).forEach(([c,t])=>{let n=cNext(t);if(n<k)n=k;const iv=cInt(t);let g=0;while(n<=days[13]&&g++<20){(m[n]=m[n]||[]).push(t);n=cAdd(n,iv)}});
+ return `${head('Next 2 weeks','Every task placed on its next due date. Overdue tasks show on today.')}
+ <div class="card"><div class="xcal">${['Mon','Tue','Wed','Thu','Fri','Sat','Sun'].map(x=>`<div class="h">${x}</div>`).join('')}${days.map(d=>{const L=m[d]||[];return `<div class="c ${d===k?'t':''} ${d<k?'o':''}" style="min-height:96px"><b>${+d.slice(8)} <small style="color:var(--mute);font-weight:500">${L.length?sum(L,cMin)+'′':''}</small></b>${L.slice(0,5).map(t=>`<span class="${t.last===k?'':'p'}" title="${esc(cName(t))}">${esc(cName(t))}</span>`).join('')}${L.length>5?`<small style="color:var(--mute)">+${L.length-5} more</small>`:''}</div>`}).join('')}</div></div>
+ <div class="grid g2" style="margin-top:16px">${xCard('Minutes per day',bars(days.map(d=>sum(m[d]||[],cMin)),days.map(d=>d.slice(8)),130),'next 14 days')}${xCard('Busiest rooms',xHBars(xGroup(S.tasks,t=>t.room,cWeekMin).map(([r,v])=>[r,Math.round(v)]),v=>v+' min/wk'))}</div>`};
+APP.P.daily=()=>`${head('Daily reset','The few things that keep the house from sliding. Tap a square each day.',`<button class="btn" data-act="addrow" data-c="daily">${ic('plus',15)} Add</button>`)}${gridTracker({c:'daily',t:'This month',label:'Task'})}`;
+X.section('rooms',[['today','Today’s list',cToday],['rooms','By room',cByRoom],['tasks','All tasks',cTasks],['upcoming','Next 2 weeks',cUpcoming],['daily','Daily reset',()=>APP.P.daily()]]);
+// ---- family ----
+function cLoads(){const o={};S.fam.forEach(p=>o[p.name]=0);const n=S.fam.length||1;S.tasks.concat(S.deep,S.laundry).forEach(t=>{const w=cWeekMin(t);if(t.who==='Everyone')S.fam.forEach(p=>o[p.name]+=w/n);else if(o[t.who]!=null)o[t.who]+=w});return o}
+const cFair=()=>{const L=cLoads(),tw=sum(S.fam,p=>C_SH[p.w]||1)||1,tot=sum(Object.values(L),x=>x),un=S.tasks.filter(t=>!t.who).length,d30=S.clog.filter(x=>xDaysTo(x.date)>-30);
+ return `${head('Fair split','Who does what, and whether it’s fair. Shares are weighted: a kid does a small share.',`<button class="btn ghost sm" data-act="crot">↻ Rotate adults</button><button class="btn" data-act="cbal">⚖ Balance for me</button>`)}
+ <div class="grid g21"><div class="card"><h3>Weekly load vs fair share<span class="x">${Math.round(tot)} min a week in total</span></h3><div class="tblw"><table class="tbl"><tr><th>Person</th><th class="num">Assigned</th><th class="num">Fair share</th><th>Balance</th><th class="num">Done (30 days)</th></tr>
+  ${S.fam.map(p=>{const a=L[p.name]||0,f=tot*(C_SH[p.w]||1)/tw,d=a-f;return `<tr><td><span class="cdot" style="background:${p.col||'var(--acc)'}"></span><b>${esc(p.name)}</b></td><td class="num">${Math.round(a)} min</td><td class="num">${Math.round(f)} min</td><td><span class="cst" style="color:${Math.abs(d)<=f*.15+5?'#5BA88B':d>0?'#E07A5F':'#D9A441'}">${Math.abs(d)<=f*.15+5?'Fair':d>0?'+'+Math.round(d)+' min too much':Math.round(-d)+' min under'}</span></td><td class="num">${sum(d30.filter(x=>x.who===p.name),x=>x.min)} min</td></tr>`}).join('')}</table></div>
+  ${un?`<p style="color:#E07A5F;font-size:13px;margin:10px 0 0">${un} tasks have nobody assigned. <b>Balance for me</b> will hand them out.</p>`:''}</div>
+ ${xCard('Who does the work',xDonut(S.fam.map(p=>[p.name,Math.round(L[p.name]||0),Math.round(L[p.name]||0)+' min'])),'per week')}</div>
+ <div class="card" style="margin-top:16px"><h3>People<button class="btn ghost sm" style="margin-left:auto" data-act="addrow" data-c="fam">+ Add person</button></h3>${xTable('fam',S.fam,[['name','Name'],['w','Share','sel',Object.keys(C_SH)],['col','Color'],['_t','Tasks','calc',p=>S.tasks.filter(t=>t.who===p.name).length],['_n','Due now','calc',p=>cDue().filter(([c,t])=>t.who===p.name).length]])}
+ <p style="color:var(--mute);font-size:12.5px;margin:10px 0 0">Balance gives the longest jobs out first to whoever is furthest under their fair share. Kids only get short tasks (10 min or less).</p></div>`};
+APP.P.chores=()=>`${head('Kids’ chore chart','Kids tap a square for each chore done. Agree on a reward together.',`<button class="btn" data-act="addrow" data-c="chores">${ic('plus',15)} Add chore</button>`)}${gridTracker({c:'chores',t:'This month',label:'Who · chore'})}
+ <div class="grid g3" style="margin-top:16px">${[['Ages 3–5','Put toys in a bin · Feed a pet · Put clothes in the hamper · Wipe a spill'],['Ages 6–9','Make the bed · Set & clear the table · Sort laundry · Water plants · Sweep the entry'],['Ages 10+','Load the dishwasher · Vacuum a room · Clean the bathroom sink · Take out trash · Fold laundry']].map(([a,l])=>`<div class="card"><h3>${a}</h3><p style="font-size:13px;color:var(--mute);margin:0;line-height:1.6">${l}</p></div>`).join('')}</div>`;
+X.section('family',[['fair','Fair split',cFair],['chores','Kids’ chore chart',()=>APP.P.chores()]]);
+// ---- laundry ----
+const cLaundry=()=>{const L=S.laundry.slice().sort((a,b)=>cDueIn(a)-cDueIn(b)),due=L.filter(t=>cDueIn(t)<=0),wd=cWd();
+ return `${head('Laundry',`${due.length} loads due · next dates are calculated from the last wash`,`<button class="btn" data-act="addrow" data-c="laundry">${ic('plus',15)} Add load</button>`)}
+ <div class="grid g21"><div class="card"><h3>Due now<span class="x">${sum(due,cMin)} min of hands-on time</span></h3><div class="list">${due.map(t=>cRow('laundry',t)).join('')||`<div class="empty" style="padding:12px">No load due. Next: ${L[0]?esc(L[0].load)+' · '+cStatus(L[0]).toLowerCase():'—'}</div>`}</div></div>
+  <div class="card"><h3>Laundry days</h3><div class="list">${WD.slice(0,7).map((d,i)=>{const T=S.laundry.filter(t=>t.day===d);return `<div class="it" style="${i===wd?'font-weight:700':''}"><b style="width:44px">${d.slice(0,3)}</b><div style="flex:1">${T.map(t=>esc(t.load)).join(' · ')||'<span style="color:var(--mute)">—</span>'}</div></div>`}).join('')}</div><p style="color:var(--mute);font-size:12.5px;margin:10px 0 0">Loads set to “Any day” show up whenever they’re due.</p></div></div>
+ <div class="card" style="margin-top:16px"><h3>All loads</h3>${xTable('laundry',L,[['load','Load'],['freq','How often','sel',C_FL],['day','Day','sel',WD],['temp','Water','sel',['Cold','Warm','Hot','Hand wash']],['who','Who','sel',cWho()],['min','Min','num'],['last','Last wash','date'],['_n','Next','calc',t=>fmtS(cNext(t))],['_s','Status','calc',t=>`<span class="cst" style="color:${cCol(cLvl(t))}">${cStatus(t)}</span>`]])}</div>`};
+const cLGuide=()=>`${head('Laundry guide','Sorting, stains and care labels in one place.')}<div class="grid g3"><div class="card"><h3>Sort guide</h3><div class="list" style="font-size:13px"><div class="it"><b style="width:64px">Hot</b>Towels, sheets, kitchen cloths, underwear</div><div class="it"><b style="width:64px">Warm</b>Whites & light cottons</div><div class="it"><b style="width:64px">Cold</b>Darks, jeans, colors, workout gear</div><div class="it"><b style="width:64px">Hand</b>Wool, silk, lace, bras</div></div><p style="color:var(--mute);font-size:12px;margin:10px 0 0">Zip zippers, empty pockets, turn darks inside out.</p></div>
+ <div class="card"><h3>Stain cheat sheet</h3><div class="list" style="font-size:13px"><div class="it"><b style="width:64px">Coffee</b>Cold water, then dish soap</div><div class="it"><b style="width:64px">Grease</b>Dish soap, rub, warm wash</div><div class="it"><b style="width:64px">Blood</b>Cold water only + hydrogen peroxide</div><div class="it"><b style="width:64px">Grass</b>Enzyme stain remover, then wash</div><div class="it"><b style="width:64px">Wine</b>Blot, salt or baking soda, cold rinse</div><div class="it"><b style="width:64px">Makeup</b>Micellar water or dish soap</div></div><p style="color:var(--mute);font-size:12px;margin:10px 0 0">Never put a stained item in the dryer: heat sets the stain.</p></div>
+ <div class="card"><h3>Care labels</h3><div class="list" style="font-size:13px"><div class="it"><b style="width:96px">Tub, 1 dot</b>Cold wash, 30 °C / 85 °F</div><div class="it"><b style="width:96px">Tub, 2 dots</b>Warm wash, 40 °C / 105 °F</div><div class="it"><b style="width:96px">Tub + hand</b>Hand wash only</div><div class="it"><b style="width:96px">Triangle ✕</b>No bleach</div><div class="it"><b style="width:96px">Square + circle</b>Tumble dry, dots = heat</div><div class="it"><b style="width:96px">Plain circle</b>Dry clean only</div></div></div></div>`;
+X.section('laundry',[['schedule','Schedule',cLaundry],['guide','Laundry guide',cLGuide]]);
+// ---- projects ----
+const cSeasonPg=()=>{const sn=cSeason(),d=S.season.filter(x=>x.done).length,ro=[...new Set(S.season.map(x=>x.room))];
+ return `${head(sn.split(' ')[0]+' deep clean',`${d} of ${S.season.length} done · the list resets on its own when the season changes`,`<button class="btn ghost sm" data-act="print">${ic('print',14)} Print</button><button class="btn" data-act="addrow" data-c="season">${ic('plus',15)} Add</button>`)}
+ <div class="card" style="margin-bottom:16px"><div class="bar"><i style="width:${pct(d/(S.season.length||1))}%"></i></div><small style="color:var(--mute)">Do one room a weekend. Start at the top of each room and work down.</small></div>
+ <div class="grid g3">${ro.map(r=>{const L=S.season.filter(x=>x.room===r);return `<div class="card"><h3>${esc(r)}<span class="x">${L.filter(x=>x.done).length}/${L.length}</span></h3><div class="list">${L.map(x=>`<div class="it">${chk('season',x,'done')}<div style="flex:1" class="${x.done?'done':''}">${inp('season',x,'task',{st:'padding:2px 4px'})}</div>${del('season',x)}</div>`).join('')}</div></div>`}).join('')}</div>`};
+const cBig=()=>`${head('Big jobs','Monthly and seasonal jobs, never forgotten. Next dates are calculated for you.',`<button class="btn" data-act="addrow" data-c="deep">${ic('plus',15)} Add job</button>`)}
+ <div class="grid g21"><div class="card">${xTable('deep',S.deep.slice().sort((a,b)=>cDueIn(a)-cDueIn(b)),[['done','','chk'],['task','Job'],['room','Room','sel',[...new Set(ROOMS.concat(cRooms()))]],['freq','How often','sel',C_FL],['min','Min','num'],['last','Last done','date'],['_n','Next','calc',t=>fmtS(cNext(t))],['_s','Status','calc',t=>`<span class="cst" style="color:${cCol(cLvl(t))}">${cStatus(t)}</span>`]])}</div>
+ <div class="card"><h3>Coming up</h3><div class="list">${S.deep.slice().sort((a,b)=>cDueIn(a)-cDueIn(b)).slice(0,6).map(t=>cRow('deep',t)).join('')}</div></div></div>`;
+APP.P.declutter=()=>{const d=S.declutter.filter(x=>x.done).length,day=Math.min(30,Math.max(1,1-xDaysTo(S.dcStart))),out=sum(S.declutter,x=>x.out);
+ return `${head('30-day declutter',`Day ${day} of 30 · ${d} spots done · ${out} items out of the house`,`<button class="btn ghost sm" data-act="cdcrestart">↺ Restart today</button>`)}
+ <div class="card" style="margin-bottom:16px"><div class="bar"><i style="width:${pct(d/30)}%"></i></div><small style="color:var(--mute)">${d<30?'Next: '+esc((S.declutter.find(x=>!x.done)||{}).task||'')+'. 15 minutes max. Keep, donate or toss.':'Challenge complete ✓'}</small></div>
+ <div class="grid g4">${S.declutter.map(x=>{const dt=cAdd(S.dcStart,(+x.day||1)-1);return `<div class="card" style="display:flex;gap:10px;align-items:center;${x.done?'opacity:.6':''}${+x.day===day&&!x.done?';outline:2px solid var(--acc)':''}">${chk('declutter',x,'done')}<div style="flex:1;min-width:0"><small style="color:var(--mute);font-size:11px">DAY ${x.day} · ${fmtS(dt).toUpperCase()}</small><div style="font-weight:600">${esc(x.task)}</div></div><input class="in num" type="number" placeholder="items" title="Items removed" data-c="declutter" data-id="${x.id}" data-f="out" value="${esc(x.out)}" style="width:62px"></div>`}).join('')}</div>`};
+X.section('projects',[['season','Seasonal deep clean',cSeasonPg],['big','Big jobs',cBig],['declutter','30-day declutter',()=>APP.P.declutter()]]);
+// ---- supplies ----
+const C_LV=['Full','Half','Low','Out'];
+const cNeed=x=>!x.got||x.lvl==='Low'||x.lvl==='Out';
+const cInv=()=>{const f=fv('csc','all'),cats=[...new Set(S.supplies.map(x=>x.cat||'General'))],R=S.supplies.filter(x=>f==='all'||(x.cat||'General')===f);
+ return `${head('Supplies',`${S.supplies.filter(cNeed).length} to reorder · set the level and the list builds itself`,`<button class="btn" data-act="addrow" data-c="supplies">${ic('plus',15)} Add item</button>`)}
+ <div class="grid g21"><div class="card">${tabs('csc',[['all','All']].concat(cats.map(x=>[x,x])))}${xTable('supplies',R,[['item','Item'],['cat','Type','sel',['General','Kitchen','Bathroom','Laundry','Floors']],['lvl','Level','sel',C_LV],['store','Store'],['price','Price','money'],['_r','','calc',x=>cNeed(x)?'<span class="xpill" style="background:#E07A5F22;color:#C0503F">Reorder</span>':'']])}</div>
+ <div class="grid" style="align-content:start">${xCard('Stock levels',xDonut(C_LV.map(l=>[l,S.supplies.filter(x=>x.lvl===l).length])))}<div class="card"><h3>DIY cleaners</h3><div class="list" style="font-size:13px"><div class="it"><div><b>All-purpose</b><small>1 cup water + 1 cup white vinegar + lemon peel. Not for stone.</small></div></div><div class="it"><div><b>Glass</b><small>2 cups water + ½ cup vinegar + 1 tbsp cornstarch.</small></div></div><div class="it"><div><b>Scrub paste</b><small>Baking soda + a little dish soap. Sinks, tubs, oven door.</small></div></div></div><p style="color:#C0503F;font-size:12px;margin:10px 0 0">Never mix bleach with vinegar or ammonia.</p></div></div></div>`};
+const cShop=()=>{const L=S.supplies.filter(cNeed),st=[...new Set(L.map(x=>x.store||'Any store'))];
+ return `${head('Shopping list',`${L.length} items · about ${money(sum(L,x=>x.price),1)}`,`<button class="btn ghost sm" data-act="print">${ic('print',14)} Print</button><button class="btn" data-act="cbuyall">✓ Bought everything</button>`)}
+ <div class="grid g3">${st.map(s=>{const I2=L.filter(x=>(x.store||'Any store')===s);return `<div class="card"><h3>${esc(s)}<span class="x">${money(sum(I2,x=>x.price),1)}</span></h3><div class="list">${I2.map(x=>`<div class="it"><button class="cck" data-act="cbuy" data-id="${x.id}" title="Bought"></button><div style="flex:1">${esc(x.item)}<small>${esc(x.lvl||'')}</small></div><b>${xNum(x.price)?money(x.price,1):''}</b></div>`).join('')}</div></div>`}).join('')||'<div class="card"><div style="font:600 22px var(--serif)">Fully stocked ✓</div><p style="color:var(--mute);margin:6px 0 0">Set an item to Low or Out and it shows up here.</p></div>'}</div>`};
+X.section('supplies',[['stock','Inventory',cInv],['shop','Shopping list',cShop]]);
+// ---- data ----
+const cData=()=>{const W=cWeek(8),d30=S.clog.filter(x=>xDaysTo(x.date)>-30),hm={};S.clog.forEach(x=>hm[x.date]=(hm[x.date]||0)+xNum(x.min));const all=cAll(),ontime=all.length?all.filter(([c,t])=>cDueIn(t)>=0).length/all.length:0;
+ return `${head('Overview','Everything you tick, turned into charts.')}<div class="grid g4" style="margin-bottom:16px">${kpi('home',pct(cHome())+'%','home cleanliness',cHome())}${kpi('check',pct(ontime)+'%','tasks on schedule',ontime)}${kpi('timer',sum(d30,x=>x.min)+' min','cleaned in 30 days')}${kpi('flame',d30.length,'tasks done in 30 days')}</div>
+ <div class="grid g2">${xCard('Minutes per week',bars(W.map(w=>sum(w.L,x=>x.min)),W.map(w=>w.l),150),'last 8 weeks')}${xCard('Where the time goes',xDonut(xGroup(d30,x=>x.room,x=>x.min).map(([k,v])=>[k,v,v+' min'])),'30 days')}${xCard('Cleanliness by room',xHBars(cRooms().map(r=>[r,pct(cRoomScore(r))]),v=>v+'%'))}${xCard('Cleaning calendar',xHeat(hm,18),'darker = more minutes')}</div>`};
+const cDataRooms=()=>`${head('Rooms','What each room asks of you, and how it’s doing.')}<div class="card"><div class="tblw"><table class="tbl"><tr><th>Room</th><th class="num">Tasks</th><th class="num">Min / week</th><th class="num">Due now</th><th class="num">Last cleaned</th><th class="num">Clean</th></tr>${cRooms().map(r=>{const T=cAll().filter(([c,t])=>t.room===r),ls=S.clog.filter(x=>x.room===r)[0];return `<tr><td><b>${esc(r)}</b></td><td class="num">${T.length}</td><td class="num">${Math.round(sum(T,([c,t])=>cWeekMin(t)))}</td><td class="num">${T.filter(([c,t])=>cDueIn(t)<=0).length}</td><td class="num">${ls?fmtS(ls.date):'—'}</td><td class="num" style="color:${cCol(1-cRoomScore(r))};font-weight:700">${pct(cRoomScore(r))}%</td></tr>`}).join('')}</table></div></div>
+ <div class="grid g2" style="margin-top:16px">${xCard('Minutes needed per week',xHBars(cRooms().map(r=>[r,Math.round(sum(cAll().filter(([c,t])=>t.room===r),([c,t])=>cWeekMin(t)))]),v=>v+' min'))}${xCard('Most done tasks',xHBars(xGroup(S.clog.filter(x=>xDaysTo(x.date)>-30),x=>x.t).slice(0,8)),'30 days')}</div>`;
+const cDataPeople=()=>{const d30=S.clog.filter(x=>xDaysTo(x.date)>-30),W=cWeek(6);
+ return `${head('People','Who actually did the work, from what was ticked.')}<div class="grid g2">${xCard('Minutes done',xHBars(S.fam.map(p=>[p.name,sum(d30.filter(x=>x.who===p.name),x=>x.min)]),v=>v+' min'),'30 days')}${xCard('Tasks done',xDonut(S.fam.map(p=>[p.name,d30.filter(x=>x.who===p.name).length])),'30 days')}
+ ${S.fam.slice(0,4).map(p=>xCard(esc(p.name)+' per week',bars(W.map(w=>sum(w.L.filter(x=>x.who===p.name),x=>x.min)),W.map(w=>w.l),110,p.col||'var(--acc)'),'minutes')).join('')}</div>`};
+const cHistory=()=>`${head('History',`${S.clog.length} tasks logged. Added automatically when you tick a task.`,`<button class="btn" data-act="addrow" data-c="clog">${ic('plus',15)} Add</button>`)}<div class="card">${xTable('clog',S.clog.slice(0,120),[['date','Date','date'],['t','Task'],['room','Room'],['who','Who','sel',cWho()],['min','Min','num']])}</div>`;
+X.section('data',[['overview','Overview',cData],['rooms','Rooms',cDataRooms],['people','People',cDataPeople],['history','History',cHistory]]);
+X.section('more',[['photos','Before & after',()=>APP.P.memories()],['notes','Notes',()=>APP.P.notes()]]);
+// ---- actions ----
+APP.onChange=(c,it,f)=>{if(['tasks','deep','laundry'].includes(c)&&f==='done'){if(it.done){if(it.last!==xToday())cComplete(c,it,1)}else cUndo(it)}
+ if(['tasks','deep','laundry'].includes(c)&&f==='last'){it.done=cDueIn(it)>0}
+ if(c==='supplies'&&f==='lvl')it.got=it.lvl==='Full'||it.lvl==='Half';if(c==='supplies'&&f==='got')it.lvl=it.got?'Full':'Out';
+ if(c==='fam'&&f==='name'){}};
+Object.assign(APP.act,{
+ cdone:t=>{const c=t.dataset.c,it=(S[c]||[]).find(x=>x.id===t.dataset.id);if(!it)return;cComplete(c,it);toast('✓ '+cName(it)+' · next: '+fmtS(cNext(it)));rerender()},
+ cundo:t=>{const c=t.dataset.c,it=(S[c]||[]).find(x=>x.id===t.dataset.id);if(!it)return;cUndo(it);it.done=cDueIn(it)>0;save();rerender()},
+ croomdone:t=>{const r=t.dataset.r;cAll().filter(([c,x])=>x.room===r&&x.last!==xToday()).forEach(([c,x])=>cComplete(c,x,1));save();toast(r+' marked clean ✓');rerender()},
+ cspgo:t=>{F.cspd=t.dataset.m;F.cmode='due';X.go('speed','plan')},
+ cspstart:t=>{const m=+t.dataset.m;XT.list=XT.list.filter(x=>!x.label.startsWith('Speed clean'));XT.list.unshift({id:uid(),label:'Speed clean · '+m+' min',total:m*60,left:m*60,end:Date.now()+m*6e4,run:true});xTStart();rerender()},
+ cbal:()=>{if(!S.fam.length){toast('Add people first');return}if(!confirm('Re-assign every task fairly? Tasks set to “Everyone” stay as they are.'))return;
+  const L={};S.fam.forEach(p=>L[p.name]=0);S.tasks.concat(S.deep,S.laundry).filter(t=>t.who==='Everyone').forEach(t=>S.fam.forEach(p=>L[p.name]+=cWeekMin(t)/S.fam.length));
+  S.tasks.concat(S.deep,S.laundry).filter(t=>t.who!=='Everyone').sort((a,b)=>cWeekMin(b)-cWeekMin(a)).forEach(t=>{const el=S.fam.filter(p=>(C_SH[p.w]||1)>=.5||cMin(t)<=10);const P=(el.length?el:S.fam).slice().sort((a,b)=>(L[a.name]+cWeekMin(t))/(C_SH[a.w]||1)-(L[b.name]+cWeekMin(t))/(C_SH[b.w]||1))[0];t.who=P.name;L[P.name]+=cWeekMin(t)});
+  save();rerender();toast('Tasks balanced ⚖')},
+ crot:()=>{const A=S.fam.filter(p=>(C_SH[p.w]||1)>=.5).map(p=>p.name);if(A.length<2){toast('Needs 2 adults or more');return}S.tasks.concat(S.deep,S.laundry).forEach(t=>{const i=A.indexOf(t.who);if(i>=0)t.who=A[(i+1)%A.length]});save();rerender();toast('Adult tasks rotated ↻')},
+ cdcl:t=>{const x=S.declutter.find(z=>z.id===t.dataset.id);if(x){x.done=true;save();rerender();toast('Day done ✓')}},
+ cdcrestart:()=>{if(!confirm('Restart the 30 days from today? Ticks will be cleared.'))return;S.dcStart=xToday();S.declutter.forEach(x=>{x.done=false;x.out=''});save();rerender()},
+ cbuy:t=>{const x=S.supplies.find(z=>z.id===t.dataset.id);if(x){x.got=true;x.lvl='Full';save();rerender()}},
+ cbuyall:()=>{S.supplies.filter(cNeed).forEach(x=>{x.got=true;x.lvl='Full'});save();rerender();toast('Restocked ✓')}});
+APP.calmFrom=['tasks','deep'];
+APP.side=()=>{const h=cHome();return `<svg viewBox="0 0 120 120"><circle cx="60" cy="60" r="40" fill="#DCEEEB"/><text x="60" y="78" font-size="48" text-anchor="middle">🧽</text></svg><div class="n">${pct(h)}%</div><small>home clean · ${cDue().length} due</small>`};
+APP.counts=()=>({rooms:cDue().length||null});
+X.layout([['dashboard','Today','home'],['speed','Speed clean','timer'],['rooms','Rooms & tasks','grid'],['family','Family','guests'],['laundry','Laundry','drop'],['projects','Deep clean & declutter','leaf'],['supplies','Supplies','cart'],['data','Data','chart'],['more','Photos & notes','cam'],['settings','Settings','set']]);
 
 boot();
 </script>
