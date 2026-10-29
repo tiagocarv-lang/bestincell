@@ -249,6 +249,8 @@ html[data-theme=dark] .btn.ghost,html[data-theme=dark] .chip{background:#262320;
 html[data-theme=dark] .cm{background:#262320;color:#F1EBE2}
 html[data-theme=dark] .onb{background:#2E2925;border-color:#4A3F37;color:#F1EBE2}
 
+.tblw{overflow-x:auto;max-width:100%}.card{min-width:0}
+
 :root{--bg:#F7F2EA;--acc:#2F6B55;--acc-l:#DDEBE3;--acc-d:#1F4D3D;--blush:#C0504D;--blush-l:#F4DEDB;--gold:#C9A24D}
 [data-acc=red]{--acc:#B23A3A;--acc-l:#F4DCDA;--acc-d:#8A2A2A}
 [data-acc=gold]{--acc:#B8914E;--acc-l:#F3EAD8;--acc-d:#8E6E36}
@@ -701,11 +703,18 @@ function tablePage(o){let rows=S[o.c];if(o.filter){const v=fv(o.c+'f','all');if(
  ${o.side?`<div class="grid g21"><div class="card">${ft}${tbl}</div><div class="grid" style="align-content:start">${o.side}</div></div>`:`<div class="card">${ft}${tbl}</div>`}`}
 function gridTracker(o){const t=new Date(),y=t.getFullYear(),m=t.getMonth(),nd=new Date(y,m+1,0).getDate(),pre=`${y}-${String(m+1).padStart(2,'0')}-`;
  const streak=x=>{let s=0;for(let d=t.getDate();d>0;d--){if(x.log&&x.log[pre+String(d).padStart(2,'0')])s++;else if(d!==t.getDate())break}return s};
- return `<div class="card"><h3>${o.t}<span class="x">${t.toLocaleDateString('en-US',{month:'long',year:'numeric'})}</span></h3><div class="tblw"><table class="tbl" style="font-size:12px"><tr><th>${o.label||'Item'}</th>${[...Array(nd)].map((_,i)=>`<th style="text-align:center;padding:4px 2px">${i+1}</th>`).join('')}<th class="num">🔥</th></tr>
- ${S[o.c].map(x=>`<tr><td style="min-width:150px">${inp(o.c,x,o.f||'name',{st:'font-weight:600'})}</td>${[...Array(nd)].map((_,i)=>{const k=pre+String(i+1).padStart(2,'0'),on=x.log&&x.log[k];return `<td style="padding:2px;text-align:center"><button data-act="tick" data-c="${o.c}" data-id="${x.id}" data-k="${k}" style="width:20px;height:20px;border-radius:6px;border:1px solid var(--line);background:${on?(x.col||'var(--acc)'):'transparent'};cursor:pointer;padding:0"></button></td>`}).join('')}<td class="num"><b>${streak(x)}</b></td></tr>`).join('')}</table></div></div>`}
+ return `<div class="card"><h3>${o.t}<span class="x">${t.toLocaleDateString('en-US',{month:'long',year:'numeric'})}</span></h3><div class="tblw"><table class="tbl" style="font-size:12px"><tr><th>${o.label||'Item'}</th>${[...Array(nd)].map((_,i)=>`<th style="text-align:center;padding:4px 0;font-size:10px;letter-spacing:0">${i+1}</th>`).join('')}<th class="num">🔥</th></tr>
+ ${S[o.c].map(x=>`<tr><td style="min-width:110px;width:150px">${inp(o.c,x,o.f||'name',{st:'font-weight:600'})}</td>${[...Array(nd)].map((_,i)=>{const k=pre+String(i+1).padStart(2,'0'),on=x.log&&x.log[k];return `<td style="padding:1px;text-align:center"><button data-act="tick" data-c="${o.c}" data-id="${x.id}" data-k="${k}" style="width:100%;max-width:22px;min-width:12px;aspect-ratio:1;height:auto;border-radius:5px;border:1px solid var(--line);background:${on?(x.col||'var(--acc)'):'transparent'};cursor:pointer;padding:0;display:block;margin:0 auto"></button></td>`}).join('')}<td class="num"><b>${streak(x)}</b></td></tr>`).join('')}</table></div></div>`}
 function logDemo(days,p){const t=new Date(),y=t.getFullYear(),m=t.getMonth(),o={};for(let d=1;d<=Math.min(days,t.getDate());d++)if(Math.random()<p)o[`${y}-${String(m+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`]=1;return o}
 Object.assign(CORE_ACT,{addrow:t=>{const c=t.dataset.c;S[c].unshift(Object.assign(JSON.parse(JSON.stringify(((APP.defaults||{})[c])||{})),{id:uid()}));save();rerender()},
  tick:t=>{const it=S[t.dataset.c].find(x=>x.id===t.dataset.id);it.log=it.log||{};if(it.log[t.dataset.k])delete it.log[t.dataset.k];else it.log[t.dataset.k]=1;save();rerender()}});
+// ---- extra tabs added after launch (used by <app>/post.js) ----
+// addTab(after, [key,label,icon], arrayKey, seed(), defaults, keepSeedOnFreshStart)
+function addTab(after,tab,arr,seed,def,keep){const i=APP.pages.findIndex(p=>p[0]===after);APP.pages.splice(i<0?APP.pages.length-2:i+1,0,tab);if(!arr)return;
+ if(!APP.arrays.includes(arr))APP.arrays.push(arr);const mk=()=>seed?seed().map(x=>Object.assign({id:uid()},x)):[];
+ if(!Array.isArray(S[arr]))S[arr]=mk();APP.defaults=APP.defaults||{};APP.defaults[arr]=def||{};
+ const _d=APP.demo;APP.demo=()=>{const s=_d();s[arr]=mk();return s};const _b=APP.blank;APP.blank=()=>{const s=_b();s[arr]=keep?mk():[];return s}}
+const isoAgo=n=>{const d=new Date();d.setDate(d.getDate()-n);return d.toISOString().slice(0,10)};
 
 // ===== CALM LAYER: next small step, 5-min timer, stuck helper, brain dump, quick add, onboarding, focus mode, help =====
 if(!Array.isArray(S.dump))S.dump=[];
@@ -760,6 +769,366 @@ Object.assign(CORE_ACT,{
 (function(){const f=document.createElement('button');f.className='fab';f.dataset.act='quickadd';f.title='Quick add';f.textContent='+';document.body.appendChild(f);
  const db=$('#demobar');if(db&&window.ETSY_URL){db.innerHTML=`✨ <b>Free demo</b> · try anything, your data never leaves your browser · <a href="${window.ETSY_URL}" target="_blank" rel="noopener" style="color:inherit;font-weight:700;text-decoration:underline">Get the full app on Etsy →</a>`}})();
 
+// ===== EXTRAS: quotes, badges, insights (charts), timers, spinner wheel, year in pixels, breathing, water =====
+// Used from <app>/post.js:  X.quotes(list,{tab}) · X.badges(after,defs) · X.insights(after,tab,fn) · X.timer(after,tab,o)
+//                           X.wheel(after,tab,o) · X.pixels(after,tab,o) · X.breathe(after) · X.water(after,o)
+I.medal='<circle cx="12" cy="15" r="6"/><path d="M8.5 3.5L12 9l3.5-5.5"/><path d="M12 12.6l.9 1.7 1.9.3-1.4 1.3.3 1.9-1.7-.9-1.7.9.3-1.9-1.4-1.3 1.9-.3z"/>';
+I.spin='<circle cx="12" cy="12" r="9"/><path d="M12 3v9l6.4 6.4M12 12L5.6 18.4M12 12H3"/>';
+I.quote='<path d="M5 7h5v5c0 3-1.6 5-4.5 6M14 7h5v5c0 3-1.6 5-4.5 6"/>';
+I.drop='<path d="M12 3s6 6.5 6 11a6 6 0 0 1-12 0c0-4.5 6-11 6-11z"/>';
+I.wind='<path d="M3 8h11a3 3 0 1 0-3-3M3 12h16a3 3 0 1 1-3 3M3 16h7"/>';
+I.grid='<rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5"/><rect x="14" y="14" width="7" height="7" rx="1.5"/>';
+(function(){const s=document.createElement('style');s.textContent=`
+.xq{background:var(--acc-l);border:0;position:relative}.xq .qk{font:700 11px var(--sans);letter-spacing:.14em;color:var(--acc-d,var(--acc))}
+.xq .qt{font:600 21px/1.35 var(--serif);margin:8px 0 6px}.xq .qa{font-size:12.5px;color:var(--mute)}.xq .qb{display:flex;gap:6px;margin-top:12px;flex-wrap:wrap}
+.xbm{display:flex;flex-direction:column;justify-content:space-between}.xbm .em{font-size:30px;letter-spacing:4px;margin:8px 0}
+.xbg{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:12px}
+.xb{text-align:center;padding:16px 12px}.xb .e{font-size:36px;width:68px;height:68px;border-radius:50%;display:grid;place-items:center;margin:0 auto 8px;background:var(--acc-l)}
+.xb.lock .e{filter:grayscale(1);opacity:.4;background:var(--soft)}.xb b{display:block;font:600 16px/1.2 var(--serif)}.xb small{color:var(--mute);font-size:12px;display:block;margin-top:4px;line-height:1.35}
+.xb .d{font-size:11px;color:var(--acc);font-weight:700;margin-top:8px}.xb .bar{margin-top:10px}
+.xt{display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:14px}.xt .card{text-align:center}
+.xring{width:164px;height:164px;border-radius:50%;margin:6px auto 12px;display:grid;place-items:center}
+.xring>div{width:134px;height:134px;border-radius:50%;background:var(--card);display:grid;place-items:center;font:600 32px var(--serif)}
+.xt .card.done .xring>div{color:var(--acc)}.xbtns{display:flex;gap:6px;justify-content:center;flex-wrap:wrap}
+.xpre{display:flex;gap:8px;flex-wrap:wrap;margin:4px 0 2px}
+.xhb{display:grid;grid-template-columns:minmax(80px,140px) 1fr auto;gap:8px 10px;align-items:center;font-size:13px}.xhb .t{height:10px;border-radius:6px;background:var(--soft);overflow:hidden}.xhb .t i{display:block;height:100%;border-radius:6px;background:var(--acc)}.xhb b{font-variant-numeric:tabular-nums}
+.xheat{display:grid;grid-auto-flow:column;grid-template-rows:repeat(7,1fr);gap:3px;overflow-x:auto}.xheat i{width:14px;height:14px;border-radius:3px;background:var(--soft);display:block}
+.xpx{display:grid;grid-template-columns:22px repeat(12,1fr);gap:3px;font-size:10px;color:var(--mute);text-align:center}.xpx i{display:block;aspect-ratio:1;border-radius:3px;background:var(--soft);max-width:26px;margin:0 auto;width:100%}
+.xpx i.na{background:transparent}
+.xwh{position:relative;width:min(340px,86vw);margin:0 auto}.xwh svg{width:100%;display:block}.xwh .pt{position:absolute;left:50%;top:-6px;transform:translateX(-50%);width:0;height:0;border-left:13px solid transparent;border-right:13px solid transparent;border-top:24px solid var(--ink);z-index:2}
+.xwres{text-align:center;font:600 24px var(--serif);min-height:34px;margin-top:14px}
+.xbr{width:230px;height:230px;border-radius:50%;margin:24px auto;display:grid;place-items:center;background:radial-gradient(circle,var(--acc-l) 0,var(--acc-l) 55%,transparent 56%);position:relative}
+.xbr .c{position:absolute;inset:30px;border-radius:50%;background:var(--acc);opacity:.85;transform:scale(.55);transition:transform 4s ease-in-out}
+.xbr b{position:relative;color:#fff;font:600 22px var(--serif);text-shadow:0 1px 6px rgba(0,0,0,.25)}
+.xgl{display:flex;gap:6px;flex-wrap:wrap;justify-content:center;font-size:34px;margin:12px 0}.xgl span{opacity:.22;filter:grayscale(1)}.xgl span.on{opacity:1;filter:none}
+.xconf{position:fixed;top:-40px;font-size:26px;z-index:99;pointer-events:none;animation:xfall 1.7s ease-in forwards}@keyframes xfall{to{transform:translateY(110vh) rotate(540deg);opacity:.3}}
+@media(max-width:720px){.xq .qt{font-size:18px}.xring{width:140px;height:140px}.xring>div{width:112px;height:112px;font-size:27px}}`;document.head.appendChild(s)})();
+const X={};
+const xIso=d=>`${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,"0")}-${String(d.getDate()).padStart(2,"0")}`;
+const xToday=()=>xIso(new Date());
+const xDays=n=>[...Array(n)].map((_,i)=>{const d=new Date();d.setDate(d.getDate()-(n-1-i));return xIso(d)});
+const xNum=v=>+String(v??'').replace(/[^\d.-]/g,'')||0;
+const xCnt=(k,f)=>(S[k]||[]).filter(f||(()=>true)).length;
+const xTicks=k=>sum(S[k]||[],x=>Object.keys(x.log||{}).length);
+function xBest(k){const d=new Set();(S[k]||[]).forEach(x=>Object.keys(x.log||{}).forEach(z=>d.add(z)));let b=0,c=0,p=null;[...d].sort().forEach(z=>{const t=new Date(z+'T12:00');c=p&&Math.round((t-p)/864e5)===1?c+1:1;p=t;b=Math.max(b,c)});return b}
+function xByDay(arr,df,vf,n){const m={};arr.forEach(x=>{const d=x[df];if(d)m[d]=(m[d]||0)+(vf?+vf(x)||0:1)});return xDays(n).map(d=>m[d]||0)}
+function xByMonth(arr,df,vf,n){const now=new Date(),out=[];for(let i=n-1;i>=0;i--){const d=new Date(now.getFullYear(),now.getMonth()-i,1),k=xIso(d).slice(0,7);out.push([d.toLocaleDateString('en-US',{month:'short'}),sum(arr.filter(x=>String(x[df]||'').slice(0,7)===k),x=>vf?vf(x):1)])}return out}
+function xGroup(arr,kf,vf){const m={};arr.forEach(x=>{const k=kf(x)||'Other';m[k]=(m[k]||0)+(vf?+vf(x)||0:1)});return Object.entries(m).sort((a,b)=>b[1]-a[1])}
+const xDl=d=>new Date(d+'T12:00').toLocaleDateString('en-US',{weekday:'short'}).slice(0,2);
+// ---- charts ----
+function xLine(vals,labels,o={}){const W=320,H=o.h||150,p=18,n=vals.length;if(!n)return '<div class="empty">No data yet</div>';
+ const mn=o.zero?0:Math.min(...vals),mx=Math.max(...vals),r=(mx-mn)||1,X0=i=>p+(n<2?(W-2*p)/2:i*(W-2*p)/(n-1)),Y=v=>H-p-(v-mn)/r*(H-2*p-8);
+ const pts=vals.map((v,i)=>`${X0(i).toFixed(1)},${Y(v).toFixed(1)}`).join(' ');
+ return `<svg viewBox="0 0 ${W} ${H+14}" style="width:100%;height:auto;display:block"><polygon points="${X0(0)},${H-p} ${pts} ${X0(n-1)},${H-p}" style="fill:var(--acc);opacity:.12"/><polyline points="${pts}" fill="none" style="stroke:var(--acc)" stroke-width="2.4" stroke-linejoin="round" stroke-linecap="round"/>
+ ${vals.map((v,i)=>`<circle cx="${X0(i)}" cy="${Y(v)}" r="3.2" style="fill:var(--card);stroke:var(--acc)" stroke-width="2"/>`).join('')}
+ ${labels.map((l,i)=>(n<=12||i%Math.ceil(n/8)===0)?`<text x="${X0(i)}" y="${H+8}" text-anchor="middle" font-size="9" fill="#8C8378">${esc(l)}</text>`:'').join('')}
+ <text x="${p}" y="11" font-size="9" fill="#8C8378">${o.fmt?o.fmt(mx):Math.round(mx*10)/10}</text></svg>`}
+function xHBars(rows,fmt){const m=Math.max(1,...rows.map(r=>r[1]));return rows.length?`<div class="xhb">${rows.map(([k,v])=>`<span>${esc(k)}</span><div class="t"><i style="width:${Math.max(2,v/m*100)}%"></i></div><b>${fmt?fmt(v):Math.round(v*10)/10}</b>`).join('')}</div>`:'<div class="empty">No data yet</div>'}
+const XPAL=()=>X.pal||(PAL.length>=6?PAL:["var(--acc)","#E07A5F","#B8914E","#7A8FB8","#81B29A","#B5546B","#8C8378","#D8A25E"]);
+function xDonut(rows,center,lab){const t=rows.filter(r=>r[1]>0),P=XPAL();return t.length?`<div style="display:flex;gap:18px;align-items:center;flex-wrap:wrap;justify-content:center">${donut(t.map(([k,v],i)=>({v,c:P[i%P.length]})),160,center,lab||'')}<div class="legend">${t.map(([k,v,d],i)=>`<span><i style="background:${P[i%P.length]}"></i>${esc(k)}<b>${d!=null?d:v}</b></span>`).join('')}</div></div>`:'<div class="empty">No data yet</div>'}
+function xHeat(map,weeks){weeks=weeks||18;const t=new Date(),st=new Date(t);st.setDate(t.getDate()-t.getDay()-7*(weeks-1));const mx=Math.max(1,...Object.values(map));let s='';
+ for(let i=0;i<weeks*7;i++){const d=new Date(st);d.setDate(st.getDate()+i);const k=xIso(d),v=map[k]||0;s+=d>t?'<i style="background:transparent"></i>':`<i title="${k}: ${v}" style="${v?`background:var(--acc);opacity:${(.3+.7*v/mx).toFixed(2)}`:''}"></i>`}
+ return `<div class="xheat">${s}</div><div style="display:flex;justify-content:space-between;font-size:11px;color:var(--mute);margin-top:6px"><span>${weeks} weeks ago</span><span>Today</span></div>`}
+const xCard=(t,body,x)=>`<div class="card"><h3>${t}${x?`<span class="x">${x}</span>`:''}</h3>${body}</div>`;
+function xConfetti(e){return;const em=[e||'🎉','✨','⭐','🎊'];for(let i=0;i<22;i++){const s=document.createElement('span');s.className='xconf';s.textContent=em[i%em.length];s.style.left=Math.random()*100+'vw';s.style.animationDelay=Math.random()*.5+'s';document.body.appendChild(s);setTimeout(()=>s.remove(),2600)}}
+// ---- quotes of the day ----
+const XQ={list:null,off:0,tab:null};
+X.quotes=(list,o={})=>{XQ.list=list;if(!Array.isArray(S.favq))S.favq=[];
+ if(o.tab){addTab(o.tab,['inspire',o.label||'Inspiration','quote'],'myq',null,{q:'',by:''});
+  APP.P.inspire=()=>`${head(o.label||'Inspiration',o.sub||'Words to come back to. Tap ♡ to keep your favorites.',`<button class="btn" data-act="addrow" data-c="myq">${ic('plus',15)} Add my own</button>`)}
+  ${S.myq.length?`<h3 style="margin:4px 0 10px">My words</h3><div class="grid g3">${S.myq.map(q=>`<div class="card xq"><div style="display:flex;justify-content:flex-end">${del('myq',q)}</div><textarea data-c="myq" data-id="${q.id}" data-f="q" placeholder="Write a quote or mantra…" style="width:100%;min-height:70px;border:0;background:transparent;font:600 19px/1.35 var(--serif);resize:vertical">${esc(q.q)}</textarea>${inp('myq',q,'by',{ph:'— who said it',st:'font-size:12.5px;background:transparent;border:0'})}</div>`).join('')}</div>`:''}
+  <h3 style="margin:18px 0 10px">${S.favq.length?'Favorites first':'All quotes'}</h3><div class="grid g3">${XQ.list.slice().sort((a,b)=>S.favq.includes(b[0])-S.favq.includes(a[0])).map(([q,a])=>{const f=S.favq.includes(q);return `<div class="card xq" style="${f?'':'background:var(--card);border:1px solid var(--line)'}"><div class="qt" style="font-size:18px">“${esc(q)}”</div><div style="display:flex;justify-content:space-between;align-items:center"><span class="qa">${a?'— '+esc(a):''}</span><button class="btn ghost sm" data-act="xqfav" data-q="${esc(q)}">${f?'♥':'♡'}</button></div></div>`}).join('')}</div>`}};
+function xQuoteCard(){const L=XQ.list;if(!L||!L.length)return '';const d=Math.floor((Date.now()-new Date(new Date().getFullYear(),0,0))/864e5),[q,a]=L[(d+XQ.off)%L.length],f=S.favq.includes(q);
+ return `<div class="card xq"><div class="qk">QUOTE OF THE DAY</div><div class="qt">“${esc(q)}”</div>${a?`<div class="qa">— ${esc(a)}</div>`:''}<div class="qb"><button class="btn ghost sm" data-act="xqnext">↻ Another</button><button class="btn ghost sm" data-act="xqfav" data-q="${esc(q)}">${f?'♥ Saved':'♡ Save'}</button>${APP.pages.some(p=>p[0]==='inspire')?'<button class="btn ghost sm" data-go="inspire">All quotes →</button>':''}</div></div>`}
+// ---- badges ----
+const XB={defs:null};
+X.badges=(after,defs,label)=>{XB.defs=defs;XB.label=label||"Badges";addTab(after,['badges',label||'Badges','medal']);
+ const _c=APP.counts;APP.counts=()=>{const c=_c?_c():{};c.badges=xBadges().filter(b=>b.ok).length;return c};
+ APP.P.badges=()=>{const st=xBadges(),ok=st.filter(b=>b.ok).length,nx=st.filter(b=>!b.ok).sort((a,b)=>b.v/b.g-a.v/a.g)[0];
+  return `${head(label||'Badges',`${ok} of ${st.length} unlocked · they unlock on their own as you use the app`)}
+  <div class="grid g21" style="margin-bottom:16px"><div class="card"><h3>Your collection<span class="x">${pct(ok/st.length)}%</span></h3><div class="bar"><i style="width:${pct(ok/st.length)}%"></i></div><div style="font-size:26px;letter-spacing:4px;margin-top:12px">${st.filter(b=>b.ok).map(b=>b.e).join('')||'<span style="font-size:14px;color:var(--mute);letter-spacing:0">Your first badge is close…</span>'}</div></div>
+  <div class="card xq">${nx?`<div class="qk">NEXT UP</div><div class="qt" style="font-size:19px">${nx.e} ${esc(nx.n)}</div><div class="qa">${esc(nx.d)} · ${Math.round(nx.v)} / ${nx.g}</div><div class="bar" style="margin-top:10px"><i style="width:${pct(nx.v/nx.g)}%"></i></div>`:'<div class="qt">All badges unlocked! 🏆</div>'}</div></div>
+  <div class="xbg">${st.map(b=>`<div class="card xb ${b.ok?'':'lock'}"><div class="e">${b.e}</div><b>${esc(b.n)}</b><small>${esc(b.d)}</small>${b.ok?`<div class="d">✓ ${S._bdg&&S._bdg[b.n]?new Date(S._bdg[b.n]+'T12:00').toLocaleDateString('en-US',{month:'short',day:'numeric'}):'Unlocked'}</div>`:`<div class="bar"><i style="width:${pct(b.v/b.g)}%"></i></div><div class="d" style="color:var(--mute)">${Math.round(b.v)} / ${b.g}</div>`}</div>`).join('')}</div>`}};
+function xBadges(){return (XB.defs||[]).map(([e,n,d,f,g])=>{let v=0;try{v=+f()||0}catch(x){}const ok=v>=g||!!(S._bdg&&S._bdg[n]);return {e,n,d,v:ok?g:Math.min(v,g),g,ok}})}
+function xBadgeCheck(){if(!XB.defs)return;const fresh=!S._bdg||typeof S._bdg!=='object';if(fresh)S._bdg={};const nw=[];
+ (XB.defs||[]).forEach(([e,n,d,f,g])=>{let v=0;try{v=+f()||0}catch(x){}if(v>=g&&!S._bdg[n]){S._bdg[n]=xToday();nw.push(e+' '+n)}});
+ if(fresh||nw.length)save();if(nw.length&&!fresh)setTimeout(()=>{toast('🏅 Badge unlocked: '+nw[0]);xConfetti(nw[0].split(' ')[0])},350)}
+function xBadgeMini(){if(!XB.defs)return '';const st=xBadges(),ok=st.filter(b=>b.ok),nx=st.filter(b=>!b.ok).sort((a,b)=>b.v/b.g-a.v/a.g)[0];
+ return `<div class="card xbm"><div><h3>🏅 ${XB.label||"Badges"}<span class="x">${ok.length} / ${st.length}</span></h3><div class="em">${ok.slice(-6).map(b=>b.e).join('')||'—'}</div>${nx?`<small style="color:var(--mute)">Next: ${nx.e} ${esc(nx.n)} · ${Math.round(nx.v)}/${nx.g}</small><div class="bar" style="margin-top:6px"><i style="width:${pct(nx.v/nx.g)}%"></i></div>`:''}</div><button class="btn ghost sm" data-go="badges" style="align-self:flex-start;margin-top:12px">See all →</button></div>`}
+// ---- insights page ----
+X.insights=(after,tab,fn,sub)=>{addTab(after,tab);APP.P[tab[0]]=()=>`${head(tab[1],sub||'Your numbers, drawn for you. Everything updates on its own.')}${fn()}`};
+// ---- timers (several can run at once) ----
+const XT={list:[],iv:null,o:{}};
+function xBeep(){try{const a=new(window.AudioContext||window.webkitAudioContext)();[0,.35,.7].forEach(t=>{const o=a.createOscillator(),g=a.createGain();o.frequency.value=880;o.connect(g);g.connect(a.destination);g.gain.setValueAtTime(.001,a.currentTime+t);g.gain.exponentialRampToValueAtTime(.3,a.currentTime+t+.02);g.gain.exponentialRampToValueAtTime(.001,a.currentTime+t+.3);o.start(a.currentTime+t);o.stop(a.currentTime+t+.32)})}catch(e){}try{navigator.vibrate&&navigator.vibrate([200,100,200])}catch(e){}}
+const xFmt=s=>{s=Math.max(0,Math.ceil(s));const h=Math.floor(s/3600),m=Math.floor(s%3600/60),x=s%60;return (h?h+':'+String(m).padStart(2,'0'):m)+':'+String(x).padStart(2,'0')};
+function xRingBg(t){return `conic-gradient(var(--acc) ${((1-t.left/t.total)*360).toFixed(1)}deg,var(--acc-l) 0)`}
+function xTick(){let any=false,fin=false;XT.list.forEach(t=>{if(!t.run)return;t.left=Math.max(0,(t.end-Date.now())/1000);
+  if(t.left<=0){t.run=false;t.done=true;fin=true;xBeep();toast('⏰ '+t.label+' is done!');if(!Array.isArray(S.tlog))S.tlog=[];S.tlog.unshift({date:xToday(),label:t.label,min:Math.round(t.total/60)});S.tlog=S.tlog.slice(0,300);save()}else any=true;
+  const el=document.getElementById('xt-'+t.id);if(el){el.querySelector('.tm').textContent=xFmt(t.left);el.querySelector('.xring').style.background=xRingBg(t)}});
+ if(!any){clearInterval(XT.iv);XT.iv=null}if(fin&&page===XT.o.key)rerender()}
+function xTStart(){if(!XT.iv)XT.iv=setInterval(xTick,250)}
+X.timer=(after,tab,o)=>{XT.o=Object.assign({key:tab[0]},o);addTab(after,tab);if(!Array.isArray(S.tlog))S.tlog=[];
+ APP.P[tab[0]]=()=>{const lg=S.tlog||[],td=sum(lg.filter(x=>x.date===xToday()),x=>x.min),wk=xByDay(lg,'date',x=>x.min,7);
+  return `${head(o.title||tab[1],o.sub||'Tap a preset to start. Several timers can run at once.')}
+  <div class="card" style="margin-bottom:16px"><h3>Start a timer</h3><div class="xpre">${o.presets.map(([l,m])=>`<button class="chip" data-act="xtadd" data-l="${esc(l)}" data-m="${m}">▶ ${esc(l)} · ${m<1?Math.round(m*60)+' s':m+' min'}</button>`).join('')}</div>
+   <div class="addrow" style="margin-top:12px"><input class="fi" id="xtlab" placeholder="${esc(o.ph||'Name (optional)')}" style="flex:2"><input class="fi" id="xtmin" type="number" min="1" step="any" placeholder="Minutes" style="flex:1"><button class="btn" data-act="xtcustom">Start</button></div></div>
+  <div class="xt">${XT.list.map(t=>`<div class="card ${t.done?'done':''}" id="xt-${t.id}"><b style="font:600 18px var(--serif)">${esc(t.label)}</b><div class="xring" style="background:${xRingBg(t)}"><div class="tm">${t.done?'Done ✓':xFmt(t.left)}</div></div>
+   <div class="xbtns">${t.done?`<button class="btn sm" data-act="xtreset" data-id="${t.id}">↺ Again</button>`:`<button class="btn sm" data-act="xtgo" data-id="${t.id}">${t.run?'Pause':'Resume'}</button><button class="btn ghost sm" data-act="xtplus" data-id="${t.id}">+1 min</button>`}<button class="btn ghost sm" data-act="xtdel" data-id="${t.id}">×</button></div></div>`).join('')||'<div class="card empty">No timer running. Pick one above ⏱</div>'}</div>
+  ${o.log===false?'':`<div class="grid g2" style="margin-top:16px">${xCard(o.logTitle||'Minutes this week',bars(wk,xDays(7).map(xDl),130),`today ${td} min`)}${xCard('Recent sessions',`<div class="list">${lg.slice(0,6).map(x=>`<div class="it"><div style="flex:1">${esc(x.label)}</div><small style="color:var(--mute)">${x.min} min · ${new Date(x.date+'T12:00').toLocaleDateString('en-US',{month:'short',day:'numeric'})}</small></div>`).join('')||'<div class="empty" style="padding:12px">Finished timers show up here</div>'}</div>`,`${lg.length} total`)}</div>`}`}};
+// ---- spinner wheel ----
+const XW={rot:0,res:''};
+X.wheel=(after,tab,o)=>{XW.o=o;addTab(after,tab);
+ APP.P[tab[0]]=()=>{const L=xWOpts();return `${head(o.title||tab[1],o.sub||'Can’t decide? Let the wheel pick.')}
+ <div class="grid g21"><div class="card" style="padding:26px 16px">${L.length>1?`<div class="xwh"><div class="pt"></div>${xWheelSvg(L)}</div><div class="xwres" id="xwres">${esc(XW.res)}</div><div style="text-align:center;margin-top:10px"><button class="btn" data-act="xwspin">🎡 ${o.verb||'Spin the wheel'}</button></div>`:`<div class="empty">${o.empty||'Add a few items first'}</div>`}</div>
+ <div class="card"><h3>On the wheel<span class="x">${L.length}</span></h3><div class="list">${L.map(x=>`<div class="it">${esc(x)}</div>`).join('')}</div>${o.note?`<p style="color:var(--mute);font-size:12.5px;margin:12px 0 0">${o.note}</p>`:''}</div></div>`}};
+const xWOpts=()=>{let L=[];try{L=XW.o.opts().filter(Boolean).map(String)}catch(e){}return [...new Set(L)].slice(0,16)};
+const xDark=h=>{const m=/^#([0-9a-f]{6})$/i.exec(h||"");if(!m)return true;const n=parseInt(m[1],16);return (0.299*(n>>16)+0.587*(n>>8&255)+0.114*(n&255))<150};
+function xWheelSvg(L){const n=L.length,sg=360/n,R=150,c=160,P=a=>[c+R*Math.cos((a-90)*Math.PI/180),c+R*Math.sin((a-90)*Math.PI/180)];
+ return `<svg viewBox="0 0 320 320"><g id="xwg" style="transform-origin:160px 160px;transform:rotate(${XW.rot}deg)">${L.map((l,i)=>{const [x1,y1]=P(i*sg),[x2,y2]=P((i+1)*sg),m=i*sg+sg/2;
+  const th=m-90,lf=th>90&&th<270;return `<path d="M${c} ${c} L${x1.toFixed(1)} ${y1.toFixed(1)} A${R} ${R} 0 ${sg>180?1:0} 1 ${x2.toFixed(1)} ${y2.toFixed(1)}z" fill="${PAL[i%PAL.length]}" stroke="#fff" stroke-width="2"/><text transform="rotate(${lf?th-180:th} ${c} ${c})" x="${lf?c-R+12:c+R-12}" y="${c+4}" text-anchor="${lf?"start":"end"}" font-size="${n>10?10:12}" font-weight="700" fill="${xDark(PAL[i%PAL.length])?"#fff":"#3A3029"}">${esc(l.length>18?l.slice(0,17)+'…':l)}</text>`}).join('')}</g><circle cx="${c}" cy="${c}" r="22" style="fill:var(--card)" stroke="#fff" stroke-width="3"/><text x="${c}" y="${c+6}" text-anchor="middle" font-size="18">✨</text></svg>`}
+// ---- year in pixels ----
+X.pixels=(after,tab,o)=>{addTab(after,tab);
+ APP.P[tab[0]]=()=>{const y=new Date().getFullYear(),m=o.get(),C=o.colors;let h='<span></span>'+'JFMAMJJASOND'.split('').map(x=>`<b>${x}</b>`).join('');
+  for(let d=1;d<=31;d++){h+=`<span>${d}</span>`;for(let mo=0;mo<12;mo++){const dt=new Date(y,mo,d);if(dt.getMonth()!==mo){h+='<i class="na"></i>';continue}const k=`${y}-${String(mo+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`,v=m[k];h+=`<i title="${k}${v?': '+o.labels[v-1]:''}" style="${v?'background:'+C[v-1]:''}"></i>`}}
+  const cnt=o.labels.map((l,i)=>[l,Object.values(m).filter(v=>v===i+1).length]);
+  return `${head(tab[1],o.sub||'One little square for every day of the year.')}<div class="grid g21"><div class="card"><h3>${y}<span class="x">${Object.keys(m).filter(k=>k.startsWith(y)).length} days logged</span></h3><div class="xpx">${h}</div></div>
+  <div class="grid" style="align-content:start"><div class="card"><h3>Legend</h3><div class="list">${o.labels.map((l,i)=>`<div class="it"><i style="width:16px;height:16px;border-radius:4px;background:${C[i]};display:inline-block"></i><div style="flex:1">${l}</div><b>${cnt[i][1]}</b></div>`).join('')}</div></div>${o.side?o.side():''}</div></div>`}};
+// ---- breathing ----
+const XBR={on:false,pat:'box',iv:null};
+const XBP={box:['Box breathing',[['Breathe in',4],['Hold',4],['Breathe out',4],['Hold',4]]],calm:['4 · 7 · 8 relax',[['Breathe in',4],['Hold',7],['Breathe out',8]]],easy:['Easy calm',[['Breathe in',4],['Breathe out',6]]]};
+X.breathe=(after)=>{addTab(after,['breathe','Breathe','wind']);
+ APP.P.breathe=()=>`${head('Breathe','A one-minute reset. Follow the circle.')}<div class="grid g21"><div class="card" style="text-align:center"><div class="tabs" style="justify-content:center">${Object.entries(XBP).map(([k,[l]])=>`<button class="${XBR.pat===k?'on':''}" data-act="xbrpat" data-p="${k}">${l}</button>`).join('')}</div>
+  <div class="xbr"><div class="c" id="xbrc"></div><b id="xbrt">${XBR.on?'…':'Ready'}</b></div><button class="btn" data-act="xbrgo">${XBR.on?'Stop':'▶ Start'}</button><p style="color:var(--mute);font-size:13px;margin:12px 0 0" id="xbrn">${XBR.n?XBR.n+' breaths today':''}</p></div>
+  <div class="card"><h3>When to use it</h3><div class="list"><div class="it">😮‍💨 Before a hard conversation</div><div class="it">🛏 When you can’t fall asleep (try 4·7·8)</div><div class="it">💻 Between two tasks</div><div class="it">🌀 When everything feels like too much</div></div></div></div>`};
+function xBrRun(){const [,ph]=XBP[XBR.pat];let i=0;const step=()=>{if(!XBR.on)return;const [l,s]=ph[i%ph.length],c=$('#xbrc'),t=$('#xbrt');if(!c){XBR.on=false;return}
+ c.style.transitionDuration=s+'s';c.style.transform=l==='Breathe in'?'scale(1)':l==='Breathe out'?'scale(.55)':c.style.transform;let k=s;t.textContent=l+' · '+k;
+ clearInterval(XBR.iv);XBR.iv=setInterval(()=>{k--;if(k>0&&$('#xbrt'))$('#xbrt').textContent=l+' · '+k},1000);
+ if(i%ph.length===ph.length-1){XBR.n=(XBR.n||0)+1}i++;XBR.to=setTimeout(step,s*1000)};step()}
+// ---- water ----
+X.water=(after,o={})=>{const g=o.goal||8;XWG=g;addTab(after,['water',o.label||'Water','drop']);if(!S.water||typeof S.water!=='object'||Array.isArray(S.water))S.water={};
+ APP.P.water=()=>{const n=S.water[xToday()]||0,wk=xDays(7).map(d=>S.water[d]||0),hit=Object.values(S.water).filter(v=>v>=g).length;
+  return `${head(o.label||'Water',`Goal: ${g} glasses a day · goal reached ${hit} days`)}<div class="grid g21"><div class="card" style="text-align:center"><div style="font:600 46px var(--serif)">${n} <span style="font-size:20px;color:var(--mute)">/ ${g}</span></div><div class="xgl">${[...Array(Math.max(g,n))].map((_,i)=>`<span class="${i<n?'on':''}">💧</span>`).join('')}</div>
+  <div class="xbtns"><button class="btn" data-act="xwat" data-d="1">+ 1 glass</button><button class="btn ghost" data-act="xwat" data-d="-1">− 1</button></div>${n>=g?'<p style="margin:12px 0 0;font-weight:700;color:var(--acc)">Goal reached today 🎉</p>':''}</div>${xCard('Last 7 days',bars(wk,xDays(7).map(xDl),140))}</div>`}};
+// ---- actions ----
+Object.assign(CORE_ACT,{
+ xqnext:()=>{XQ.off++;rerender()},
+ xqfav:t=>{const q=t.dataset.q;S.favq=S.favq.includes(q)?S.favq.filter(x=>x!==q):[q,...S.favq];save();rerender();toast(S.favq.includes(q)?'Saved ♥':'Removed')},
+ xtadd:t=>{const m=+t.dataset.m;XT.list.unshift({id:uid(),label:t.dataset.l,total:m*60,left:m*60,end:Date.now()+m*6e4,run:true});xTStart();rerender()},
+ xtcustom:()=>{const m=+$('#xtmin').value;if(!(m>0)){toast('Type the minutes first');return}const l=$('#xtlab').value.trim()||(m+' min timer');XT.list.unshift({id:uid(),label:l,total:m*60,left:m*60,end:Date.now()+m*6e4,run:true});xTStart();rerender()},
+ xtgo:t=>{const x=XT.list.find(z=>z.id===t.dataset.id);if(!x)return;if(x.run){x.run=false;x.left=Math.max(0,(x.end-Date.now())/1000)}else{x.run=true;x.end=Date.now()+x.left*1000;xTStart()}rerender()},
+ xtplus:t=>{const x=XT.list.find(z=>z.id===t.dataset.id);if(!x)return;x.total+=60;x.left+=60;x.end+=6e4;rerender()},
+ xtreset:t=>{const x=XT.list.find(z=>z.id===t.dataset.id);if(!x)return;x.done=false;x.run=true;x.left=x.total;x.end=Date.now()+x.total*1000;xTStart();rerender()},
+ xtdel:t=>{XT.list=XT.list.filter(z=>z.id!==t.dataset.id);rerender()},
+ xwspin:()=>{const L=xWOpts(),n=L.length;if(n<2)return;const w=Math.floor(Math.random()*n),sg=360/n,ac=(w+.5)*sg,cur=((XW.rot%360)+360)%360,need=((360-ac-cur)%360+360)%360;XW.rot+=1440+need;
+  const g=document.getElementById('xwg'),r=$('#xwres');if(r)r.textContent='…';if(g){g.style.transition='transform 3.4s cubic-bezier(.17,.67,.15,1)';g.style.transform=`rotate(${XW.rot}deg)`}
+  setTimeout(()=>{XW.res=(XW.o.prefix||'')+L[w];const r2=$('#xwres');if(r2)r2.textContent=XW.res;xConfetti(XW.o.emoji||'🎉')},3500)},
+ xbrpat:t=>{XBR.pat=t.dataset.p;XBR.on=false;clearTimeout(XBR.to);clearInterval(XBR.iv);rerender()},
+ xbrgo:()=>{XBR.on=!XBR.on;clearTimeout(XBR.to);clearInterval(XBR.iv);rerender();if(XBR.on)setTimeout(xBrRun,50)},
+ xwat:t=>{const k=xToday();S.water[k]=Math.max(0,(S.water[k]||0)+(+t.dataset.d));save();rerender();if(+t.dataset.d>0&&S.water[k]===(XWG||8))xConfetti('💧')}});
+let XWG=8;
+// ---- dashboard row (quote + badges) & badge check on every render ----
+
+// ---- sections with sub-tabs (pro layout) ----
+// X.section(key,[[sub,label,fn]...]) · X.layout([[key,label,icon]...]) · X.dash(fn) adds a dashboard card
+X.section=(key,subs)=>{APP.P[key]=()=>{const cur=F["sub_"+key]||subs[0][0],s=subs.find(x=>x[0]===cur)||subs[0];let h="";try{h=s[2]()}catch(e){h=`<div class="card empty">${esc(e.message)}</div>`}
+ const bar=`<div class="tabs xsub">${subs.map(([k,l])=>`<button class="${k===s[0]?"on":""}" data-flt="sub_${key}:${k}">${l}</button>`).join("")}</div>`;
+ const i=h.indexOf(`<div class="top">`);if(i<0)return bar+h;const r=h.indexOf(`<div class="r">`,i),j=h.indexOf("</div></div>",r)+12;return h.slice(0,j)+bar+h.slice(j)}};
+X.go=(key,sub)=>{if(sub)F["sub_"+key]=sub;page=key;history.replaceState(null,"","#"+key);render()};
+X.layout=L=>{APP.pages=L};
+const XDC=[];X.dash=fn=>XDC.push(fn);
+function xTable(c,rows,cols,o={}){const w={chk:"40px",num:"84px",money:"100px",date:"145px",time:"105px",thumb:"56px",stars:"118px"};
+ return `<div class="tblw"><table class="tbl"><tr>${cols.map(k=>`<th class="${["num","money","calc"].includes(k[2])?"num":""}">${k[1]}</th>`).join("")}${o.nodel?"":"<th></th>"}</tr>${rows.map(x=>`<tr>${cols.map(k=>`<td style="${w[k[2]]?"width:"+w[k[2]]:""}${k[2]==="calc"?";text-align:right;white-space:nowrap;font-variant-numeric:tabular-nums":""}">${k[2]==="calc"?k[3](x):cellFor(c,x,k)}</td>`).join("")}${o.nodel?"":`<td>${del(c,x)}</td>`}</tr>`).join("")}</table>${rows.length?"":`<div class="empty">${o.empty||"Nothing yet"}</div>`}</div>`}
+Object.assign(CORE_ACT,{xgo:t=>X.go(t.dataset.k,t.dataset.s)});
+(function(){const s=document.createElement("style");s.textContent=`.xsub{margin:-4px 0 18px;overflow-x:auto;flex-wrap:nowrap;scrollbar-width:none}.xsub::-webkit-scrollbar{display:none}.xsub button{white-space:nowrap}
+.xday{display:flex;flex-direction:column;gap:8px}.xday.today{outline:2px solid var(--acc);outline-offset:-2px}.xday .dn{display:flex;justify-content:space-between;align-items:center}.xday .dn b{font:600 18px var(--serif)}.xday textarea{width:100%;min-height:150px;border:1px solid var(--line);border-radius:12px;padding:8px 10px;font:500 13px/1.5 var(--sans);background:transparent;color:inherit;resize:vertical}
+.xpill{display:inline-block;padding:3px 10px;border-radius:20px;background:var(--acc-l);color:var(--acc-d,var(--acc));font-size:12px;font-weight:700}
+.xmeter{display:grid;grid-template-columns:90px 1fr auto;gap:6px 10px;align-items:center;font-size:13px}.xmeter .t{height:9px;border-radius:6px;background:var(--soft);overflow:hidden}.xmeter .t i{display:block;height:100%;background:var(--acc);border-radius:6px}.xmeter .t i.over{background:var(--red,#C0503F)}
+.xcal{display:grid;grid-template-columns:repeat(7,1fr);gap:6px}.xcal .h{font-size:11px;color:var(--mute);text-align:center;font-weight:700}.xcal .c{min-height:76px;border:1px solid var(--line);border-radius:12px;padding:6px;font-size:11px;display:flex;flex-direction:column;gap:3px}.xcal .c.o{opacity:.35}.xcal .c.t{border-color:var(--acc);box-shadow:inset 0 0 0 1px var(--acc)}.xcal .c b{font-size:12px}.xcal .c span{border-radius:6px;padding:1px 5px;background:var(--acc-l);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.xcal .c span.p{background:transparent;border:1px dashed var(--line);color:var(--mute)}
+.xprog{display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:14px}.xprog .card.on{outline:2px solid var(--acc)}
+@media(max-width:720px){.xcal .c{min-height:54px;font-size:9px}.xcal .c span{padding:0 3px}}`;document.head.appendChild(s)})();
+
+// ---- gentle review ask: paid apps only, after 3 days of use, never with an incentive (Etsy rules) ----
+const XRV={k:KEY+'-rv',v:null};
+try{if(!DEMO){XRV.v=JSON.parse(localStorage.getItem(XRV.k)||'null');if(!XRV.v){XRV.v={first:Date.now(),snooze:0,done:0};localStorage.setItem(XRV.k,JSON.stringify(XRV.v))}}}catch(e){}
+const xrvSave=()=>{try{localStorage.setItem(XRV.k,JSON.stringify(XRV.v))}catch(e){}};
+X.dash(()=>{const v=XRV.v;if(!v||v.done||Date.now()-v.first<3*864e5)return '';
+ return `<div class="card" style="margin-bottom:16px;display:flex;gap:16px;align-items:center;flex-wrap:wrap;border:1px solid var(--line)"><div style="font-size:30px">💛</div><div style="flex:1;min-width:220px"><b style="font:600 18px var(--serif)">Enjoying ${esc(document.title)}?</b><div style="color:var(--mute);font-size:13.5px;margin-top:4px">If it helps you, a short review on Etsy means a lot to a small shop. Something not right? Message me on Etsy first and I’ll fix it.</div></div><div class="xbtns"><a class="btn sm" href="https://www.etsy.com/your/purchases" target="_blank" rel="noopener" data-act="xrvgo">Leave a review</a><button class="btn ghost sm" data-act="xrvlater">Not now</button><button class="btn ghost sm" data-act="xrvdone">Already did</button></div></div>`});
+Object.assign(CORE_ACT,{xrvgo:()=>{XRV.v.done=1;xrvSave();setTimeout(rerender,300)},xrvdone:()=>{XRV.v.done=1;xrvSave();rerender()},
+ xrvlater:()=>{XRV.v.snooze++;if(XRV.v.snooze>=2)XRV.v.done=1;else XRV.v.first=Date.now()+11*864e5;xrvSave();rerender()}});
+// ---- dashboard alerts (due soon, use soon…) ----
+const XA=[];X.alert=fn=>XA.push(fn);
+function xAlerts(){const L=[];XA.forEach(f=>{try{(f()||[]).forEach(x=>L.push(x))}catch(e){}});return L.length?`<div class="card" style="margin-bottom:16px;border-left:5px solid var(--acc)"><h3>🔔 Heads up<span class="x">${L.length}</span></h3><div class="list">${L.slice(0,6).map(x=>`<div class="it">${x}</div>`).join("")}</div></div>`:""}
+const xDaysTo=d=>d?Math.round((new Date(d+"T12:00")-new Date(xToday()+"T12:00"))/864e5):null;
+const _xview=view;
+view=function(){if(!Array.isArray(S.favq))S.favq=[];if(!Array.isArray(S.tlog))S.tlog=[];if(!S.water||typeof S.water!=="object"||Array.isArray(S.water))S.water={};const h=_xview();xBadgeCheck();if(page!=='dashboard'||S.focus)return h;const q=xQuoteCard(),b=xBadgeMini(),al=xAlerts();if(!q&&!b&&!al&&!XDC.length)return h;
+ const dx=XDC.map(f=>{try{return f()}catch(e){return ""}}).join("");const row=al+dx+(q||b?`<div class="grid ${q&&b?'g21':''}" style="margin-bottom:16px">${q}${b}</div>`:''),mk='<div style="height:16px"></div>',i=h.indexOf(mk);if(X.dashEnd)return h.replace(/(<div style="margin-top:16px"><div class="card"><h3>🧠 Brain dump)/,`<div style="margin-top:16px">${row}</div>$1`);return i>=0?h.slice(0,i+mk.length)+row+h.slice(i+mk.length):row+h};
+
+// ===== CHRISTMAS PRO: to-do (week timeline, calendar) · gifts (list, stockings, parcels, deals) · budget · food (menu & recipes, shopping, cooking day, baking, timers) · home (cards, decorations, photos) · season (events, advent, traditions, movies) · data =====
+const cFmt=s=>s?new Date(s+'T12:00').toLocaleDateString('en-US',{month:'short',day:'numeric'}):'—';
+const cDay=s=>new Date(s+'T12:00').toLocaleDateString('en-US',{weekday:'short',month:'short',day:'numeric'});
+const cHad=(()=>{try{return !!localStorage.getItem(KEY)}catch(e){return false}})();
+function cReg(arr,def,seed){if(!APP.arrays.includes(arr))APP.arrays.push(arr);if(!Array.isArray(S[arr]))S[arr]=seed&&cHad?seed():[];APP.defaults=APP.defaults||{};APP.defaults[arr]=def||{}}
+const MOVIES=[['Home Alone','Disney+'],['Elf','Max'],['The Polar Express','Max'],['The Grinch (2018)','Netflix'],['Love Actually','Prime Video'],['The Santa Clause','Disney+'],['A Christmas Story','Max'],['The Holiday','Netflix'],['Klaus','Netflix'],['Miracle on 34th Street','Disney+'],['Arthur Christmas','Netflix'],['It’s a Wonderful Life','Prime Video']];
+const TRADS=['Decorate the tree together','Bake Christmas cookies','Gingerbread house night','Drive to see the lights','Ugly sweater day','Hot cocoa & a movie','Write letters to Santa','Donate toys or food','Christmas Eve PJs','Read “The Night Before Christmas”'];
+cReg('movies',{title:'New movie',where:'',watched:false,rate:'0'},()=>MOVIES.map(([t,w])=>({id:uid(),title:t,where:w,watched:false,rate:'0'})));
+cReg('traditions',{what:'New tradition',when:'',done:false},()=>TRADS.map(t=>({id:uid(),what:t,when:'',done:false})));
+cReg('stock',{p:'',item:'New stocking stuffer',price:0,got:false});cReg('bake',{item:'New bake',date:'',qty:'',done:false,note:''});
+cReg('decor',{item:'New item',where:'',qty:1,cond:'Good',cost:0});cReg('events',{name:'New event',date:'',time:'18:00',where:'',bring:'',rsvp:'Going'});
+const _cbl=APP.blank;APP.blank=()=>{const s=_cbl();APP.arrays.forEach(k=>{if(!Array.isArray(s[k]))s[k]=[]});s.movies=MOVIES.map(([t,w])=>({id:uid(),title:t,where:w,watched:false,rate:'0'}));s.traditions=TRADS.map(t=>({id:uid(),what:t,when:'',done:false}));s.guests=6;return s};
+const CY=()=>(S.date||xToday()).slice(0,4);
+const cDue=w=>{if(!S.date)return '';const d=new Date(S.date+'T12:00');d.setDate(d.getDate()-xNum(w));return xIso(d)};
+const cW=d=>S.date&&d?Math.round((new Date(S.date+'T12:00')-new Date(d+'T12:00'))/864e5):0;
+const cMon=d=>{const x=new Date(d+'T12:00');x.setDate(x.getDate()-((x.getDay()+6)%7));return xIso(x)};
+const SHIPC=[['','Not ordered'],['Ordered','Ordered'],['Shipped','Shipped'],['Arrived','Arrived']],CCARR=['','USPS','UPS','FedEx','Amazon','Other'];
+const cShipDL=()=>{const y=CY();return [['USPS Ground Advantage',y+'-12-17'],['USPS First-Class Mail (cards)',y+'-12-17'],['USPS Priority Mail',y+'-12-18'],['UPS Ground (most areas)',y+'-12-16'],['FedEx Ground',y+'-12-16'],['USPS Priority Express',y+'-12-20']]};
+const cLate=g=>g.ship&&g.ship!=='Arrived'&&g.eta&&xDaysTo(g.eta)<0,cTooLate=g=>g.ship&&g.ship!=='Arrived'&&g.eta&&S.date&&g.eta>cDue(1);
+const cTrack=g=>{const n=encodeURIComponent(g.track||'');return !g.track?'':g.carrier==='USPS'?'https://tools.usps.com/go/TrackConfirmAction?tLabels='+n:g.carrier==='UPS'?'https://www.ups.com/track?tracknum='+n:g.carrier==='FedEx'?'https://www.fedex.com/fedextrack/?trknbr='+n:''};
+// ---- budget categories ----
+const CBC=[['Gifts',.55],['Food',.2],['Decor',.1],['Travel',.1],['Other',.05]];
+const cCatOf=c=>['Decor','Tree & lights','Wrapping'].includes(c)?'Decor':c==='Travel'?'Travel':c==='Food & drinks'?'Food':'Other';
+function cCats(){const st=sum(S.stock.filter(x=>x.got),x=>x.price),stp=sum(S.stock,x=>x.price),o={Gifts:[gSpent()+st,gPlanned()+stp],Food:[food(),food()],Decor:[sum(S.decor,x=>x.cost),sum(S.decor,x=>x.cost)],Travel:[0,0],Other:[0,0]};
+ S.extras.forEach(x=>{const k=cCatOf(x.cat);o[k][0]+=xNum(x.cost);o[k][1]+=Math.max(xNum(x.plan),xNum(x.cost))});return CBC.map(([k,f])=>({k,sp:o[k][0],pl:o[k][1],bud:S['cb'+k]!=null&&S['cb'+k]!==''?xNum(S['cb'+k]):Math.round(xNum(S.budget)*f)}))}
+const cSpend=()=>sum(cCats(),c=>c.sp);
+const cMeter=(l,v,b)=>`<span>${esc(l)}</span><div class="t"><i class="${b&&v>b?'over':''}" style="width:${b?Math.min(100,v/b*100):v?100:0}%"></i></div><b>${money(v)} / ${money(b)}</b>`;
+// ---- cooking day ----
+const cMin=t=>{const m=/^(\d{1,2}):(\d{2})/.exec(t||'');return m?+m[1]*60+ +m[2]:900};
+const cClock=m=>{m=((m%1440)+1440)%1440;const h=Math.floor(m/60),mm=m%60;return (h%12||12)+':'+String(mm).padStart(2,'0')+(h<12?' am':' pm')};
+const CDAY=['Starter','Main','Side','Dessert','Drinks'],CSERVE={Drinks:-60,Starter:0,Main:30,Side:30,Dessert:100};
+function cTimeline(){const D=cMin(S.dinner),L=[[D-120,'Set the table, chill the drinks','🍽'],[D-60,'Guests arrive','🔔']];const oven=[];
+ S.menu.filter(m=>CDAY.includes(m.course)).forEach(m=>{const sv=D+(CSERVE[m.course]||0),rest=xNum(m.rest),ck=xNum(m.cook),pr=xNum(m.prep),cs=sv-rest-ck;
+  if(xNum(m.ahead)>0){L.push([sv,'Serve '+m.dish+' (made ahead)','🍽']);return}
+  if(pr)L.push([cs-pr,'Start prepping '+m.dish+' ('+pr+' min)','🔪']);if(ck)L.push([cs,(xNum(m.temp)?'In the oven at '+xNum(m.temp)+'°F: ':'Start cooking: ')+m.dish+' ('+ck+' min)','🔥']);if(ck&&xNum(m.temp))oven.push([cs,cs+ck,xNum(m.temp),m.dish]);
+  if(rest&&ck)L.push([sv-rest,'Take out '+m.dish+', rest '+rest+' min','⏲']);L.push([sv,'Serve '+m.dish,'🍽'])});
+ const cf=[];oven.forEach((a,i)=>oven.slice(i+1).forEach(b=>{if(a[0]<b[1]&&b[0]<a[1]&&Math.abs(a[2]-b[2])>=25)cf.push(`${esc(a[3])} (${a[2]}°F) and ${esc(b[3])} (${b[2]}°F) need the oven at the same time. Cook one earlier and reheat, or use a second oven / air fryer.`)}));
+ return {L:L.sort((a,b)=>a[0]-b[0]),cf,ahead:S.menu.filter(m=>xNum(m.ahead)>0)}}
+// ---- shopping list from menu ----
+const CAISLE=[['Produce',/potato|onion|garlic|bean|carrot|lemon|apple|herb|thyme|rosemary|parsley|lettuce|cranberr|orange|celery|shallot|sprout|squash/i],['Meat & fish',/ham|turkey|beef|shrimp|salmon|chicken|bacon|pork|sausage|prime/i],['Dairy & eggs',/butter|milk|cream|egg|cheese|yogurt/i],['Bakery',/bread|roll|bun/i],['Baking',/flour|sugar|yeast|baking|cocoa|chocolate|vanilla|ginger|molasses|cinnamon|nutmeg|sprinkle/i],['Drinks',/wine|juice|soda|cider|champagne|beer/i],['Frozen',/frozen|ice cream/i],['Pantry',/oil|salt|pepper|stock|broth|mustard|honey|sauce|almond|nut|rice|pasta|vinegar|syrup|clove/i]];
+const cAisle=n=>(CAISLE.find(a=>a[1].test(n))||['Other'])[0];
+function cParse(line,f){const m=/^\s*([\d.\/½¼¾]+)\s*(lb|lbs|oz|cup|cups|tbsp|tsp|qt|kg|g|can|cans|stick|sticks|bottle|bottles|pack|bunch|cloves?|large|medium|small)?\s+(.*)$/i.exec(line);if(!m)return {qty:'',name:line.trim()};
+ let q=m[1].replace('½','.5').replace('¼','.25').replace('¾','.75');q=q.includes('/')?(+q.split('/')[0]/+q.split('/')[1]):+q;q=Math.round(q*f*100)/100;return {qty:q+(m[2]?' '+m[2]:''),name:m[3].trim()}}
+function cBuildShop(){const g=xNum(S.guests);let n=0;S.menu.forEach(m=>{const f=g&&xNum(m.serves)?g/xNum(m.serves):1;String(m.ingr||'').split('\n').map(l=>l.trim()).filter(Boolean).forEach(l=>{const p=cParse(l,f);if(!p.name)return;const k=p.name.toLowerCase(),h=S.shop.find(x=>x.item.toLowerCase()===k);
+  if(h){if(h.from===m.id)h.qty=p.qty;return}S.shop.push({id:uid(),item:p.name,qty:p.qty,aisle:cAisle(p.name),cost:0,got:false,from:m.id});n++})});return n}
+// ---- alerts ----
+function cAlerts(){const L=[];cShipDL().forEach(([n,d])=>{const l=xDaysTo(d);if(l>=0&&l<=14)L.push(`📮 <b>${n}</b>: last day to ship is ${cFmt(d)} (${l===0?'today':'in '+l+' days'})`)});
+ S.gifts.filter(cLate).forEach(g=>L.push(`📦 <b>${esc(g.item)}</b> for ${esc(pname(g.p))} was due ${cFmt(g.eta)}. Check the tracking.`));
+ S.gifts.filter(g=>!cLate(g)&&cTooLate(g)).forEach(g=>L.push(`⏰ <b>${esc(g.item)}</b> arrives ${cFmt(g.eta)}, after Christmas Eve. Upgrade shipping or pick it up in store.`));
+ S.people.forEach(p=>{const t=sum(S.gifts.filter(g=>g.p===p.id),g=>g.price)+sum(S.stock.filter(x=>x.p===p.id),x=>x.price);if(xNum(p.bud)&&t>xNum(p.bud))L.push(`💸 <b>${esc(p.name)}</b> is over budget: ${money(t)} of ${money(p.bud)}`)});
+ cCats().filter(c=>c.bud&&c.pl>c.bud).forEach(c=>L.push(`📊 <b>${c.k}</b> plan is over budget: ${money(c.pl)} of ${money(c.bud)}`));
+ S.events.filter(e=>e.date&&xDaysTo(e.date)>=0&&xDaysTo(e.date)<=7).forEach(e=>L.push(`🎉 <b>${esc(e.name)}</b> ${cDay(e.date)}${e.time?' · '+esc(e.time):''}${e.bring?' · bring '+esc(e.bring):''}`));
+ S.bake.filter(b=>!b.done&&b.date&&xDaysTo(b.date)>=0&&xDaysTo(b.date)<=3).forEach(b=>L.push(`🍪 Baking day: <b>${esc(b.item)}</b> ${cDay(b.date)}`));return L}
+// ---- dashboard ----
+APP.P.dashboard=()=>{const d=dLeft(),C=cCats(),sp=sum(C,c=>c.sp),gb=S.gifts.filter(g=>g.st!=='idea').length,cs=S.cards.filter(c=>c.sent).length,td=S.tasks.filter(t=>t.done).length,A=cAlerts(),mon=cMon(xToday()),sun=xIso(new Date(new Date(mon+'T12:00').getTime()+6*864e5));
+ const wk=S.tasks.filter(t=>!t.done&&cDue(t.w)<=sun).sort((a,b)=>xNum(b.w)-xNum(a.w)),nx=wk.length?[]:S.tasks.filter(t=>!t.done).sort((a,b)=>xNum(b.w)-xNum(a.w)).slice(0,4),wkEnds=d!=null?Math.floor((d+((new Date().getDay()+1)%7))/7):0;
+ const t=new Date(),adv=t.getMonth()===11&&t.getDate()<=25?S.advent.find(a=>a.d===t.getDate()):null,ev=S.events.filter(e=>e.date&&xDaysTo(e.date)>=0).sort((a,b)=>a.date.localeCompare(b.date))[0],TL=cTimeline();
+ return `${head('Merry Christmas ♡',new Date().toLocaleDateString('en-US',{weekday:'long',month:'long',day:'numeric'}),`<button class="btn ghost sm" data-act="xgo" data-k="plan" data-s="weeks">${ic('check',14)} To-do</button>`)}
+ <div class="hero"><div class="t"><small>Christmas ${CY()}</small><h2>${esc(S.host)}</h2><p>${S.date?fmtD(new Date(S.date+'T00:00')):''} · ${wkEnds} weekends left · dinner at ${esc(S.dinner||'—')}</p>
+ <div class="cd"><div><b>${d??'—'}</b><span>days</span></div><div><b>${gb}/${S.gifts.length}</b><span>gifts ready</span></div><div><b>${money(xNum(S.budget)-sp)}</b><span>left</span></div></div></div>${heroArt()}</div>
+ <div class="grid g21" style="margin-top:16px"><div class="card"><h3>${wk.length?'This week':'Coming next'}<span class="x">${wk.length?'due by '+cFmt(sun):''}</span></h3><div class="list">${(wk.length?wk:nx).slice(0,7).map(x=>{const du=cDue(x.w);return `<div class="it">${chk('tasks',x,'done')}<div style="flex:1">${esc(x.t)}<small>${du?'due '+cDay(du):''}</small></div>${du&&xDaysTo(du)<0?'<span class="pill p-no">late</span>':''}</div>`}).join('')||'<div class="it">✓ Every task is done. Enjoy the season.</div>'}</div><button class="btn ghost sm" style="margin-top:10px" data-act="xgo" data-k="plan" data-s="weeks">See the December plan</button></div>
+ <div class="card"><h3>Heads up<span class="x">${A.length}</span></h3><div class="list">${A.slice(0,6).map(x=>`<div class="it" style="display:block">${x}</div>`).join('')||`<div class="it">✓ No late parcel, nobody over budget.</div><div class="it">📮 Last USPS Ground day: ${cFmt(cShipDL()[0][1])}</div>`}</div></div></div>
+ <div class="grid g4" style="margin-top:16px">${kpi('gift',gb+' / '+S.gifts.length,'gifts bought',S.gifts.length?gb/S.gifts.length:0)}${kpi('budget',money(sp),'spent of '+money(S.budget),xNum(S.budget)?sp/xNum(S.budget):0,sp>xNum(S.budget)?'rd':'gd')}${kpi('mail',cs+' / '+S.cards.length,'cards sent',S.cards.length?cs/S.cards.length:0,'bl')}${kpi('check',td+' / '+S.tasks.length,'to-dos done',S.tasks.length?td/S.tasks.length:0,'gd')}</div>
+ <div class="grid g3" style="margin-top:16px"><div class="card"><h3>Budget</h3><div class="xmeter">${C.map(c=>cMeter(c.k,c.sp,c.bud)).join('')}</div><button class="btn ghost sm" style="margin-top:12px" data-act="xgo" data-k="budget" data-s="overview">Open budget</button></div>
+ <div class="card"><h3>Christmas dinner<span class="x">${S.menu.length} dishes</span></h3>${TL.L.length>2?`<div class="list">${TL.L.slice(0,5).map(x=>`<div class="it"><b style="width:70px;flex:none">${cClock(x[0])}</b><div style="flex:1;font-size:13px">${x[2]} ${esc(x[1])}</div></div>`).join('')}</div>`:'<p style="color:var(--mute)">Add cooking times to your recipes to get a timeline.</p>'}<button class="btn ghost sm" style="margin-top:10px" data-act="xgo" data-k="food" data-s="day">Cooking day plan</button></div>
+ <div class="grid" style="align-content:start">${adv?`<div class="card"><h3>Advent · day ${adv.d}</h3><div class="it" style="border:0">${chk('advent',adv,'done')}<div style="font:600 19px var(--serif)">${esc(adv.t)}</div></div></div>`:''}<div class="card"><h3>${ev?'Next event':'Events'}</h3>${ev?`<div style="font:600 21px var(--serif)">${esc(ev.name)}</div><small style="color:var(--mute)">${cDay(ev.date)}${ev.time?' · '+esc(ev.time):''}${ev.where?' · '+esc(ev.where):''}</small>${ev.bring?`<p style="margin:8px 0 0;font-size:13px">Bring: ${esc(ev.bring)}</p>`:''}`:'<p style="color:var(--mute);margin:0">No party planned yet.</p>'}</div>
+ <div class="card"><h3>Still to buy</h3><div class="list">${S.gifts.filter(g=>g.st==='idea').slice(0,4).map(g=>`<div class="it"><div style="flex:1">${esc(g.item)}<small>for ${esc(pname(g.p))}</small></div><b>${money(g.price)}</b></div>`).join('')||'<div class="it">✓ Everything bought</div>'}</div></div></div></div>`};
+// ---- to-do ----
+const cWeeks=()=>{const T=S.tasks.slice().sort((a,b)=>xNum(b.w)-xNum(a.w)),g={},m0=cMon(xToday());T.forEach(t=>{const du=cDue(t.w)||xToday(),k=t.done||du>=m0?cMon(du):m0;(g[k]=g[k]||[]).push(t)});
+ return `${head('December plan',`${S.tasks.filter(t=>t.done).length} of ${S.tasks.length} done · due dates count back from ${S.date?cFmt(S.date):'Christmas'}`)}
+ <div class="card" style="margin-bottom:16px"><div class="addrow" style="margin:0"><input class="fi" id="ctName" placeholder="New task, e.g. Order the turkey" data-enter="ctadd"><input class="fi" id="ctDate" type="date" style="flex:.5" value="${cDue(10)}"><button class="btn" data-act="ctadd">Add</button></div></div>
+ <div class="grid g2">${Object.keys(g).sort().map(k=>{const L=g[k],dn=L.filter(t=>t.done).length,now=k===m0,end=xIso(new Date(new Date(k+'T12:00').getTime()+6*864e5));return `<div class="card ${now?'cnow':''}"><h3>${now?'This week':'Week of '+cFmt(k)}<span class="x">${cFmt(k)} – ${cFmt(end)} · ${dn}/${L.length}</span></h3><div class="bar" style="margin:-4px 0 8px"><i style="width:${pct(dn/L.length)}%"></i></div><div class="list">${L.map(t=>{const du=cDue(t.w);return `<div class="it">${chk('tasks',t,'done')}<div style="flex:1" class="${t.done?'done':''}">${inp('tasks',t,'t',{st:'padding:2px 6px'})}</div><small style="color:var(--mute);white-space:nowrap">${du?cFmt(du):''}</small>${!t.done&&du&&xDaysTo(du)<0?'<span class="pill p-no">late</span>':''}${del('tasks',t)}</div>`}).join('')}</div></div>`}).join('')||'<div class="card empty">Add your first task</div>'}</div>`};
+const cCal=()=>{const off=+(F.ccal||0),base=S.date?new Date(S.date+'T12:00'):new Date(),m=new Date(base.getFullYear(),base.getMonth()+off,1),mo=m.getMonth(),st=new Date(m.getFullYear(),mo,1-((m.getDay()+6)%7)),td=xToday(),DL=cShipDL();let h='';
+ for(let i=0;i<42;i++){const d=new Date(st);d.setDate(st.getDate()+i);const k=xIso(d),it=[];if(k===S.date)it.push(['🎄 Christmas','']);S.events.filter(e=>e.date===k).forEach(e=>it.push(['🎉 '+e.name,'']));S.bake.filter(b=>b.date===k).forEach(b=>it.push(['🍪 '+b.item,'']));DL.filter(x=>x[1]===k).slice(0,1).forEach(()=>it.push(['📮 Last ship day','p']));S.tasks.filter(t=>!t.done&&cDue(t.w)===k).forEach(t=>it.push([t.t,'p']));
+  h+=`<div class="c ${d.getMonth()!==mo?'o':''} ${k===td?'t':''}"><b>${d.getDate()}</b>${it.slice(0,4).map(([x,c])=>`<span class="${c}">${esc(x)}</span>`).join('')}${it.length>4?`<small style="color:var(--mute)">+${it.length-4}</small>`:''}</div>`}
+ return `${head('Holiday calendar','Events, baking days, shipping deadlines and to-dos in one view.',`<button class="btn ghost sm" data-flt="ccal:${off-1}">‹</button><button class="btn ghost sm" data-flt="ccal:0">December</button><button class="btn ghost sm" data-flt="ccal:${off+1}">›</button>`)}
+ <div class="card"><h3>${m.toLocaleDateString('en-US',{month:'long',year:'numeric'})}<span class="x">filled = events & baking · dashed = to-dos & deadlines</span></h3><div class="xcal">${['Mon','Tue','Wed','Thu','Fri','Sat','Sun'].map(x=>`<div class="h">${x}</div>`).join('')}${h}</div></div>`};
+X.section('plan',[['weeks','By week',cWeeks],['calendar','Calendar',cCal]]);
+// ---- gifts ----
+const cStock=()=>{const L=S.stock;return `${head('Stocking stuffers',`${L.filter(x=>x.got).length} of ${L.length} bought · ${money(sum(L,x=>x.price))} · counted in each person’s budget`,`<button class="btn" data-act="cstock">${ic('plus',15)} Add stuffer</button>`)}
+ <div class="grid g21"><div class="grid g2" style="align-content:start">${S.people.map(p=>{const x=L.filter(s=>s.p===p.id);return `<div class="card"><h3>${esc(p.name)}<span class="x">${money(sum(x,s=>s.price))}</span></h3><div class="list">${x.map(s=>`<div class="it" style="gap:6px">${chk('stock',s,'got')}<div style="flex:1;min-width:0" class="${s.got?'done':''}">${inp('stock',s,'item',{st:'padding:2px 6px'})}</div>${inp('stock',s,'price',{num:1,st:'width:60px;padding:2px 4px'})}${del('stock',s)}</div>`).join('')||'<small style="color:var(--mute)">Nothing yet</small>'}</div><button class="btn ghost sm" style="margin-top:8px" data-act="cstock" data-p="${p.id}">+ Add</button></div>`}).join('')||'<div class="card empty">Add people in the Gift list first</div>'}</div>
+ <div class="card" style="align-self:start"><h3>Ideas that always work</h3><div class="list">${['Fuzzy socks','Lip balm & hand cream','Mini puzzle or card game','Hot cocoa bombs','Ornament with the year','Gift card for coffee','Hair accessories','Book light','Stickers & gel pens','Chocolate orange'].map(i=>`<div class="it">${esc(i)}</div>`).join('')}</div></div></div>`};
+const cParcels=()=>{const L=S.gifts.filter(g=>g.st!=='given'&&(g.ship||g.st!=='idea')).sort((a,b)=>(a.eta||'9').localeCompare(b.eta||'9')),c=k=>L.filter(g=>g.ship===k).length;
+ return `${head('Parcels',`${c('Ordered')} ordered · ${c('Shipped')} shipped · ${c('Arrived')} arrived · ${L.filter(cLate).length} late`)}
+ <div class="grid g21"><div class="card cparc">${xTable('gifts',L,[['item','Gift'],['ship','Status','sel',SHIPC],['carrier','Carrier','sel',CCARR],['track','Tracking #'],['eta','Expected','date'],['_s','','calc',g=>{const u=cTrack(g);return `${cLate(g)?'<span class="pill p-no">late</span> ':cTooLate(g)?'<span class="pill p-pend">after Dec 24</span> ':g.ship==='Arrived'?'<span class="pill p-yes">✓</span> ':''}${u?`<a class="btn ghost sm" href="${u}" target="_blank" rel="noopener">Track</a>`:''}`}]],{empty:'Gifts you buy show up here. Set them to “Ordered” to track them.',nodel:1})}</div>
+ <div class="card kv" style="align-self:start"><h3>Last days to ship</h3>${cShipDL().map(([n,d])=>`<div class="row"><span>${n}</span><b>${cFmt(d)}</b></div>`).join('')}<small style="color:var(--mute)">Typical dates for delivery by Dec 24. Check the carrier’s site for this year.</small></div></div>`};
+const _orig_gifts=APP.P.gifts;
+X.section('gifts',[['list','Gift list',()=>_orig_gifts()],['stock','Stocking stuffers',cStock],['parcels','Parcels',cParcels],['deals','Deals',()=>APP.P.deals()]]);
+// ---- budget ----
+const cBudget=()=>{const C=cCats(),sp=sum(C,c=>c.sp),pl=sum(C,c=>c.pl);
+ return `${head('Budget overview',`${money(sp)} spent · ${money(pl)} planned · budget ${money(S.budget)}`)}
+ <div class="grid g4" style="margin-bottom:16px"><div class="card"><label class="f">TOTAL BUDGET</label><input class="fi" style="font:600 24px var(--serif);padding:4px 10px" type="number" data-set="budget" value="${xNum(S.budget)}"></div>${kpi('budget',money(sp),'spent so far',xNum(S.budget)?sp/xNum(S.budget):0)}${kpi('star',money(pl),'if you buy everything planned',xNum(S.budget)?pl/xNum(S.budget):0,pl>xNum(S.budget)?'rd':'gd')}${kpi('chart',money(xNum(S.budget)-pl),xNum(S.budget)-pl<0?'over budget':'buffer left')}</div>
+ <div class="grid g21"><div class="card"><div class="tblw"><table class="tbl"><tr><th>Category</th><th class="num">Budget</th><th class="num">Planned</th><th class="num">Spent</th><th></th></tr>${C.map(c=>`<tr><td><b>${c.k}</b><br><small style="color:var(--mute)">${{Gifts:'gift list + stocking stuffers',Food:'shopping list + food expenses',Decor:'decor, tree, lights, wrapping',Travel:'flights, gas, hotels',Other:'cards, hosting, charity'}[c.k]}</small></td><td style="width:100px"><input class="in num" type="number" data-set="cb${c.k}" value="${c.bud}"></td><td class="num" style="${c.pl>c.bud?'color:var(--red,#C0503F);font-weight:700':''}">${money(c.pl)}</td><td class="num"><b>${money(c.sp)}</b></td><td style="width:140px"><div class="bar ${c.pl>c.bud?'rd':''}"><i style="width:${pct(c.bud?c.sp/c.bud:0)}%"></i></div></td></tr>`).join('')}</table></div><p style="color:var(--mute);font-size:12.5px;margin:10px 0 0">Category budgets start as a split of your total (55% gifts, 20% food, 10% decor, 10% travel, 5% other). Type your own.</p></div>
+ ${xCard('Where the money goes',xDonut(C.map(c=>[c.k,c.sp,money(c.sp)]),money(sp)))}</div>`};
+const _orig_budget=APP.P.budget;
+X.section('budget',[['overview','Overview',cBudget],['expenses','Expenses',()=>_orig_budget()]]);
+// ---- food ----
+const cMenu=()=>{const sel1=S.menu.find(m=>m.id===F.cdish)||S.menu.find(m=>m.steps)||S.menu.find(m=>m.ingr)||S.menu[0];
+ return `${head('Menu & recipes',`${S.menu.length} dishes · ${S.menu.filter(m=>m.done).length} ready · dinner at ${esc(S.dinner||'—')} for ${xNum(S.guests)||'—'} guests`,`<button class="btn" data-act="adddish">${ic('plus',15)} Add dish</button>`)}
+ <div class="grid g21"><div class="grid g2" style="align-content:start">${COURSES.map(c=>{const ds=S.menu.filter(m=>m.course===c);if(!ds.length)return '';return `<div class="card"><h3>${c}<span class="x">${ds.length}</span></h3><div class="list">${ds.map(m=>`<div class="it ${sel1&&sel1.id===m.id?'csel':''}" style="gap:6px">${chk('menu',m,'done')}<div style="flex:1;min-width:0">${inp('menu',m,'dish',{st:'font-weight:600;padding:2px 6px'})}<small style="padding-left:6px">${m.who?'by '+esc(m.who):''}${xNum(m.cook)?' · '+(xNum(m.prep)+xNum(m.cook))+' min':''}</small></div><button class="btn ghost sm" data-flt="cdish:${m.id}">Recipe</button></div>`).join('')}</div></div>`}).join('')||'<div class="card empty">Add your first dish</div>'}</div>
+ <div class="grid" style="align-content:start">${sel1?`<div class="card"><h3>Recipe<span class="x">${del('menu',sel1)}</span></h3>${inp('menu',sel1,'dish',{cls:'fi',st:'font:600 20px var(--serif)'})}
+  <div class="grid g2" style="gap:8px;margin-top:8px"><div><label class="f">COURSE</label>${sel('menu',sel1,'course',COURSES,{cls:'fi'})}</div><div><label class="f">WHO MAKES IT</label>${inp('menu',sel1,'who',{cls:'fi'})}</div><div><label class="f">SERVES</label>${inp('menu',sel1,'serves',{num:1,cls:'fi'})}</div><div><label class="f">PREP MIN</label>${inp('menu',sel1,'prep',{num:1,cls:'fi'})}</div><div><label class="f">COOK MIN</label>${inp('menu',sel1,'cook',{num:1,cls:'fi'})}</div><div><label class="f">OVEN °F</label>${inp('menu',sel1,'temp',{num:1,cls:'fi'})}</div><div><label class="f">REST MIN</label>${inp('menu',sel1,'rest',{num:1,cls:'fi'})}</div><div><label class="f">MAKE AHEAD</label>${sel('menu',sel1,'ahead',[['0','Same day'],['1','1 day before'],['2','2 days before'],['3','3+ days before']],{cls:'fi'})}</div></div>
+  <label class="f" style="margin-top:10px">INGREDIENTS · one per line (“2 lb potatoes”)</label><textarea class="ctx" data-c="menu" data-id="${sel1.id}" data-f="ingr" placeholder="2 lb potatoes&#10;1 stick butter">${esc(sel1.ingr||'')}</textarea>
+  <label class="f" style="margin-top:10px">STEPS</label><textarea class="ctx" data-c="menu" data-id="${sel1.id}" data-f="steps" placeholder="1. Preheat the oven…">${esc(sel1.steps||'')}</textarea></div>`:''}
+ <div class="card"><label class="f">GUESTS</label><input class="fi" type="number" data-set="guests" value="${xNum(S.guests)}"><label class="f" style="margin-top:10px">DINNER TIME</label><input class="fi" type="time" data-set="dinner" value="${esc(S.dinner||'15:00')}"><p style="color:var(--mute);font-size:12.5px;margin:8px 0 0">The shopping list scales each recipe to your number of guests. The cooking plan counts back from dinner time.</p></div></div></div>`};
+const cShop=()=>{const fm=S.shop.filter(x=>x.from).length;return `<div class="card" style="margin-bottom:14px;display:flex;gap:12px;align-items:center;flex-wrap:wrap"><div style="flex:1;min-width:220px"><b>Build it from your menu</b><br><small style="color:var(--mute)">Adds every ingredient, scaled for ${xNum(S.guests)||'your'} guests and sorted by aisle. Items already on the list are kept. ${fm?fm+' items came from recipes.':''}</small></div><button class="btn" data-act="cshop">↻ Build from menu</button></div>`+APP.P.shopping()};
+const cDayPage=()=>{const T=cTimeline(),D=cMin(S.dinner);
+ return `${head('Cooking day',`Working back from dinner at ${cClock(D)} on ${S.date?cDay(S.date):'Christmas Day'}`,`<button class="btn ghost sm" data-act="print">${ic('print',14)} Print</button>`)}
+ ${T.cf.length?`<div class="card" style="margin-bottom:16px;border-left:5px solid var(--red,#C0503F)"><h3>Oven clash</h3>${T.cf.map(x=>`<p style="margin:4px 0;font-size:13.5px">♨︎ ${x}</p>`).join('')}</div>`:''}
+ <div class="grid g21"><div class="card"><h3>Christmas Day timeline</h3><div class="tl">${T.L.map(x=>`<div class="ev"><div class="tm" style="width:86px;font-size:17px">${cClock(x[0])}</div><div style="padding-top:2px">${x[2]} ${esc(x[1])}</div></div>`).join('')}</div>${S.menu.some(m=>xNum(m.cook))?'':'<p style="color:var(--mute)">Add prep and cook minutes to your recipes to fill this in.</p>'}</div>
+ <div class="grid" style="align-content:start"><div class="card"><h3>Make ahead</h3><div class="list">${T.ahead.map(m=>`<div class="it">${chk('menu',m,'done')}<div style="flex:1">${esc(m.dish)}<small>${xNum(m.ahead)>=3?'3+ days before':xNum(m.ahead)===1?'Christmas Eve':xNum(m.ahead)+' days before'}${S.date?' · '+cDay(cDue(xNum(m.ahead))):''}</small></div></div>`).join('')||'<div class="it">Nothing set to make ahead. Desserts and sauces are great candidates.</div>'}</div></div>
+ <div class="card" style="background:var(--acc-l);border:0"><h3>Turkey & ham guide</h3><div class="list"><div class="it">Turkey: about 13–15 min per lb at 325°F, rest 30 min</div><div class="it">Thaw a frozen turkey in the fridge: 1 day per 4–5 lb</div><div class="it">Spiral ham (pre-cooked): 10–12 min per lb at 325°F</div><div class="it">Safe temps: turkey 165°F · reheated ham 140°F</div></div></div></div></div>`};
+const cBake=()=>{const L=S.bake.slice().sort((a,b)=>(a.date||'9').localeCompare(b.date||'9'));return `${head('Baking plan',`${L.filter(b=>b.done).length} of ${L.length} baked · cookie swaps, gifts and the dessert table`,`<button class="btn" data-act="addrow" data-c="bake">${ic('plus',15)} Add bake</button>`)}
+ <div class="grid g21"><div class="card">${xTable('bake',L,[['done','','chk'],['item','What'],['date','Bake day','date'],['qty','How many'],['note','For / notes']],{empty:'Plan your cookies, pies and breads'})}</div>
+ <div class="grid" style="align-content:start">${xCard('Bake days',`<div class="list">${[...new Set(L.filter(b=>b.date&&!b.done).map(b=>b.date))].slice(0,5).map(d=>`<div class="it"><b style="width:96px">${cDay(d)}</b><div style="flex:1;font-size:13px">${L.filter(b=>b.date===d).map(b=>esc(b.item)).join(', ')}</div></div>`).join('')||'<div class="it">All baked ✓</div>'}</div>`)}<div class="card" style="background:var(--acc-l);border:0"><h3>Freeze ahead</h3><p style="font-size:13px;margin:0;line-height:1.55">Most cookie doughs freeze for 3 months, baked cookies for 6 weeks. Bake early in December, freeze, and thaw the night before.</p></div></div></div>`};
+X.timer('x',['timers','Kitchen timers','timer'],{title:'Kitchen timers',sub:'Cookies, ham, pies… run several at once.',presets:[['Sugar cookies',10],['Gingerbread',12],['Cinnamon rolls',25],['Pie',50],['Ham',90],['Turkey rest',30],['Hot cocoa',5]],logTitle:'Minutes baked this week'});
+X.section('food',[['menu','Menu & recipes',cMenu],['shop','Shopping list',cShop],['day','Cooking day',cDayPage],['bake','Baking',cBake],['timers','Timers',()=>APP.P.timers()]]);
+// ---- home ----
+const cDecor=()=>{const f=fv('cdf','all'),L=f==='all'?S.decor:S.decor.filter(d=>d.cond===f),buy=S.decor.filter(d=>d.cond!=='Good');
+ return `${head('Decorations',`${S.decor.length} items · ${buy.length} to replace or buy · know what’s in which box`,`<button class="btn" data-act="addrow" data-c="decor">${ic('plus',15)} Add item</button>`)}
+ <div class="grid g21"><div class="card">${tabs('cdf',[['all','All'],['Good','Good'],['Replace','Replace'],['Buy new','Buy new']])}${xTable('decor',L,[['item','Item'],['where','Box / where stored'],['qty','Qty','num'],['cond','Condition','sel',['Good','Replace','Buy new']],['cost','Cost to buy','money']])}</div>
+ <div class="card" style="align-self:start"><h3>Shopping for decor<span class="x">${money(sum(buy,x=>x.cost))}</span></h3><div class="list">${buy.map(d=>`<div class="it"><div style="flex:1">${esc(d.item)}<small>${esc(d.cond)}</small></div><b>${money(d.cost)}</b></div>`).join('')||'<div class="it">Nothing to buy ✓</div>'}</div><p style="color:var(--mute);font-size:12.5px;margin:10px 0 0">Costs here count in the Decor budget. After the season, note what broke so next year starts with a list.</p></div></div>`};
+X.section('home',[['cards','Cards',()=>APP.P.cards()],['decor','Decorations',cDecor],['photos','Photos',()=>APP.P.memories()]]);
+// ---- season ----
+const cEvents=()=>{const L=S.events.slice().sort((a,b)=>(a.date||'9').localeCompare(b.date||'9'));return `${head('Events & parties',`${L.filter(e=>e.date&&xDaysTo(e.date)>=0).length} coming up · what to bring, what to wear, RSVP`,`<button class="btn" data-act="addrow" data-c="events">${ic('plus',15)} Add event</button>`)}
+ <div class="card">${xTable('events',L,[['name','Event'],['date','Date','date'],['time','Time','time'],['where','Where'],['bring','Bring / wear'],['rsvp','RSVP','sel',['Going','Maybe','Not going','Hosting','To reply']],['_d','','calc',e=>e.date?(xDaysTo(e.date)<0?'<span class="pill p-yes">done</span>':`<span class="pill p-pend">in ${xDaysTo(e.date)} d</span>`):'']],{empty:'Add parties, school concerts, cookie swaps…'})}</div>`};
+X.section('season',[['events','Events & parties',cEvents],['advent','Advent calendar',()=>APP.P.advent()],['traditions','Traditions',()=>tablePage({c:'traditions',t:'Family traditions',s:`${S.traditions.filter(m=>m.done).length} of ${S.traditions.length} done this season`,cols:[['done','','chk'],['what','Tradition'],['when','When','date']],addLabel:'Add tradition',sort:(a,b)=>a.done-b.done})],['movies','Movies',()=>tablePage({c:'movies',t:'Holiday movies',s:`${S.movies.filter(m=>m.watched).length} of ${S.movies.length} watched`,cols:[['watched','','chk'],['title','Movie'],['where','Where to watch'],['rate','Rating','stars']],addLabel:'Add movie',sort:(a,b)=>a.watched-b.watched,right:`<button class="btn ghost sm" data-act="movpick">Pick one for tonight</button>`})]]);
+APP.act.movpick=()=>{const l=S.movies.filter(m=>!m.watched);if(!l.length){toast('All watched!');return}toast('Tonight: '+l[Math.floor(Math.random()*l.length)].title)};
+// ---- data ----
+const cData=()=>{const C=cCats(),saved=sum(S.deals.filter(x=>x.got),x=>Math.max(0,xNum(x.reg)-xNum(x.deal))),P=[['To-dos',S.tasks],['Gifts bought',S.gifts,'st'],['Cards sent',S.cards,'sent'],['Shopping',S.shop,'got'],['Advent',S.advent],['Baking',S.bake]];
+ return `${head('Overview','Your Christmas, in numbers.')}<div class="grid g4" style="margin-bottom:16px">${kpi('gift',S.gifts.filter(g=>g.st!=='idea').length+' / '+S.gifts.length,'gifts bought')}${kpi('budget',money(sum(C,c=>c.sp)),'spent of '+money(S.budget))}${kpi('star',money(saved),'saved with deals')}${kpi('mail',xCnt('cards',x=>x.sent)+' / '+S.cards.length,'cards sent')}</div>
+ <div class="grid g2">${xCard('Where the money goes',xDonut(C.map(c=>[c.k,c.sp,money(c.sp)])))}${xCard('Gifts per person',xHBars(S.people.map(p=>[p.name,sum(S.gifts.filter(g=>g.p===p.id),g=>g.price)+sum(S.stock.filter(x=>x.p===p.id),x=>x.price)]).filter(x=>x[1]),v=>money(v)))}
+ ${xCard('Progress',xHBars(P.map(([l,a,f])=>[l,pct(a.length?a.filter(x=>f==='st'?x.st!=='idea':x[f||'done']).length/a.length:0)]),v=>v+'%'))}${xCard('Gift status',xDonut(GST.map(([k,l])=>[l,S.gifts.filter(g=>g.st===k).length])))}</div>`};
+X.badges('x',[['🎁','First gift','Buy your first gift',()=>S.gifts.filter(g=>g.st!=='idea').length,1],['🛍','Santa’s helper','Buy 10 gifts',()=>S.gifts.filter(g=>g.st!=='idea').length,10],['🎀','All wrapped','Wrap every gift',()=>S.gifts.length&&S.gifts.every(g=>g.st==='wrapped'||g.st==='given')?1:0,1],['💌','Card writer','Send 10 cards',()=>xCnt('cards',x=>x.sent),10],['📅','Advent star','Finish 12 advent days',()=>xCnt('advent',x=>x.done),12],['🎬','Movie marathon','Watch 5 holiday movies',()=>xCnt('movies',x=>x.watched),5],['🎄','Tradition keeper','Do 5 traditions',()=>xCnt('traditions',x=>x.done),5],['🏷','Deal hunter','Save $100 with deals',()=>sum(S.deals.filter(x=>x.got),x=>xNum(x.reg)-xNum(x.deal)),100],['🍪','Baker','Bake 5 batches',()=>xCnt('bake',x=>x.done),5],['🍽','Head chef','Write 3 full recipes',()=>xCnt('menu',m=>m.ingr),3],['✅','Ready for Christmas','Finish every task',()=>S.tasks.length&&xCnt('tasks',x=>x.done)===S.tasks.length?1:0,1],['📸','Memory maker','Add 5 photos',()=>xCnt('mem',x=>x.img),5]],'Milestones');
+X.section('data',[['overview','Overview',cData],['miles','Milestones',()=>APP.P.badges()]]);
+X.quotes([['Christmas isn’t a season. It’s a feeling.'],['Keep it simple. Keep it cozy.'],['Done is better than perfect. Even the cookies.'],['The best gifts are the people around the table.'],['Make memories, not stress.']]);
+X.dashEnd=1;
+// ---- styles ----
+(function(){const s=document.createElement('style');s.textContent=`.cnow{outline:2px solid var(--acc)}.csel{background:var(--acc-l);border-radius:10px;padding-left:6px!important}.cparc select{min-width:100px}
+.ctx{width:100%;min-height:120px;border:1px solid var(--line);border-radius:12px;padding:8px 10px;font:500 13px/1.6 var(--sans);background:transparent;color:inherit;resize:vertical}`;document.head.appendChild(s)})();
+// ---- actions & automation ----
+const _cch=APP.onChange;APP.onChange=(c,it,f)=>{_cch&&_cch(c,it,f);if(c==='gifts'&&f==='ship'&&it.ship){if(it.st==='idea')it.st='bought';if(it.ship==='Ordered'&&!it.eta){const d=new Date();d.setDate(d.getDate()+5);it.eta=xIso(d)}}};
+const _cdel=APP.onDelete;APP.onDelete=(c,id)=>{_cdel&&_cdel(c,id);if(c==='people')S.stock=S.stock.filter(x=>x.p!==id);if(c==='menu'&&F.cdish===id)F.cdish=''};
+Object.assign(APP.act,{
+ adddish(){const m={id:uid(),dish:'New dish',course:'Main',who:'',done:false,serves:xNum(S.guests)||6,prep:'',cook:'',temp:'',rest:'',ahead:'0',ingr:'',steps:''};S.menu.push(m);F.cdish=m.id;save();rerender()},
+ ctadd:()=>{const n=$('#ctName').value.trim();if(!n)return $('#ctName').focus();const d=$('#ctDate').value;S.tasks.push({id:uid(),w:d?cW(d):10,t:n,done:false});save();rerender();toast('Task added')},
+ cstock:t=>{const p=t.dataset.p||(S.people[0]||{}).id;if(!p){toast('Add a person first');return}S.stock.push({id:uid(),p,item:'New stocking stuffer',price:0,got:false});save();rerender()},
+ cshop:()=>{if(!S.menu.some(m=>m.ingr)){toast('Add ingredients to a recipe first');return}const n=cBuildShop();save();rerender();toast(n?n+' items added from your menu':'List already up to date')}});
+// ---- demo ----
+const _cdemo=APP.demo;APP.demo=()=>{const s=_cdemo();s.guests=8;s.dinner='15:00';s.cbGifts=800;s.cbFood=300;s.cbDecor=150;s.cbTravel=400;s.cbOther=100;
+ const R={'Seafood pasta':[6,15,20,'','','0','1 lb linguine\n1 lb shrimp\n4 cloves garlic\n1 cup cream'],'Cinnamon rolls':[12,30,25,350,'','1','1 can cinnamon rolls\n1 stick butter'],'Shrimp cocktail':[8,20,0,'','','0','2 lb shrimp\n1 bottle cocktail sauce\n2 lemons'],'Glazed ham':[12,20,150,325,20,'0','1 spiral ham (9 lb)\n1 cup brown sugar\n2 tbsp Dijon mustard\n1/2 cup honey'],'Roast potatoes':[8,20,55,425,'','0','4 lb potatoes\n1/4 cup olive oil\n1 bunch rosemary'],'Green beans almondine':[8,15,12,'','','0','2 lb green beans\n1/2 cup almonds\n1/2 stick butter'],'Yule log':[10,60,15,375,'','1','4 eggs\n3/4 cup sugar\n1/2 cup flour\n1/3 cup cocoa\n2 cups heavy cream'],'Gingerbread cookies':[36,30,10,350,'','3','3 cups flour\n3/4 cup molasses\n1 tbsp ginger\n1 stick butter'],'Mulled wine & cocoa':[10,10,20,'','','0','3 bottles red wine\n2 oranges\n1 box hot cocoa mix']};
+ s.menu.forEach(m=>{const r=R[m.dish]||[];Object.assign(m,{serves:r[0]||6,prep:r[1]||'',cook:r[2]||'',temp:r[3]||'',rest:r[4]||'',ahead:r[5]||'0',ingr:r[6]||'',steps:m.dish==='Glazed ham'?'1. Take the ham out 1 h before.\n2. Wrap in foil, bake at 325°F about 12 min per lb.\n3. Brush with glaze for the last 20 min, uncovered.\n4. Rest 20 min before slicing.':''})});
+ const G=n=>s.gifts.find(g=>g.item.startsWith(n));Object.assign(G('Art set'),{ship:'Shipped',carrier:'UPS',track:'1Z999AA10123456784',eta:dISO(4)});Object.assign(G('Nintendo'),{ship:'Arrived',carrier:'USPS',eta:dISO(-3)});Object.assign(G('Weekend'),{ship:'Ordered',carrier:'Other',eta:dISO(2)});Object.assign(G('Gift cards'),{ship:'Shipped',carrier:'USPS',track:'9400111899223197428490',eta:dISO(-1)});
+ const P=n=>(s.people.find(p=>p.name===n)||{}).id;
+ s.stock=[['Emma','Fuzzy socks',8,true],['Emma','Hair clips',6,false],['Emma','Hot cocoa bomb',5,false],['Noah','Pokémon cards',10,true],['Noah','Book light',12,false],['Mom & Dad','Ornament with the year',14,false],['Grandma Rose','Hand cream',9,true]].map(([p,i,pr,g])=>({id:uid(),p:P(p),item:i,price:pr,got:g}));
+ const y=s.date.slice(0,4),dd=(m,d)=>`${y}-${String(m).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
+ s.bake=[['Sugar cookie dough (freeze)',dd(12,6),'3 batches',false,'Cookie swap + Santa plate'],['Gingerbread men',dd(12,13),'36',false,'Decorate with the kids'],['Fudge',dd(12,19),'2 pans',false,'Teacher gifts'],['Pumpkin & pecan pies',dd(12,23),'2',false,'Christmas Day'],['Yule log',dd(12,24),'1',false,'Make ahead'],['Cinnamon roll dough',dd(12,24),'12',false,'Christmas morning']].map(([i,d,q,dn,n])=>({id:uid(),item:i,date:d,qty:q,done:dn,note:n}));
+ s.decor=[['Tree lights (warm white)','Box 1 · garage',4,'Good',0],['Glass ornaments','Box 2 · garage',48,'Good',0],['Tree skirt','Box 2 · garage',1,'Replace',35],['Outdoor wreath','Garage wall',1,'Good',0],['Stockings','Box 3 · closet',4,'Good',0],['Stocking for the new puppy','—',1,'Buy new',15],['Garland for the stairs','Box 3 · closet',2,'Replace',40],['Nativity set','Box 4 · attic',1,'Good',0],['Window lights','Box 1 · garage',3,'Good',0]].map(([i,w,q,c,co])=>({id:uid(),item:i,where:w,qty:q,cond:c,cost:co}));
+ s.events=[['Office holiday party',dd(12,11),'18:30','The Loft downtown','Secret Santa gift ($25)','Going'],['Cookie swap at Sarah’s',dd(12,7),'14:00','Sarah’s house','3 dozen cookies + recipe cards','Going'],['School winter concert',dd(12,16),'18:00','Lincoln Elementary','Red & green outfits','Going'],['Ugly sweater party',dd(12,19),'19:00','Our place','Snacks & mulled wine','Hosting'],['Christmas Eve service',dd(12,24),'17:00','St. Mark’s','','Maybe'],['Neighborhood lights walk',dd(12,20),'18:30','Maple Street','Hot cocoa thermos','To reply']].map(([n,d,t,w,b,r])=>({id:uid(),name:n,date:d,time:t,where:w,bring:b,rsvp:r}));
+ [[44,"Book Santa photos"],[40,"Order photo cards"],[38,"Plan the advent calendar"],[36,"Make the travel plan for Grandma"],[25,"Buy stocking stuffers"],[17,"Mail cards to family abroad"],[15,"Confirm the guest list for dinner"],[12,"Deep-clean the guest room"],[4,"Thaw the turkey / pick up the ham"],[2,"Prep vegetables & make the dessert"]].forEach(([w,t])=>s.tasks.push({id:uid(),w,t,done:false}));s.tasks.forEach(t=>t.done=xNum(t.w)>=44);s.advent.forEach(a=>a.done=false);
+ s.movies=MOVIES.map(([t,w],i)=>({id:uid(),title:t,where:w,watched:false,rate:'0'}));s.traditions=TRADS.map(t=>({id:uid(),what:t,when:'',done:false}));
+ s.shop.forEach(x=>x.from='');return s};
+const dISO=n=>{const d=new Date();d.setDate(d.getDate()+n);return xIso(d)};
+try{if(!cHad)S=APP.demo()}catch(e){}
+X.layout([['dashboard','Today','home'],['plan','To-do','check'],['gifts','Gifts','gift'],['budget','Budget','budget'],['food','Food','chef'],['home','Cards & decor','mail'],['season','Season','star'],['data','Data','chart'],['notes','Notes','note'],['settings','Settings','set']]);
+APP.counts=()=>({gifts:S.gifts.filter(g=>g.st==='idea').length||null,plan:S.tasks.filter(t=>!t.done&&cDue(t.w)&&xDaysTo(cDue(t.w))<=7).length||null,home:S.cards.filter(c=>!c.sent).length||null});
 
 boot();
 </script>
