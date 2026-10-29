@@ -854,6 +854,15 @@ Object.assign(CORE_ACT,{xgo:t=>X.go(t.dataset.k,t.dataset.s)});
 .xcal{display:grid;grid-template-columns:repeat(7,1fr);gap:6px}.xcal .h{font-size:11px;color:var(--mute);text-align:center;font-weight:700}.xcal .c{min-height:76px;border:1px solid var(--line);border-radius:12px;padding:6px;font-size:11px;display:flex;flex-direction:column;gap:3px}.xcal .c.o{opacity:.35}.xcal .c.t{border-color:var(--acc);box-shadow:inset 0 0 0 1px var(--acc)}.xcal .c b{font-size:12px}.xcal .c span{border-radius:6px;padding:1px 5px;background:var(--acc-l);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.xcal .c span.p{background:transparent;border:1px dashed var(--line);color:var(--mute)}
 .xprog{display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:14px}.xprog .card.on{outline:2px solid var(--acc)}
 @media(max-width:720px){.xcal .c{min-height:54px;font-size:9px}.xcal .c span{padding:0 3px}}`;document.head.appendChild(s)})();
+
+// ---- gentle review ask: paid apps only, after 3 days of use, never with an incentive (Etsy rules) ----
+const XRV={k:KEY+'-rv',v:null};
+try{if(!DEMO){XRV.v=JSON.parse(localStorage.getItem(XRV.k)||'null');if(!XRV.v){XRV.v={first:Date.now(),snooze:0,done:0};localStorage.setItem(XRV.k,JSON.stringify(XRV.v))}}}catch(e){}
+const xrvSave=()=>{try{localStorage.setItem(XRV.k,JSON.stringify(XRV.v))}catch(e){}};
+X.dash(()=>{const v=XRV.v;if(!v||v.done||Date.now()-v.first<3*864e5)return '';
+ return `<div class="card" style="margin-bottom:16px;display:flex;gap:16px;align-items:center;flex-wrap:wrap;border:1px solid var(--line)"><div style="font-size:30px">💛</div><div style="flex:1;min-width:220px"><b style="font:600 18px var(--serif)">Enjoying ${esc(document.title)}?</b><div style="color:var(--mute);font-size:13.5px;margin-top:4px">If it helps you, a short review on Etsy means a lot to a small shop. Something not right? Message me on Etsy first and I’ll fix it.</div></div><div class="xbtns"><a class="btn sm" href="https://www.etsy.com/your/purchases" target="_blank" rel="noopener" data-act="xrvgo">Leave a review</a><button class="btn ghost sm" data-act="xrvlater">Not now</button><button class="btn ghost sm" data-act="xrvdone">Already did</button></div></div>`});
+Object.assign(CORE_ACT,{xrvgo:()=>{XRV.v.done=1;xrvSave();setTimeout(rerender,300)},xrvdone:()=>{XRV.v.done=1;xrvSave();rerender()},
+ xrvlater:()=>{XRV.v.snooze++;if(XRV.v.snooze>=2)XRV.v.done=1;else XRV.v.first=Date.now()+11*864e5;xrvSave();rerender()}});
 // ---- dashboard alerts (due soon, use soon…) ----
 const XA=[];X.alert=fn=>XA.push(fn);
 function xAlerts(){const L=[];XA.forEach(f=>{try{(f()||[]).forEach(x=>L.push(x))}catch(e){}});return L.length?`<div class="card" style="margin-bottom:16px;border-left:5px solid var(--acc)"><h3>🔔 Heads up<span class="x">${L.length}</span></h3><div class="list">${L.slice(0,6).map(x=>`<div class="it">${x}</div>`).join("")}</div></div>`:""}
