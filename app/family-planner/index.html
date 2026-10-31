@@ -991,7 +991,7 @@ function fmOcc(a,b){const out=[];S.events.forEach(e=>{if(!e.date)return;const r=
  const step=r==='Biweekly'?14:r==='Weekly'?7:1,d=new Date(st);if(e.date<a){const diff=Math.round((new Date(a+'T12:00')-st)/864e5);d.setDate(d.getDate()+Math.max(0,Math.floor(diff/step)-1)*step)}
  for(let g=0;g<500;g++){const k=xIso(d);if(k>end)break;if(k>=a&&!(r==='Weekdays'&&fmDow(k)>4))out.push({e,date:k});d.setDate(d.getDate()+step)}});
  return out.sort((x,y)=>(x.date+(x.e.time||'99')).localeCompare(y.date+(y.e.time||'99')))}
-const fmEv=x=>`<div class="fev" style="--c:${mcol(x.e.who)}">${x.e.time?`<b>${fmT(x.e.time)}</b> `:''}${esc(x.e.what)}<small>${esc(x.e.who||'')}${x.e.where?' · '+esc(x.e.where):''}${x.e.rep?' · ↻':''}</small></div>`;
+const fmEv=x=>`<div class="fev" data-act="fmed" data-id="${x.e.id}" data-d="${x.date}" title="Tap to edit" style="--c:${mcol(x.e.who)};cursor:pointer">${x.e.time?`<b>${fmT(x.e.time)}</b> `:''}${esc(x.e.what)}<small>${esc(x.e.who||'')}${x.e.where?' · '+esc(x.e.where):''}${x.e.rep?' · ↻':''}</small></div>`;
 // ---- birthdays & occasions (family birthdays included automatically) ----
 function fmBdays(){const L=[],td=xToday();S.family.forEach(m=>{const n=nextOcc(m.bday);if(n==null)return;const nd=fmAdd(td,n),yrs=+nd.slice(0,4)-+m.bday.slice(0,4);L.push({who:m.name,type:'Birthday',n,date:nd,turning:yrs>0?yrs:'',idea:'',ready:false,emoji:m.emoji})});
  S.occasions.forEach(o=>{if(!o.date)return;const rec=/Birthday|Anniversary|Holiday/.test(o.type),n=rec?nextOcc(o.date):daysTo(o.date);if(n==null||n<0)return;const f=o.type==='Birthday'&&L.find(x=>x.src!=='o'&&fmLc(x.who)===fmLc(o.who));
@@ -1126,7 +1126,7 @@ const fmWf=x=>{const f=fv('fmwho','all');return f==='all'||x.e.who===f||x.e.who=
 const fmQuick=W=>{const td=xToday(),d=W.includes(td)?td:W[0];return `<div class="card" style="margin-bottom:16px;padding:12px 14px"><div class="addrow" style="margin:0"><input class="fi" id="fmqw" placeholder="Add an event, e.g. Piano lesson" style="flex:2 1 200px" data-enter="fmqadd"><input class="fi" id="fmqd" type="date" value="${d}" style="flex:0 1 150px"><input class="fi" id="fmqt" type="time" style="flex:0 1 110px"><select class="fi" id="fmqp" style="flex:0 1 130px">${who().map(n=>`<option>${esc(n)}</option>`).join('')}</select><select class="fi" id="fmqr" style="flex:0 1 140px">${FMREP.map(([k,l])=>`<option value="${k}">${l}</option>`).join('')}</select><button class="btn" data-act="fmqadd">Add</button></div></div>`};
 const fmNav=k=>{const o=+(F[k]||0);return `<button class="btn ghost sm" data-flt="${k}:${o-1}">‹</button><button class="btn ghost sm" data-flt="${k}:0">Today</button><button class="btn ghost sm" data-flt="${k}:${o+1}">›</button>`};
 const fmWeekPage=()=>{const o=+(F.fmwk||0),W=fmWeek(o),td=xToday(),occ=fmOcc(W[0],W[6]).filter(fmWf),f=fv('fmwho','all');
- return `${head('Week',`${fmtS(W[0])} – ${fmtS(W[6])} · ${occ.length} events${o?'':' this week'}`,fmNav('fmwk'))}${fmQuick(W)}${fmWhoTabs()}
+ return `${head('Week',`${fmtS(W[0])} – ${fmtS(W[6])} · ${occ.length} events${o?'':' this week'} · tap an event to change or delete it`,fmNav('fmwk'))}${fmQuick(W)}${fmWhoTabs()}
  <div class="fwk">${W.map(k=>{const e=occ.filter(x=>x.date===k),t=S.tasks.filter(x=>!x.done&&x.due===k&&(f==='all'||x.who===f)),dm=S.meals.find(m=>m.day===DAYS[fmDow(k)]&&m.meal==='Dinner'&&m.dish),bd=fmBdays().filter(b=>b.date===k&&b.type==='Birthday'),bl=k.slice(0,7)===td.slice(0,7)?S.bills.filter(b=>!b.paid&&Math.min(+b.due||1,fmDim())===+k.slice(8)):[];
   return `<div class="d ${k===td?'t':''}"><div class="dh"><b>${DAYS[fmDow(k)]}</b><small style="color:var(--mute)">${fmtS(k)}</small></div>${bd.map(b=>`<div class="fev" style="--c:var(--gold,#B8914E)">🎂 ${esc(b.who)}${b.turning?' turns '+b.turning:''}</div>`).join('')}${e.map(fmEv).join('')||(bd.length?'':'<small style="color:var(--mute)">Free</small>')}
   ${t.map(x=>`<div class="fmi">${chk('tasks',x,'done')}<span>${esc(x.task)}</span></div>`).join('')}${bl.map(b=>`<div class="fmi"><span>💳</span><span>${esc(b.name)} ${money(b.amount)}</span></div>`).join('')}<div class="din">🍽 ${dm?esc(dm.dish):'—'}</div></div>`}).join('')}</div>`};
@@ -1138,7 +1138,7 @@ const fmPeoplePage=()=>{const o=+(F.fmwk||0),W=fmWeek(o),td=xToday(),occ=fmOcc(W
 const fmMonthPage=()=>{const off=+(F.fmmo||0),n=new Date(),m=new Date(n.getFullYear(),n.getMonth()+off,1),y=m.getFullYear(),mo=m.getMonth(),st=new Date(y,mo,1-((m.getDay()+6)%7)),td=xToday();st.setHours(12);
  const a=xIso(st),b=fmAdd(a,41),occ=fmOcc(a,b).filter(fmWf),bds=[];S.family.forEach(p=>p.bday&&bds.push([p.bday.slice(5),'🎂 '+p.name]));S.occasions.forEach(o=>o.date&&!(o.type==='Birthday'&&S.family.some(m=>fmLc(m.name)===fmLc(o.who)))&&bds.push([/Birthday|Anniversary|Holiday/.test(o.type)?o.date.slice(5):o.date,fmOccIc(o.type)+' '+o.who]));
  let h='';for(let i=0;i<42;i++){const k=fmAdd(a,i),d=new Date(k+'T12:00'),e=occ.filter(x=>x.date===k),bb=bds.filter(([md])=>md===k.slice(5)||md===k);
-  h+=`<div class="c ${d.getMonth()!==mo?'o':''} ${k===td?'t':''}" style="min-height:96px"><b>${d.getDate()}</b>${bb.map(([,l])=>`<span class="p">${esc(l)}</span>`).join('')}${e.slice(0,3).map(x=>`<span style="background:${mcol(x.e.who)};color:#fff" title="${esc(x.e.what)}">${x.e.time?fmT(x.e.time)+' ':''}${esc(x.e.what)}</span>`).join('')}${e.length>3?`<small style="color:var(--mute)">+${e.length-3} more</small>`:''}</div>`}
+  h+=`<div class="c ${d.getMonth()!==mo?'o':''} ${k===td?'t':''}" style="min-height:96px"><b>${d.getDate()}</b>${bb.map(([,l])=>`<span class="p">${esc(l)}</span>`).join('')}${e.slice(0,3).map(x=>`<span data-act="fmed" data-id="${x.e.id}" data-d="${x.date}" style="background:${mcol(x.e.who)};color:#fff;cursor:pointer" title="${esc(x.e.what)} · tap to edit">${x.e.time?fmT(x.e.time)+' ':''}${esc(x.e.what)}</span>`).join('')}${e.length>3?`<small style="color:var(--mute)">+${e.length-3} more</small>`:''}</div>`}
  const inM=occ.filter(x=>x.date.slice(0,7)===xIso(m).slice(0,7));
  return `${head('Month',`${inM.length} events in ${m.toLocaleDateString('en-US',{month:'long'})} · birthdays and recurring events included`,fmNav('fmmo'))}${fmWhoTabs()}
  <div class="card"><h3>${m.toLocaleDateString('en-US',{month:'long',year:'numeric'})}<span class="x">${S.family.map(f=>memChip(f.name)+esc(f.name)).join(' &nbsp;')}</span></h3><div class="xcal fmc fmx">${DAYS.map(x=>`<div class="h">${x}</div>`).join('')}${h}</div></div>`};
@@ -1341,6 +1341,29 @@ const _fmOC=APP.onChange;APP.onChange=(c,it,f)=>{_fmOC&&_fmOC(c,it,f);
  if(c==='projects'&&f==='prog'){const p=xNum(it.prog);it.status=p>=100?'Done':p>0?'In progress':it.status==='Done'?'In progress':it.status||'Not started'}
  if(c==='chores'&&f==='who')it.col=mcol(it.who);
  if(c==='family'&&(f==='col'||f==='name'))S.chores.forEach(ch=>ch.col=mcol(ch.who))};
+// ---- tap an event to edit it ----
+function fmEdit(id,d){const e=S.events.find(x=>x.id===id);if(!e)return;let m=document.getElementById('fmm');if(!m){m=document.createElement('div');m.id='fmm';document.body.appendChild(m)}
+ const W=who();if(e.who&&!W.includes(e.who))W.push(e.who);const fl=(l,h)=>`<div style="margin-top:10px"><label class="f">${l}</label>${h}</div>`;
+ m.innerHTML=`<div data-act="fmx" style="position:fixed;inset:0;background:rgba(30,25,20,.45);z-index:60"></div><div role="dialog" aria-label="Edit event" style="position:fixed;z-index:61;left:50%;top:50%;transform:translate(-50%,-50%);width:min(440px,calc(100vw - 24px));max-height:calc(100vh - 24px);overflow:auto;background:var(--card);border-radius:20px;padding:20px;box-shadow:0 20px 60px rgba(0,0,0,.25)">
+ <div style="display:flex;align-items:center"><h3 style="margin:0;font-family:Fraunces,serif;font-size:22px">Edit event</h3><button class="btn ghost sm" data-act="fmx" style="margin-left:auto" aria-label="Close">✕</button></div>
+ ${fl('WHAT','<input class="fi" id="fme_what" value="'+esc(e.what||'')+'">')}
+ <div style="display:flex;gap:8px">${fl('DATE','<input class="fi" type="date" id="fme_date" value="'+(e.date||'')+'">')}${fl('TIME','<input class="fi" type="time" id="fme_time" value="'+(e.time||'')+'">')}</div>
+ <div style="display:flex;gap:8px">${fl('WHO','<select class="fi" id="fme_who">'+W.map(n=>`<option ${n===e.who?'selected':''}>${esc(n)}</option>`).join('')+'</select>')}${fl('REPEATS','<select class="fi" id="fme_rep">'+FMREP.map(([v,l])=>`<option value="${v}" ${v===(e.rep||'')?'selected':''}>${l}</option>`).join('')+'</select>')}</div>
+ ${fl('WHERE','<input class="fi" id="fme_where" value="'+esc(e.where||'')+'">')}
+ ${e.rep?'<p style="color:var(--mute);font-size:12.5px;margin:10px 0 0">↻ This event repeats. Changes apply to every repeat.</p>':''}
+ <div style="display:flex;gap:8px;margin-top:16px;flex-wrap:wrap"><button class="btn" data-act="fmsave" data-id="${id}">Save</button><button class="btn ghost" data-act="fmx">Cancel</button>
+ <span style="margin-left:auto;display:flex;gap:8px;flex-wrap:wrap">${e.rep&&d&&d>e.date?`<button class="btn ghost" data-act="fmend" data-id="${id}" data-d="${d}" style="color:var(--red)">Stop from ${fmtS(d)}</button>`:''}<button class="btn ghost" data-act="fmdel" data-id="${id}" style="color:var(--red)">Delete${e.rep?' all':''}</button></span></div></div>`;
+ setTimeout(()=>{const i=$('#fme_what');i&&i.focus()},30)}
+const fmClose=()=>{const m=document.getElementById('fmm');m&&(m.innerHTML='')};
+document.addEventListener('keydown',e=>{if(e.key==='Escape')fmClose()});
+Object.assign(APP.act,{
+ fmed:t=>fmEdit(t.dataset.id,t.dataset.d),
+ fmx:fmClose,
+ fmsave:t=>{const e=S.events.find(x=>x.id===t.dataset.id);if(!e)return fmClose();const w=$('#fme_what').value.trim();if(!w){toast('Give the event a name');return}
+  Object.assign(e,{what:w,date:$('#fme_date').value||e.date,time:$('#fme_time').value,who:$('#fme_who').value,rep:$('#fme_rep').value,where:$('#fme_where').value.trim()});save();fmClose();rerender();toast('✓ Event updated')},
+ fmdel:t=>{const e=S.events.find(x=>x.id===t.dataset.id);if(!e)return fmClose();if(!confirm(`Delete "${e.what}"${e.rep?' and all its repeats':''}?`))return;S.events=S.events.filter(x=>x!==e);save();fmClose();rerender();toast('Event deleted')},
+ fmend:t=>{const e=S.events.find(x=>x.id===t.dataset.id);if(!e)return fmClose();e.until=fmAdd(t.dataset.d,-1);save();fmClose();rerender();toast('✓ Stopped from '+fmtS(t.dataset.d))}
+});
 Object.assign(APP.act,{
  tick:t=>{const c=t.dataset.c,it=(S[c]||[]).find(x=>x.id===t.dataset.id);if(!it)return;it.log=it.log||{};const k=t.dataset.k;if(it.log[k])delete it.log[k];else it.log[k]=c==='chores'?(it.who||'Everyone'):1;save();rerender()},
  fmqadd:()=>{const w=$('#fmqw').value.trim();if(!w){toast('Type the event first');$('#fmqw').focus();return}const r=$('#fmqr').value;S.events.push({id:uid(),date:$('#fmqd').value||xToday(),time:$('#fmqt').value,what:w,who:$('#fmqp').value,where:'',rep:r});save();rerender();toast('Added to the calendar'+(r?' · repeats':''))},
