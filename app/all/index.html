@@ -1,0 +1,141 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Life Planner · All apps</title>
+<meta name="theme-color" content="#FBF6F1">
+<link rel="manifest" href="manifest.json">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Life Planner">
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,600;9..144,700&family=Inter:wght@500;600;700;800&display=swap" rel="stylesheet">
+<style>
+:root{--bg:#FBF6F1;--card:#FFFDF9;--ink:#2B1C16;--mute:#7A6A60;--line:#EADDD0;--acc:#C0603F;--accl:#F6E1D8;--top:56px}
+*{box-sizing:border-box}
+html,body{margin:0;height:100%;overflow:hidden;background:var(--bg);color:var(--ink);font:14px/1.4 Inter,-apple-system,Segoe UI,Roboto,sans-serif;-webkit-font-smoothing:antialiased}
+button{font:inherit;color:inherit;cursor:pointer}
+/* top bar */
+.top{position:fixed;left:0;right:0;top:0;height:calc(var(--top) + env(safe-area-inset-top));padding:env(safe-area-inset-top) 12px 0;display:flex;align-items:center;gap:10px;background:var(--card);border-bottom:1px solid var(--line);z-index:20}
+.logo{display:flex;align-items:center;gap:8px;font:800 14px Inter;white-space:nowrap}
+.logo i{width:30px;height:30px;border-radius:9px;background:var(--acc);color:#fff;display:grid;place-items:center;font:700 17px Fraunces,serif;font-style:normal}
+.cur{display:flex;align-items:center;gap:9px;border:1px solid var(--line);background:#fff;border-radius:14px;padding:5px 12px 5px 6px;min-width:0;max-width:280px}
+.cur img{width:30px;height:30px;border-radius:8px;flex:none}
+.cur b{font:600 15px Fraunces,serif;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.cur span{color:var(--mute);font-size:11px;margin-left:2px}
+.recent{display:flex;gap:6px;overflow-x:auto;scrollbar-width:none;min-width:0;flex:1}
+.recent::-webkit-scrollbar{display:none}
+.recent button{flex:none;display:flex;align-items:center;gap:7px;border:0;background:transparent;border-radius:12px;padding:5px 10px 5px 5px;color:var(--mute);font-weight:600;font-size:13px;white-space:nowrap}
+.recent button:hover{background:var(--accl);color:var(--ink)}
+.recent img{width:26px;height:26px;border-radius:7px}
+.all{margin-left:auto;flex:none;display:flex;align-items:center;gap:7px;border:0;background:var(--acc);color:#fff;border-radius:12px;padding:9px 14px;font-weight:700;font-size:13px}
+/* frames */
+.stage{position:fixed;left:0;right:0;bottom:0;top:calc(var(--top) + env(safe-area-inset-top))}
+.stage iframe{position:absolute;inset:0;width:100%;height:100%;border:0;background:var(--bg);display:none}
+.stage iframe.on{display:block}
+.load{position:absolute;inset:0;display:grid;place-items:center;color:var(--mute);font-weight:600;pointer-events:none}
+/* picker */
+.pk{position:fixed;inset:0;z-index:40;display:none}
+.pk.on{display:block}
+.pk .sh{position:absolute;inset:0;background:rgba(43,28,22,.42)}
+.pk .pn{position:absolute;left:50%;top:calc(var(--top) + env(safe-area-inset-top) + 10px);transform:translateX(-50%);width:min(860px,calc(100vw - 20px));max-height:calc(100% - var(--top) - env(safe-area-inset-top) - 20px);overflow:auto;background:var(--card);border-radius:24px;padding:22px 22px 26px;box-shadow:0 24px 70px rgba(0,0,0,.28)}
+.pn h2{margin:0;font:700 26px Fraunces,serif}
+.pn .sub{color:var(--mute);margin:4px 0 6px}
+.pn input{width:100%;border:1px solid var(--line);border-radius:12px;padding:10px 12px;font:inherit;margin:10px 0 4px;background:#fff}
+.grp{font:800 11px Inter;letter-spacing:.16em;color:var(--acc);margin:18px 0 8px}
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(180px,1fr));gap:10px}
+.app{display:flex;align-items:center;gap:11px;text-align:left;border:1px solid var(--line);background:#fff;border-radius:16px;padding:10px}
+.app:hover,.app.on{border-color:var(--acc);background:var(--accl)}
+.app img{width:42px;height:42px;border-radius:11px;flex:none;box-shadow:0 3px 8px rgba(0,0,0,.1)}
+.app b{display:block;font:600 15px/1.15 Fraunces,serif}
+.app small{color:var(--mute);font-size:11.5px}
+.x{float:right;border:0;background:var(--accl);border-radius:10px;width:34px;height:34px;font-size:15px}
+.tip{margin-top:18px;background:var(--accl);border-radius:14px;padding:11px 14px;font-size:12.5px;color:#5a463b}
+@media (max-width:700px){
+ .logo span,.recent{display:none}
+ .cur{flex:1;max-width:none}
+ .all{padding:9px 12px}
+ .all em{display:none}
+ .grid{grid-template-columns:1fr 1fr}
+ .app{padding:8px;gap:8px}.app img{width:34px;height:34px}.app b{font-size:13.5px}.app small{display:none}
+ .pk .pn{padding:18px 14px 22px;border-radius:20px}
+}
+</style>
+</head>
+<body>
+<header class="top">
+ <div class="logo"><i>B</i><span>Life Planner</span></div>
+ <button class="cur" id="cur" aria-label="Switch app"></button>
+ <nav class="recent" id="recent" aria-label="Recent apps"></nav>
+ <button class="all" id="allbtn"><svg width="15" height="15" viewBox="0 0 16 16" fill="currentColor"><rect x="1" y="1" width="6" height="6" rx="1.5"/><rect x="9" y="1" width="6" height="6" rx="1.5"/><rect x="1" y="9" width="6" height="6" rx="1.5"/><rect x="9" y="9" width="6" height="6" rx="1.5"/></svg><em style="font-style:normal">All apps</em></button>
+</header>
+<main class="stage" id="stage"><div class="load" id="load">Opening…</div></main>
+<div class="pk" id="pk">
+ <div class="sh" data-close></div>
+ <div class="pn" role="dialog" aria-label="Choose an app">
+  <button class="x" data-close aria-label="Close">✕</button>
+  <h2>Your 22 apps</h2>
+  <p class="sub">Tap an app to open it. Your data stays in each app, and you can switch back anytime.</p>
+  <input id="q" type="search" placeholder="Search an app…" autocomplete="off">
+  <div id="list"></div>
+  <div class="tip">💡 Add this page to your home screen (Share → Add to Home Screen) to get all your planners in one app.</div>
+ </div>
+</div>
+<script>
+const B='../';
+const APPS=[
+ ['Money','adhd-budget','ADHD Budget','Safe to spend today','https://tiagocarv-lang.github.io/calm-budget/'],
+ ['Money','cash-stuffing-budget','Cash Stuffing Budget','Digital envelopes'],
+ ['Money','couple-budget','Couple Budget','Shared expenses'],
+ ['Money','debt-payoff-tracker','Debt Payoff Tracker','Your debt-free date'],
+ ['Holidays','christmas-planner','Christmas Planner','Gifts, budget, dinner'],
+ ['Holidays','thanksgiving-planner','Thanksgiving Planner','Guests, menu, turkey'],
+ ['Holidays','gift-tracker','Gift Tracker','Birthdays & gift ideas'],
+ ['Home & family','family-planner','Family Planner','Calendar, chores, meals'],
+ ['Home & family','meal-planner','Meal Planner','Meals & grocery list'],
+ ['Home & family','cleaning-schedule','Cleaning Schedule','Today\'s chores'],
+ ['Home & family','kids-reward-chart','Kids Reward Chart','Chores & rewards'],
+ ['Home & family','homeschool-planner','Homeschool Planner','Lessons & attendance'],
+ ['Home & family','pet-care-tracker','Pet Care Tracker','Vaccines, meds, vet'],
+ ['Home & family','pregnancy-baby-tracker','Pregnancy & Baby','Week by week, feeds'],
+ ['You','goals-habits-2027','Goals & Habits 2027','Habits & goals'],
+ ['You','self-care-journal','Self-Care Journal','Mood & gratitude'],
+ ['You','fitness-tracker','Fitness Tracker','Workouts & macros'],
+ ['You','reading-journal','Reading Journal','Books & reading goal'],
+ ['You','travel-planner','Travel Planner','Trips & packing'],
+ ['You','student-planner','Student Planner','Classes & exams'],
+ ['Bonus','etsy-shop-manager','Etsy Shop Manager','Orders, fees, profit'],
+ ['Bonus','sourdough-tracker','Sourdough Companion','Feeds & bake days']
+].map(([g,id,n,d,u])=>({g,id,n,d,u:u||B+id+'/'}));
+APPS.forEach(a=>a.ic=a.u+'icon-192.png');
+const $=s=>document.querySelector(s),esc=s=>String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+const st={get(k,d){try{return JSON.parse(localStorage.getItem('hub_'+k))??d}catch(e){return d}},set(k,v){try{localStorage.setItem('hub_'+k,JSON.stringify(v))}catch(e){}}};
+const byId=id=>APPS.find(a=>a.id===id);
+let cur=null,recent=st.get('recent',[]).filter(byId);
+const frames={};
+function open(id,push){const a=byId(id)||APPS[7];cur=a.id;
+ if(!frames[a.id]){const f=document.createElement('iframe');f.src=a.u;f.title=a.n;f.setAttribute('allow','clipboard-write');f.addEventListener('load',()=>{if(cur===a.id)$('#load').style.display='none'});frames[a.id]=f;$('#stage').appendChild(f);$('#load').style.display='grid'}
+ else $('#load').style.display='none';
+ Object.entries(frames).forEach(([k,f])=>f.classList.toggle('on',k===a.id));
+ recent=[a.id,...recent.filter(x=>x!==a.id)].slice(0,6);st.set('recent',recent);st.set('last',a.id);
+ document.title=a.n+' · Life Planner';
+ if(push!==false&&location.hash!=='#'+a.id)history.replaceState(null,'','#'+a.id);
+ drawTop();close()}
+function drawTop(){const a=byId(cur);
+ $('#cur').innerHTML=`<img src="${a.ic}" alt=""><b>${esc(a.n)}</b><span>▾</span>`;
+ $('#recent').innerHTML=recent.filter(x=>x!==cur).slice(0,4).map(id=>{const r=byId(id);return `<button data-open="${r.id}" title="${esc(r.n)}"><img src="${r.ic}" alt="">${esc(r.n)}</button>`}).join('')}
+function drawList(){const q=$('#q').value.trim().toLowerCase(),L=APPS.filter(a=>!q||(a.n+' '+a.d+' '+a.g).toLowerCase().includes(q));
+ const gs=[...new Set(L.map(a=>a.g))];
+ $('#list').innerHTML=gs.map(g=>`<div class="grp">${esc(g.toUpperCase())}</div><div class="grid">${L.filter(a=>a.g===g).map(a=>`<button class="app${a.id===cur?' on':''}" data-open="${a.id}"><img src="${a.ic}" alt="" loading="lazy"><span><b>${esc(a.n)}</b><small>${esc(a.d)}</small></span></button>`).join('')}</div>`).join('')||'<p class="sub">No app found.</p>'}
+function show(){drawList();$('#pk').classList.add('on');if(matchMedia('(min-width:701px)').matches)setTimeout(()=>$('#q').focus(),30)}
+function close(){$('#pk').classList.remove('on');$('#q').value=''}
+document.addEventListener('click',e=>{const o=e.target.closest('[data-open]');if(o)return open(o.dataset.open);if(e.target.closest('[data-close]'))close()});
+$('#cur').onclick=show;$('#allbtn').onclick=show;$('#q').oninput=drawList;
+document.addEventListener('keydown',e=>{if(e.key==='Escape')close();if(e.key==='Enter'&&$('#pk').classList.contains('on')){const b=$('#list [data-open]');b&&b.click()}});
+addEventListener('hashchange',()=>{const id=location.hash.slice(1);if(byId(id)&&id!==cur)open(id,false)});
+const first=byId(location.hash.slice(1))?location.hash.slice(1):st.get('last',null);
+open(first||'family-planner');if(!first)show();
+if('serviceWorker' in navigator)navigator.serviceWorker.register('sw.js').catch(()=>{});
+</script>
+</body>
+</html>
