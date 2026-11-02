@@ -431,65 +431,169 @@ APP.P.notes=()=>notesPage('Notes','Anything to remember about your health.');
    Usage: BICSync.init({keys:['family-v1'], name:'Family Planner'})  then BICSync.open() from a button.
    Data is encrypted on the device (AES-GCM 256) before it leaves; the server only stores ciphertext.
    Pairing: device A shows a 6-digit code (10 min). Device B types it and receives the sync id + key,
-   wrapped with a key derived from the code (PBKDF2). */
+   wrapped with a key derived from the code (PBKDF2).
+   v2 (2026-11-02): no reliance on device clocks, 3-way merge when two devices edited (nothing is lost),
+   automatic retries, background check every 45 s, gzip for big data (photos), clear error messages. */
 (function () {
   const API = 'https://bic-sync.bestincell.workers.dev';
   const LS = 'bic-sync';
+  const MAXLEN = 900000, ZIP_OVER = 200000, POLL = 45000;
   const enc = new TextEncoder(), dec = new TextDecoder();
-  const b64 = (u8) => btoa(String.fromCharCode(...u8)).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
+  const b64 = (u8) => { let s = ''; for (let i = 0; i < u8.length; i += 0x8000) s += String.fromCharCode.apply(null, u8.subarray(i, i + 0x8000)); return btoa(s).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '') };
   const ub64 = (s) => Uint8Array.from(atob(s.replace(/-/g, '+').replace(/_/g, '/')), (c) => c.charCodeAt(0));
   const hex = (u8) => [...u8].map((b) => b.toString(16).padStart(2, '0')).join('');
-  let CFG = { keys: [], name: 'this app' }, ST = null, applying = false, timer = null, busy = false;
+  let CFG = { keys: [], name: 'this app' }, ST = null, applying = false, timer = null, retry = null, busy = false, again = false, edits = 0, fails = 0, lastMsg = '';
+  const set0 = Storage.prototype.setItem;
 
-  const loadSt = () => { try { ST = JSON.parse(localStorage.getItem(LS + ':' + CFG.keys[0])) } catch (e) { ST = null } };
-  const saveSt = () => localStorage.setItem(LS + ':' + CFG.keys[0], JSON.stringify(ST));
+  const stKey = () => LS + ':' + CFG.keys[0];
+  const loadSt = () => { try { ST = JSON.parse(localStorage.getItem(stKey())) } catch (e) { ST = null } };
+  const saveSt = () => { try { set0.call(localStorage, stKey(), JSON.stringify(ST)) } catch (e) {} };
 
+  // ---------- crypto ----------
   async function aes(rawKey) { return crypto.subtle.importKey('raw', rawKey, 'AES-GCM', false, ['encrypt', 'decrypt']) }
+  const gz = (u8, how) => new Response(new Blob([u8]).stream().pipeThrough(how)).arrayBuffer().then((b) => new Uint8Array(b));
   async function seal(key, obj) {
+    let pt = enc.encode(JSON.stringify(obj)), pre = '';
+    if (pt.length > ZIP_OVER && window.CompressionStream) { pt = await gz(pt, new CompressionStream('gzip')); pre = 'z1.' }
     const iv = crypto.getRandomValues(new Uint8Array(12));
-    const ct = new Uint8Array(await crypto.subtle.encrypt({ name: 'AES-GCM', iv }, key, enc.encode(JSON.stringify(obj))));
-    const out = new Uint8Array(12 + ct.length); out.set(iv); out.set(ct, 12); return b64(out);
+    const ct = new Uint8Array(await crypto.subtle.encrypt({ name: 'AES-GCM', iv }, key, pt));
+    const out = new Uint8Array(12 + ct.length); out.set(iv); out.set(ct, 12); return pre + b64(out);
   }
-  async function open_(key, s) { const u = ub64(s); return JSON.parse(dec.decode(await crypto.subtle.decrypt({ name: 'AES-GCM', iv: u.slice(0, 12) }, key, u.slice(12)))) }
+  async function open_(key, s) {
+    const z = s.startsWith('z1.'); const u = ub64(z ? s.slice(3) : s);
+    let pt = new Uint8Array(await crypto.subtle.decrypt({ name: 'AES-GCM', iv: u.slice(0, 12) }, key, u.slice(12)));
+    if (z) { if (!window.DecompressionStream) throw Object.assign(new Error('old'), { old: true }); pt = await gz(pt, new DecompressionStream('gzip')) }
+    return JSON.parse(dec.decode(pt));
+  }
   async function codeKey(code) {
     const base = await crypto.subtle.importKey('raw', enc.encode(code), 'PBKDF2', false, ['deriveKey']);
     return crypto.subtle.deriveKey({ name: 'PBKDF2', salt: enc.encode('bestincell-pair-' + code), iterations: 200000, hash: 'SHA-256' }, base, { name: 'AES-GCM', length: 256 }, false, ['encrypt', 'decrypt']);
   }
   const req = async (method, path, body) => {
-    const r = await fetch(API + path, { method, headers: body ? { 'Content-Type': 'application/json' } : {}, body: body ? JSON.stringify(body) : undefined });
+    const ac = window.AbortController ? new AbortController() : null, to = ac && setTimeout(() => ac.abort(), 25000);
+    let r;
+    try { r = await fetch(API + path, { method, cache: 'no-store', signal: ac && ac.signal, headers: body ? { 'Content-Type': 'application/json' } : {}, body: body ? JSON.stringify(body) : undefined }) }
+    catch (e) { throw Object.assign(new Error('net'), { net: true }) }
+    finally { clearTimeout(to) }
     const j = await r.json().catch(() => ({})); if (!r.ok) { const e = new Error(j.error || r.status); e.status = r.status; e.body = j; throw e } return j;
   };
 
-  const snapshot = () => { const o = {}; CFG.keys.forEach((k) => { const v = localStorage.getItem(k); if (v != null) o[k] = v }); return o };
+  // ---------- last synced copy (base for merging), kept in IndexedDB ----------
+  const idb = (mode, fn) => new Promise((res) => {
+    try {
+      const o = indexedDB.open('bic-sync', 1);
+      o.onupgradeneeded = () => o.result.createObjectStore('base');
+      o.onerror = () => res(null);
+      o.onsuccess = () => { try { const tx = o.result.transaction('base', mode), rq = fn(tx.objectStore('base')); tx.oncomplete = () => { res(rq.result); o.result.close() }; tx.onerror = tx.onabort = () => res(null) } catch (e) { res(null) } };
+    } catch (e) { res(null) }
+  });
+  const getBase = () => idb('readonly', (s) => s.get(ST.sid));
+  const putBase = (snap) => idb('readwrite', (s) => s.put(snap, ST.sid));
 
-  async function push() {
-    if (!ST || busy) return; busy = true;
-    try {
-      const key = await aes(ub64(ST.k)); const t = Date.now();
-      await req('PUT', '/s/' + ST.sid, { t, data: await seal(key, snapshot()) });
-      ST.t = t; ST.last = t; saveSt(); status('Synced ✓');
-    } catch (e) { if (e.status === 409) await pull(true); else status('Offline: will sync later') }
-    finally { busy = false }
+  // ---------- data ----------
+  const snapshot = () => { const o = {}; CFG.keys.forEach((k) => { const v = localStorage.getItem(k); if (v != null) o[k] = v }); return o };
+  function apply(snap) {
+    let changed = false; applying = true;
+    try { Object.entries(snap).forEach(([k, v]) => { if (CFG.keys.includes(k) && localStorage.getItem(k) !== v) { localStorage.setItem(k, v); changed = true } }) }
+    finally { applying = false }
+    return changed;
   }
-  async function pull(force) {
-    if (!ST) return false;
-    try {
-      const r = await req('GET', '/s/' + ST.sid);
-      if (!r.data || (!force && r.t <= (ST.t || 0))) return false;
-      const snap = await open_(await aes(ub64(ST.k)), r.data);
-      applying = true; Object.entries(snap).forEach(([k, v]) => localStorage.setItem(k, v)); applying = false;
-      ST.t = r.t; ST.last = Date.now(); saveSt(); location.reload(); return true;
-    } catch (e) { status('Offline: will sync later'); return false }
+  // 3-way merge. b = last synced value (nb: whether we know it), l = this device, r = server.
+  // Lists of items with an id are merged item by item, so edits made on two devices are both kept.
+  const isObj = (x) => x !== null && typeof x === 'object' && !Array.isArray(x);
+  const same = (a, b) => a === b || JSON.stringify(a) === JSON.stringify(b);
+  const idList = (a) => Array.isArray(a) && a.every((x) => isObj(x) && x.id != null);
+  function m3(b, l, r, nb) {
+    if (same(l, r)) return l;
+    if (nb && same(l, b)) return r;
+    if (nb && same(r, b)) return l;
+    if (l === undefined) return r;
+    if (r === undefined) return l;
+    if (isObj(l) && isObj(r)) {
+      const o = {}, bo = isObj(b) ? b : {};
+      new Set([...Object.keys(l), ...Object.keys(r)]).forEach((k) => { const v = m3(bo[k], l[k], r[k], nb); if (v !== undefined) o[k] = v });
+      return o;
+    }
+    if (idList(l) && idList(r)) {
+      const id = (x) => String(x.id), bm = new Map((idList(b) ? b : []).map((x) => [id(x), x])), lm = new Map(l.map((x) => [id(x), x])), rm = new Map(r.map((x) => [id(x), x]));
+      const order = l.map(id);
+      r.forEach((x, i) => { const k = id(x); if (lm.has(k)) return; let at = 0; for (let j = i - 1; j >= 0; j--) { const p = order.indexOf(id(r[j])); if (p >= 0) { at = p + 1; break } } order.splice(at, 0, k) });
+      return order.map((k) => m3(bm.get(k), lm.get(k), rm.get(k), nb)).filter((x) => x !== undefined);
+    }
+    return l;
   }
-  const schedule = () => { if (!ST || applying) return; clearTimeout(timer); timer = setTimeout(push, 2500) };
+  const pj = (s) => { try { return { ok: true, v: JSON.parse(s) } } catch (e) { return { ok: false } } };
+  function merge(base, local, remote) {
+    const o = {}, nb = !!base;
+    new Set([...Object.keys(local), ...Object.keys(remote)]).forEach((k) => {
+      const l = local[k], r = remote[k], b = nb ? base[k] : undefined;
+      if (l === r || r === undefined) { o[k] = l; return }
+      if (l === undefined) { o[k] = r; return }
+      const L = pj(l), R = pj(r), B = b === undefined ? { ok: false } : pj(b);
+      if (!L.ok || !R.ok) { o[k] = nb && b === l ? r : l; return }
+      o[k] = JSON.stringify(m3(B.ok ? B.v : undefined, L.v, R.v, nb));
+    });
+    return o;
+  }
+
+  // ---------- sync ----------
+  function errMsg(e) {
+    if (e.big) return 'Too much data to sync (usually photos). Remove a few photos, then tap Sync now.';
+    if (e.old) return 'Please update this browser (or iOS) to sync this data.';
+    if (e.net || (typeof navigator.onLine === 'boolean' && !navigator.onLine)) return 'No connection: it will sync by itself as soon as you are back online.';
+    return 'Sync paused for a moment, retrying automatically…';
+  }
+  async function sync() {
+    if (!ST) return; if (busy) { again = true; return } busy = true; clearTimeout(retry); clearTimeout(timer);
+    let changed = false;
+    try {
+      const key = await aes(ub64(ST.k));
+      for (let i = 0; ; i++) {
+        if (i > 4) throw new Error('loop');
+        const r = await req('GET', '/s/' + ST.sid);
+        if (r.data && r.t !== ST.t) {
+          const remote = await open_(key, r.data);
+          if (!ST.d) { if (apply(remote)) changed = true; ST.t = r.t; saveSt(); await putBase(remote) }
+          else {
+            const merged = merge(await getBase(), snapshot(), remote);
+            if (apply(merged)) changed = true;
+            ST.t = r.t; saveSt();
+            if (same(merged, remote)) { ST.d = false; saveSt(); await putBase(remote) }
+          }
+        }
+        if (!ST.d) break;
+        const e0 = edits, snap = snapshot();
+        if (r.t === ST.t || !r.data) { const b = await getBase(); if (b && same(b, snap)) { ST.d = false; saveSt(); break } }
+        const data = await seal(key, snap);
+        if (data.length > MAXLEN) throw Object.assign(new Error('big'), { big: true });
+        const t = Math.max(Date.now(), (r.t || 0) + 1);
+        try { await req('PUT', '/s/' + ST.sid, { t, data }) }
+        catch (e) { if (e.status === 409) continue; if (e.status === 400) e.big = true; throw e }
+        ST.t = t; if (edits === e0) ST.d = false; else again = true;
+        saveSt(); await putBase(snap); break;
+      }
+      ST.last = Date.now(); saveSt(); fails = 0; status('Synced ✓');
+    } catch (e) {
+      fails++; status(errMsg(e));
+      retry = setTimeout(sync, e.big ? 600000 : Math.min(300000, 5000 * 2 ** Math.min(fails, 6)));
+    } finally {
+      busy = false;
+      if (changed) { if (box) box.remove(); location.reload(); return }
+      if (again) { again = false; schedule(500) }
+    }
+  }
+  const schedule = (ms) => { if (!ST || applying) return; clearTimeout(timer); timer = setTimeout(sync, ms == null ? 2500 : ms) };
+  const typing = () => { const a = document.activeElement; return a && (/^(INPUT|TEXTAREA|SELECT)$/.test(a.tagName) || a.isContentEditable) };
 
   // Watch writes to the app's keys.
-  const set0 = Storage.prototype.setItem;
-  Storage.prototype.setItem = function (k, v) { set0.call(this, k, v); if (this === localStorage && CFG.keys.includes(k)) schedule() };
+  Storage.prototype.setItem = function (k, v) {
+    set0.call(this, k, v);
+    if (this === localStorage && !applying && ST && CFG.keys.includes(k)) { edits++; if (!ST.d) { ST.d = true; saveSt() } schedule() }
+  };
 
   // ---------- UI ----------
   let box;
-  function status(t) { const s = box && box.querySelector('#bic-st'); if (s) s.textContent = t }
+  function status(t) { lastMsg = t; const s = box && box.querySelector('#bic-st'); if (s) s.textContent = t }
   function css() {
     if (document.getElementById('bic-css')) return;
     const s = document.createElement('style'); s.id = 'bic-css';
@@ -503,11 +607,14 @@ APP.P.notes=()=>notesPage('Notes','Anything to remember about your health.');
     document.head.appendChild(s);
   }
   function view(html) { box.querySelector('.p').innerHTML = html + '<div id="bic-st"></div><button class="b g" data-x="close">Close</button>' }
+  function ago(t) { if (!t) return 'not yet'; const m = Math.round((Date.now() - t) / 60000); return m < 1 ? 'just now' : m < 60 ? m + ' min ago' : m < 1440 ? Math.round(m / 60) + ' h ago' : new Date(t).toLocaleDateString() }
   function home() {
-    if (ST) view(`<h3>⇅ Sync is on</h3><p>${CFG.name} stays the same on your linked devices. Changes sync within a few seconds.</p>
+    if (ST) {
+      view(`<h3>⇅ Sync is on</h3><p>${CFG.name} stays the same on your linked devices. Changes sync by themselves within a few seconds, from any device.</p>
       <button class="b" data-x="add">Link another device</button><button class="b g" data-x="now">Sync now</button><button class="b g" data-x="off">Turn off sync on this device</button>
-      <small>Encrypted on your device before it is sent. No account, no email.</small>`);
-    else view(`<h3>⇅ Sync phone & computer</h3><p>Use ${CFG.name} on your phone and your computer, with the same data.</p>
+      <small>Last synced: ${ago(ST.last)}${ST.d ? ' · changes waiting to be sent' : ''}. Encrypted on your device before it is sent. No account, no email.</small>`);
+      if (lastMsg && lastMsg !== 'Synced ✓') status(lastMsg);
+    } else view(`<h3>⇅ Sync phone & computer</h3><p>Use ${CFG.name} on your phone and your computer, with the same data.</p>
       <button class="b" data-x="start">This is my first device</button><button class="b g" data-x="join">I have a code from my other device</button>
       <small>No account, no email, no password. Your data is encrypted on this device before it is sent.</small>`);
   }
@@ -527,10 +634,10 @@ APP.P.notes=()=>notesPage('Notes','Anything to remember about your health.');
   async function act(x) {
     try {
       if (x === 'close') return box.remove();
-      if (x === 'start') { if (CFG.beforeStart) CFG.beforeStart(); ST = { sid: hex(crypto.getRandomValues(new Uint8Array(16))), k: b64(crypto.getRandomValues(new Uint8Array(32))), t: 0 }; saveSt(); await push(); return showCode() }
+      if (x === 'start') { if (CFG.beforeStart) CFG.beforeStart(); ST = { v: 2, sid: hex(crypto.getRandomValues(new Uint8Array(16))), k: b64(crypto.getRandomValues(new Uint8Array(32))), t: 0, d: true }; saveSt(); listen(); await sync(); return showCode() }
       if (x === 'add') return showCode();
-      if (x === 'now') { status('Syncing…'); if (!(await pull())) await push(); return }
-      if (x === 'off') { localStorage.removeItem(LS + ':' + CFG.keys[0]); ST = null; return home() }
+      if (x === 'now') { status('Syncing…'); fails = 0; await sync(); return }
+      if (x === 'off') { await idb('readwrite', (s) => s.delete(ST.sid)); localStorage.removeItem(stKey()); ST = null; lastMsg = ''; return home() }
       if (x === 'join') return view(`<h3>Type the code</h3><p>Shown on your other device.</p><input id="bic-code" inputmode="numeric" maxlength="6" autocomplete="one-time-code"><button class="b" data-x="link">Link</button><small>This device will take the data of your other device.</small>`);
       if (x === 'link') {
         const code = (box.querySelector('#bic-code').value || '').replace(/\D/g, '');
@@ -539,18 +646,29 @@ APP.P.notes=()=>notesPage('Notes','Anything to remember about your health.');
         const r = await req('GET', '/pair/' + code).catch(() => null);
         if (!r) return status('Code not found or expired');
         const v = await open_(await codeKey(code), r.box);
-        ST = { sid: v.sid, k: v.k, t: 0 }; saveSt(); status('Linked! Loading your data…');
-        if (!(await pull(true))) { await push(); home() }
+        ST = { v: 2, sid: v.sid, k: v.k, t: 0, d: false }; saveSt(); listen(); status('Linked! Loading your data…');
+        await sync(); home(); status(lastMsg);
       }
     } catch (e) { status('Something went wrong. Check your connection and try again.') }
+  }
+  let listening = false;
+  function listen() {
+    if (listening) return; listening = true;
+    addEventListener('focus', () => schedule(300));
+    addEventListener('online', () => schedule(300));
+    addEventListener('pageshow', () => schedule(300));
+    document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'visible') schedule(300); else if (ST && ST.d) sync() });
+    setInterval(() => { if (ST && document.visibilityState === 'visible' && !typing() && !busy) sync() }, POLL);
   }
   window.BICSync = {
     init(cfg) {
       CFG = Object.assign(CFG, cfg); loadSt();
-      if (ST) { pull(); addEventListener('focus', () => pull()); document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'visible') pull(); else if (timer) { clearTimeout(timer); push() } }) }
+      if (ST && ST.v !== 2) { ST.v = 2; ST.d = true; saveSt() } // v1 device: merge once with the server, nothing is overwritten
+      if (ST) { listen(); sync() }
     },
     open() { css(); box && box.remove(); box = document.createElement('div'); box.id = 'bic-sync'; box.innerHTML = '<div class="p"></div>'; box.addEventListener('click', (e) => { const x = e.target.dataset.x; if (x) act(x); else if (e.target === box) box.remove() }); document.body.appendChild(box); home() },
     get on() { return !!ST },
+    _merge: merge,
   };
 })();
 
