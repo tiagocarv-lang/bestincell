@@ -418,11 +418,13 @@ APP.onDelete=(c,id)=>{if(c==='people')S.gifts=S.gifts.filter(g=>g.p!==id)};
    Pairing: device A shows a 6-digit code (10 min). Device B types it and receives the sync id + key,
    wrapped with a key derived from the code (PBKDF2).
    v2 (2026-11-02): no reliance on device clocks, 3-way merge when two devices edited (nothing is lost),
-   automatic retries, background check every 45 s, gzip for big data (photos), clear error messages. */
+   automatic retries, background check every 45 s, gzip for big data (photos), clear error messages.
+   v3 (2026-11-02): one link for every app on the site. The first link stores a group id + key ("bic-sync:*");
+   every other app derives its own sync id from it (sha256(group:appKey)) and turns sync on by itself. */
 (function () {
   const API = 'https://bic-sync.bestincell.workers.dev';
   const LS = 'bic-sync';
-  const MAXLEN = 900000, ZIP_OVER = 200000, POLL = 45000;
+  const MAXLEN = 1900000, ZIP_OVER = 200000, POLL = 45000;
   const enc = new TextEncoder(), dec = new TextDecoder();
   const b64 = (u8) => { let s = ''; for (let i = 0; i < u8.length; i += 0x8000) s += String.fromCharCode.apply(null, u8.subarray(i, i + 0x8000)); return btoa(s).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '') };
   const ub64 = (s) => Uint8Array.from(atob(s.replace(/-/g, '+').replace(/_/g, '/')), (c) => c.charCodeAt(0));
@@ -431,8 +433,29 @@ APP.onDelete=(c,id)=>{if(c==='people')S.gifts=S.gifts.filter(g=>g.p!==id)};
   const set0 = Storage.prototype.setItem;
 
   const stKey = () => LS + ':' + CFG.keys[0];
-  const loadSt = () => { try { ST = JSON.parse(localStorage.getItem(stKey())) } catch (e) { ST = null } };
+  let OFF = false; // sync turned off for this app on this device: never auto-join it
+  const loadSt = () => { try { ST = JSON.parse(localStorage.getItem(stKey())) } catch (e) { ST = null } OFF = !!(ST && ST.off); if (OFF || (ST && !ST.sid)) ST = null };
   const saveSt = () => { try { set0.call(localStorage, stKey(), JSON.stringify(ST)) } catch (e) {} };
+
+  // ---------- one link for all apps ----------
+  const GK = LS + ':*';
+  const loadG = () => { try { const g = JSON.parse(localStorage.getItem(GK)); return g && g.g && g.k ? g : null } catch (e) { return null } };
+  const saveG = (g) => { try { set0.call(localStorage, GK, JSON.stringify(g)) } catch (e) {} };
+  const derive = async (g) => hex(new Uint8Array(await crypto.subtle.digest('SHA-256', enc.encode(g + ':' + CFG.keys[0])))).slice(0, 32);
+  function promote() { // device linked before v3: its oldest per-app link becomes the group (same choice on every linked device)
+    if (loadG()) return;
+    const c = [];
+    for (let i = 0; i < localStorage.length; i++) { const k = localStorage.key(i); if (k && k.startsWith(LS + ':') && k !== GK) { try { const s = JSON.parse(localStorage.getItem(k)); if (s && s.sid && s.k && !s.j) c.push(s) } catch (e) {} } }
+    if (c.length) { c.sort((a, b) => (a.sid < b.sid ? -1 : 1)); saveG({ g: c[0].sid, k: c[0].k }) }
+  }
+  let joining = false;
+  async function autoJoin() {
+    const G = loadG(); if (ST || OFF || !G || joining) return; joining = true;
+    try {
+      const empty = !CFG.keys.some((k) => localStorage.getItem(k) != null);
+      ST = { v: 2, sid: await derive(G.g), k: G.k, t: 0, d: !empty, j: 1, g: G.g }; saveSt(); listen(); await sync();
+    } finally { joining = false }
+  }
 
   // ---------- crypto ----------
   async function aes(rawKey) { return crypto.subtle.importKey('raw', rawKey, 'AES-GCM', false, ['encrypt', 'decrypt']) }
@@ -501,8 +524,11 @@ APP.onDelete=(c,id)=>{if(c==='people')S.gifts=S.gifts.filter(g=>g.p!==id)};
     }
     if (idList(l) && idList(r)) {
       const id = (x) => String(x.id), bm = new Map((idList(b) ? b : []).map((x) => [id(x), x])), lm = new Map(l.map((x) => [id(x), x])), rm = new Map(r.map((x) => [id(x), x]));
-      const order = l.map(id);
-      r.forEach((x, i) => { const k = id(x); if (lm.has(k)) return; let at = 0; for (let j = i - 1; j >= 0; j--) { const p = order.indexOf(id(r[j])); if (p >= 0) { at = p + 1; break } } order.splice(at, 0, k) });
+      const order = l.map(id), sig = (x) => JSON.stringify(Object.assign({}, x, { id: 0 })), lsig = nb ? null : new Set(l.map(sig));
+      // First merge without history: skip the same item stored under another id (e.g. example data).
+      r.forEach((x, i) => { const k = id(x); if (lm.has(k)) return;
+        if (lsig && lsig.has(sig(x))) { rm.delete(k); return }
+        let at = 0; for (let j = i - 1; j >= 0; j--) { const p = order.indexOf(id(r[j])); if (p >= 0) { at = p + 1; break } } order.splice(at, 0, k) });
       return order.map((k) => m3(bm.get(k), lm.get(k), rm.get(k), nb)).filter((x) => x !== undefined);
     }
     return l;
@@ -596,22 +622,26 @@ APP.onDelete=(c,id)=>{if(c==='people')S.gifts=S.gifts.filter(g=>g.p!==id)};
   function home() {
     if (ST) {
       view(`<h3>⇅ Sync is on</h3><p>${CFG.name} stays the same on your linked devices. Changes sync by themselves within a few seconds, from any device.</p>
-      <button class="b" data-x="add">Link another device</button><button class="b g" data-x="now">Sync now</button><button class="b g" data-x="off">Turn off sync on this device</button>
-      <small>Last synced: ${ago(ST.last)}${ST.d ? ' · changes waiting to be sent' : ''}. Encrypted on your device before it is sent. No account, no email.</small>`);
+      <button class="b" data-x="add">Link another device</button><button class="b g" data-x="now">Sync now</button><button class="b g" data-x="off">Turn off sync for this app on this device</button>
+      <small>One link is enough: all your BestInCell apps on this device sync with it. Last synced: ${ago(ST.last)}${ST.d ? ' · changes waiting to be sent' : ''}. Encrypted on your device before it is sent. No account, no email.</small>`);
       if (lastMsg && lastMsg !== 'Synced ✓') status(lastMsg);
-    } else view(`<h3>⇅ Sync phone & computer</h3><p>Use ${CFG.name} on your phone and your computer, with the same data.</p>
+    } else if (loadG()) view(`<h3>⇅ Sync is off for this app</h3><p>Your other BestInCell apps on this device are linked. Turn it on to sync ${CFG.name} too, no code needed.</p>
+      <button class="b" data-x="rejoin">Turn on sync for this app</button>
+      <small>Your data is encrypted on this device before it is sent.</small>`);
+    else view(`<h3>⇅ Sync phone & computer</h3><p>Use ${CFG.name} on your phone and your computer, with the same data. You link once: all your BestInCell apps sync.</p>
       <button class="b" data-x="start">This is my first device</button><button class="b g" data-x="join">I have a code from my other device</button>
       <small>No account, no email, no password. Your data is encrypted on this device before it is sent.</small>`);
   }
   async function showCode() {
     view('<h3>Link a device</h3><p>Creating your code…</p>');
     const kb = await codeKeyBox();
-    view(`<h3>Your code</h3><p>On your other device, open ${CFG.name} → Sync → “I have a code”, and type:</p><div class="code">${kb}</div><small>Valid for 10 minutes, works once.</small>`);
+    view(`<h3>Your code</h3><p>On your other device, open any BestInCell app → Sync → “I have a code”, and type:</p><div class="code">${kb}</div><small>Valid for 10 minutes, works once. It links all your apps at once.</small>`);
   }
   async function codeKeyBox() {
+    const G = loadG();
     for (let i = 0; i < 5; i++) {
       const code = String(crypto.getRandomValues(new Uint32Array(1))[0] % 1000000).padStart(6, '0');
-      const box_ = await seal(await codeKey(code), { sid: ST.sid, k: ST.k });
+      const box_ = await seal(await codeKey(code), Object.assign({ sid: ST.sid, k: ST.k }, G ? { g: G.g, gk: G.k } : {}));
       try { await req('POST', '/pair', { code, box: box_ }); return code } catch (e) { if (e.status !== 409) throw e }
     }
     throw new Error('busy');
@@ -619,19 +649,28 @@ APP.onDelete=(c,id)=>{if(c==='people')S.gifts=S.gifts.filter(g=>g.p!==id)};
   async function act(x) {
     try {
       if (x === 'close') return box.remove();
-      if (x === 'start') { if (CFG.beforeStart) CFG.beforeStart(); ST = { v: 2, sid: hex(crypto.getRandomValues(new Uint8Array(16))), k: b64(crypto.getRandomValues(new Uint8Array(32))), t: 0, d: true }; saveSt(); listen(); await sync(); return showCode() }
+      if (x === 'start') {
+        if (CFG.beforeStart) CFG.beforeStart();
+        if (!loadG()) saveG({ g: hex(crypto.getRandomValues(new Uint8Array(16))), k: b64(crypto.getRandomValues(new Uint8Array(32))) });
+        const G = loadG(); OFF = false;
+        ST = { v: 2, sid: await derive(G.g), k: G.k, t: 0, d: true, j: 1, g: G.g }; saveSt(); listen(); await sync(); return showCode();
+      }
+      if (x === 'rejoin') { OFF = false; localStorage.removeItem(stKey()); status('Turning on…'); await autoJoin(); return home() }
       if (x === 'add') return showCode();
       if (x === 'now') { status('Syncing…'); fails = 0; await sync(); return }
-      if (x === 'off') { await idb('readwrite', (s) => s.delete(ST.sid)); localStorage.removeItem(stKey()); ST = null; lastMsg = ''; return home() }
-      if (x === 'join') return view(`<h3>Type the code</h3><p>Shown on your other device.</p><input id="bic-code" inputmode="numeric" maxlength="6" autocomplete="one-time-code"><button class="b" data-x="link">Link</button><small>This device will take the data of your other device.</small>`);
+      if (x === 'off') { await idb('readwrite', (s) => s.delete(ST.sid)); ST = { off: 1 }; saveSt(); ST = null; OFF = true; lastMsg = ''; return home() }
+      if (x === 'join') return view(`<h3>Type the code</h3><p>Shown on your other device.</p><input id="bic-code" inputmode="numeric" maxlength="6" autocomplete="one-time-code"><button class="b" data-x="link">Link</button><small>This device will take the data of your other device, for all your BestInCell apps.</small>`);
       if (x === 'link') {
         const code = (box.querySelector('#bic-code').value || '').replace(/\D/g, '');
         if (code.length !== 6) return status('Type the 6 digits');
         status('Linking…');
-        const r = await req('GET', '/pair/' + code).catch(() => null);
-        if (!r) return status('Code not found or expired');
+        let r;
+        try { r = await req('GET', '/pair/' + code) }
+        catch (e) { return status(e.status === 429 ? 'Too many wrong codes. Please wait 10 minutes, then try again.' : e.net ? 'No connection. Check your internet and try again.' : 'Code not found or expired') }
         const v = await open_(await codeKey(code), r.box);
-        ST = { v: 2, sid: v.sid, k: v.k, t: 0, d: false }; saveSt(); listen(); status('Linked! Loading your data…');
+        if (v.g) saveG({ g: v.g, k: v.gk || v.k });
+        OFF = false; ST = { v: 2, sid: v.sid, k: v.k, t: 0, d: false }; if (v.g && v.sid === (await derive(v.g))) { ST.j = 1; ST.g = v.g }
+        saveSt(); listen(); status('Linked! Loading your data…');
         await sync(); home(); status(lastMsg);
       }
     } catch (e) { status('Something went wrong. Check your connection and try again.') }
@@ -645,11 +684,20 @@ APP.onDelete=(c,id)=>{if(c==='people')S.gifts=S.gifts.filter(g=>g.p!==id)};
     document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'visible') schedule(300); else if (ST && ST.d) sync() });
     setInterval(() => { if (ST && document.visibilityState === 'visible' && !typing() && !busy) sync() }, POLL);
   }
+  // Another app on this site was just linked (or re-linked): follow the group.
+  function regroup() {
+    const G = loadG(); if (!G) return;
+    if (ST && ST.j && ST.g !== G.g) { ST = null; saveSt() }
+    if (!ST) autoJoin();
+  }
   window.BICSync = {
     init(cfg) {
-      CFG = Object.assign(CFG, cfg); loadSt();
+      CFG = Object.assign(CFG, cfg); loadSt(); promote();
       if (ST && ST.v !== 2) { ST.v = 2; ST.d = true; saveSt() } // v1 device: merge once with the server, nothing is overwritten
       if (ST) { listen(); sync() }
+      regroup();
+      addEventListener('storage', (e) => { if (e.key === GK) regroup() });
+      addEventListener('focus', regroup);
     },
     open() { css(); box && box.remove(); box = document.createElement('div'); box.id = 'bic-sync'; box.innerHTML = '<div class="p"></div>'; box.addEventListener('click', (e) => { const x = e.target.dataset.x; if (x) act(x); else if (e.target === box) box.remove() }); document.body.appendChild(box); home() },
     get on() { return !!ST },
