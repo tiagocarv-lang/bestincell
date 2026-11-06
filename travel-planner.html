@@ -629,7 +629,7 @@ const isoAgo=n=>{const d=new Date();d.setDate(d.getDate()-n);return d.toISOStrin
 
 // ===== CALM LAYER: next small step, 5-min timer, stuck helper, brain dump, quick add, onboarding, focus mode, help =====
 if(!Array.isArray(S.dump))S.dump=[];
-if(APP.calmSeed&&!S.dump.length&&!S._cs){S.dump=APP.calmSeed.map(t=>({id:uid(),t}));S._cs=1}
+if(APP.calmSeed&&!S.dump.length&&!S._cs){S.dump=APP.calmSeed.map(t=>({id:uid(),t}));S._cs=1}{const _cBl=APP.blank;APP.blank=()=>Object.assign(_cBl(),{_cs:1})}
 const CALM_N={ms:'Milestones',books:'Books',pack:'Packing list',menu:'Menu',appts:'Appointments',tasks:'To-do',todo:'To-do',shop:'Shopping',chores:'Chores',daily:'Daily',bills:'Bills',gifts:'Gifts',routines:'Routines',plan:'Meal plan',grocery:'Grocery list',goals:'Goals',buy:'Baby shopping'};
 const CALM_P=['tasks','todo','chores','daily','routines','appts','bills','pack'];
 const CALM_F=['done','got','bought','paid','packed','wrapped','sent','claimed','booked','ok'];
@@ -653,7 +653,7 @@ view=function(){if(!Array.isArray(S.dump))S.dump=[];if(page!=='dashboard')return
 function modal(html){let m=$('#calmmodal');if(!m){m=document.createElement('div');m.id='calmmodal';document.body.appendChild(m)}m.innerHTML=`<div class="cm-bg" data-act="cmclose"></div><div class="cm">${html}<button class="cm-x" data-act="cmclose">×</button></div>`;m.style.display='block'}
 let CALM_T=null;
 function calmTimer(sec){const n=calmCur();let left=sec,run=true;clearInterval(CALM_T);
- const draw=()=>{const m=$('#calmmodal .cm');if(!m)return;const p=1-left/sec;m.querySelector('.ring').style.background=`conic-gradient(var(--acc) ${p*360}deg,var(--acc-l) 0)`;m.querySelector('.tm').textContent=Math.floor(left/60)+':'+String(left%60).padStart(2,'0')};
+ const draw=()=>{const m=$('#calmmodal .cm'),r=m&&m.querySelector('.ring');if(!r){clearInterval(CALM_T);return}const p=1-left/sec;r.style.background=`conic-gradient(var(--acc) ${p*360}deg,var(--acc-l) 0)`;m.querySelector('.tm').textContent=Math.floor(left/60)+':'+String(left%60).padStart(2,'0')};
  modal(`<small class="cm-k">FOCUSING ON</small><h2 class="cm-h">${esc(n?n.label:'Your step')}</h2><div class="ring"><div class="tm">5:00</div></div><div class="cn-b" style="justify-content:center"><button class="btn ghost" data-act="tpause">Pause</button><button class="btn ghost" data-act="tplus">+5 min</button><button class="btn" data-act="calmdone">✓ Done</button></div><p class="cn-s" style="text-align:center">Just start. Five minutes is enough.</p>`);
  draw();CALM_T=setInterval(()=>{if(!run)return;left--;draw();if(left<=0){clearInterval(CALM_T);toast('⏰ 5 minutes done! Keep going or call it a win.')}},1000);
  window._tp=()=>{run=!run;const b=document.querySelector('[data-act=tpause]');b&&(b.textContent=run?'Pause':'Resume')};window._tx=()=>{left+=300;sec+=300;draw()}}
