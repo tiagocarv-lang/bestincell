@@ -1,7 +1,7 @@
 <!doctype html>
 <html lang="en"><head>
 <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Website Builder Test</title>
+<title>Website Builder</title>
 <!-- BestInCell test (2026-11-08): small-business website builder. No server: the whole site is stored in the link (#s=...). Booking requests go out by WhatsApp or email. -->
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,700&family=Inter:wght@400;500;600;700&family=DM+Serif+Display&family=Nunito:wght@400;600;800&family=Playfair+Display:wght@500;700&family=Anton&family=Space+Grotesk:wght@400;500;700&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
@@ -18,7 +18,7 @@ a{color:inherit}button{font:inherit;cursor:pointer}
 #bar button.on{background:#fff;color:#1F1B24}
 #bar .sp{flex:1}
 #bar .main{background:#E9A23B;color:#1F1B24}
-#ed{position:fixed;z-index:60;top:0;left:0;bottom:0;width:380px;max-width:100%;background:#fff;box-shadow:0 0 40px rgba(0,0,0,.25);transform:translateX(-105%);transition:transform .25s;display:flex;flex-direction:column;font-family:Inter}
+#ed{color:#2A2530;position:fixed;z-index:60;top:0;left:0;bottom:0;width:380px;max-width:100%;background:#fff;box-shadow:0 0 40px rgba(0,0,0,.25);transform:translateX(-105%);transition:transform .25s;display:flex;flex-direction:column;font-family:Inter}
 #ed.on{transform:none}
 #ed header{display:flex;align-items:center;justify-content:space-between;padding:14px 16px;border-bottom:1px solid #eee;font-weight:700}
 #ed .body{overflow:auto;padding:6px 16px 90px}
@@ -205,7 +205,7 @@ body.bold #cur{display:block}
 </style></head>
 <body>
 <div id="bar" hidden>
-  <b>Test · Website builder</b>
+  <b>Website builder</b>
   <div class="seg" id="tpls"></div>
   <span class="sp"></span>
   <div class="seg" id="sty"><button data-s="bold">Bold</button><button data-s="classic">Classic</button></div>
@@ -304,6 +304,7 @@ function applyTheme(){
   document.title=S.name||'My website';
 }
 function render(){
+  if(!VIEW){try{localStorage.setItem("bic_site_draft",JSON.stringify(S))}catch(e){}}
   document.body.classList.toggle('bold',S.style==='bold');
   if(S.style==='bold'){applyTheme();return renderBold()}
   stopFx();
@@ -438,12 +439,14 @@ async function unpack(s){const t=s[0],d=unb64u(s.slice(1));
   if(t==='z'){const ds=new Blob([d]).stream().pipeThrough(new DecompressionStream('deflate-raw'));return JSON.parse(await new Response(ds).text())}
   return JSON.parse(new TextDecoder().decode(d))}
 async function showLink(){
-  const url=location.origin+location.pathname+'#s='+await pack(S);
-  $('#mbox').innerHTML=`<h3>Your website link 🎉</h3><p style="color:#6E6672;margin:0 0 10px">This link <b>is</b> the website: share it on Instagram, Google, WhatsApp or a QR code. Edit again anytime and get a new link.</p>
-   <div class="link">${esc(url)}</div><div class="btns"><button id="lC">Copy link</button><button id="lO" class="wa">Open my site</button><button class="ghost" id="lX">Close</button></div>
-   <p style="font-size:12px;color:#8a8190;margin:12px 0 0">Test version: in the real product the link would be short, like <b>bestincell.site/${esc((S.name||'my-site').toLowerCase().replace(/[^a-z0-9]+/g,'-').replace(/^-|-$/g,''))}</b>.</p>`;
+  const h='#s='+await pack(S), url=location.origin+location.pathname+h, edit=location.origin+location.pathname+'?edit'+h;
+  $('#mbox').innerHTML=`<h3>Your website is ready 🎉</h3><p style="color:#6E6672;margin:0 0 10px">1. <b>Public link</b>: this link <b>is</b> your website. Share it in your Instagram bio, on Google, WhatsApp or as a QR code.</p>
+   <div class="link">${esc(url)}</div><div class="btns"><button id="lC">Copy public link</button><button id="lO" class="wa">Open my site</button></div>
+   <p style="color:#6E6672;margin:16px 0 10px">2. <b>Private edit link</b>: keep it for yourself (save it in your Notes). Open it anytime to change prices or hours, then share the new public link.</p>
+   <div class="link">${esc(edit)}</div><div class="btns"><button id="lE">Copy edit link</button><button class="ghost" id="lX">Close</button></div>`;
   $('#modal').classList.add('on');
-  $('#lC').onclick=async()=>{try{await navigator.clipboard.writeText(url);$('#lC').textContent='Copied ✓'}catch(e){prompt('Copy this link',url)}};
+  const cp=async(b,u)=>{try{await navigator.clipboard.writeText(u);b.textContent='Copied ✓'}catch(e){prompt('Copy this link',u)}};
+  $('#lC').onclick=()=>cp($('#lC'),url);$('#lE').onclick=()=>cp($('#lE'),edit);
   $('#lO').onclick=()=>window.open(url,'_blank');
   $('#lX').onclick=()=>$('#modal').classList.remove('on');
 }
@@ -474,14 +477,18 @@ function pick(k){S=clone(DEMOS[k]);S.tpl=k;S.style=STYLE;markSty();document.quer
 // ---------- start ----------
 (async()=>{
   const m=location.hash.match(/^#s=(.+)$/);
-  if(m){try{S=await unpack(m[1]);VIEW=true;render();return}catch(e){console.warn('bad link',e)}}
+  const q=new URLSearchParams(location.search), qt=q.get('t'), qs=q.get('style');
+  let loaded=null;
+  if(m){try{loaded=await unpack(m[1])}catch(e){console.warn('bad link',e)}}
+  if(loaded&&!q.has('edit')){S=loaded;VIEW=true;render();return}
+  if(!loaded&&!qt){try{const d=JSON.parse(localStorage.getItem('bic_site_draft')||'null');if(d&&d.services)loaded=d}catch(e){}}
   $('#bar').hidden=false;
   $('#tpls').innerHTML=Object.entries(DEMOS).map(([k,d])=>`<button data-t="${k}">${d.label}</button>`).join('');
   $('#tpls').onclick=e=>{const b=e.target.closest('[data-t]');b&&pick(b.dataset.t)};
   $('#sty').onclick=e=>{const b=e.target.closest('[data-s]');b&&setStyle(b.dataset.s)};
-  const q=new URLSearchParams(location.search), qt=q.get('t'), qs=q.get('style');
   if(qs==='classic'||qs==='bold')STYLE=qs;
-  pick(DEMOS[qt]?qt:'pilates');
+  if(loaded){S=loaded;STYLE=S.style||'classic';markSty();document.querySelectorAll('#tpls button').forEach(b=>b.classList.toggle('on',b.dataset.t===S.tpl));render();if(q.has('edit')){editor();$('#ed').classList.add('on')}}
+  else pick(DEMOS[qt]?qt:'pilates');
 })();
 </script>
 </body></html>
