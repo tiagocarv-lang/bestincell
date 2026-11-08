@@ -1,0 +1,301 @@
+<!doctype html>
+<html lang="en"><head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Website Builder Test</title>
+<!-- BestInCell test (2026-11-08): small-business website builder. No server: the whole site is stored in the link (#s=...). Booking requests go out by WhatsApp or email. -->
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,700&family=Inter:wght@400;500;600;700&family=DM+Serif+Display&family=Nunito:wght@400;600;800&family=Playfair+Display:wght@500;700&display=swap" rel="stylesheet">
+<style>
+:root{--bg:#FAF7F2;--ink:#2A2530;--soft:#6E6672;--card:#fff;--acc:#B5656F;--acc2:#F3E3E2;--line:#E9E2DA;--hf:'Fraunces',Georgia,serif;--bf:'Inter',system-ui,sans-serif}
+*{box-sizing:border-box}html{scroll-behavior:smooth}
+body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.6 var(--bf)}
+a{color:inherit}button{font:inherit;cursor:pointer}
+/* builder chrome */
+#bar{position:sticky;top:0;z-index:50;background:#1F1B24;color:#fff;display:flex;gap:8px;align-items:center;padding:10px 14px;flex-wrap:wrap}
+#bar b{font:600 14px Inter;margin-right:6px;opacity:.85}
+#bar .seg{display:flex;gap:4px;flex-wrap:wrap}
+#bar button{border:0;border-radius:20px;padding:7px 13px;font:600 13px Inter;background:#3A3442;color:#fff}
+#bar button.on{background:#fff;color:#1F1B24}
+#bar .sp{flex:1}
+#bar .main{background:#E9A23B;color:#1F1B24}
+#ed{position:fixed;z-index:60;top:0;left:0;bottom:0;width:380px;max-width:100%;background:#fff;box-shadow:0 0 40px rgba(0,0,0,.25);transform:translateX(-105%);transition:transform .25s;display:flex;flex-direction:column;font-family:Inter}
+#ed.on{transform:none}
+#ed header{display:flex;align-items:center;justify-content:space-between;padding:14px 16px;border-bottom:1px solid #eee;font-weight:700}
+#ed .body{overflow:auto;padding:6px 16px 90px}
+#ed h4{margin:18px 0 6px;font-size:12px;letter-spacing:.08em;text-transform:uppercase;color:#8a8190}
+#ed label{display:block;font-size:13px;font-weight:600;margin:8px 0 3px}
+#ed input,#ed textarea,#ed select{width:100%;border:1px solid #ddd;border-radius:9px;padding:8px 10px;font:14px Inter}
+#ed textarea{min-height:64px;resize:vertical}
+#ed .row{border:1px solid #eee;border-radius:12px;padding:8px 10px;margin:8px 0;position:relative;background:#FBFAF8}
+#ed .row .x{position:absolute;top:6px;right:8px;border:0;background:none;color:#b44;font-size:18px}
+#ed .add{border:1px dashed #bbb;background:none;border-radius:10px;width:100%;padding:8px;margin-top:4px;font-weight:600;color:#555}
+#ed .sw{display:flex;gap:8px;flex-wrap:wrap}
+#ed .sw button{width:34px;height:34px;border-radius:50%;border:3px solid #fff;box-shadow:0 0 0 1px #ccc}
+#ed .sw button.on{box-shadow:0 0 0 2px #1F1B24}
+#ed .x2{border:0;background:none;font-size:22px}
+#modal{position:fixed;inset:0;z-index:80;background:rgba(20,16,24,.55);display:none;align-items:center;justify-content:center;padding:16px}
+#modal.on{display:flex}
+#modal .box{background:#fff;border-radius:20px;max-width:460px;width:100%;padding:22px;font-family:var(--bf);color:#2A2530;max-height:90vh;overflow:auto}
+#modal h3{margin:0 0 6px;font:700 22px var(--hf)}
+#modal label{display:block;font-size:13px;font-weight:600;margin:10px 0 3px}
+#modal input,#modal select,#modal textarea{width:100%;border:1px solid #ddd;border-radius:10px;padding:10px;font:15px var(--bf)}
+#modal .btns{display:flex;gap:8px;margin-top:16px;flex-wrap:wrap}
+#modal .btns button{flex:1;border:0;border-radius:12px;padding:12px;font-weight:700;color:#fff;background:var(--acc)}
+#modal .btns .wa{background:#25A35A}
+#modal .btns .ghost{background:#eee;color:#333;flex:0 0 auto}
+#modal .link{word-break:break-all;font-size:12px;background:#F4F1EC;border-radius:10px;padding:10px;max-height:110px;overflow:auto}
+/* site */
+.wrap{max-width:1080px;margin:0 auto;padding:0 20px}
+nav.sn{display:flex;align-items:center;justify-content:space-between;padding:18px 0}
+.logo{display:flex;align-items:center;gap:10px;font:700 20px var(--hf)}
+.logo i{font-style:normal;width:38px;height:38px;border-radius:50%;background:var(--acc);color:#fff;display:grid;place-items:center;font:700 17px var(--hf)}
+nav.sn .links{display:flex;gap:22px;font-size:14px;font-weight:500}
+nav.sn .links a{text-decoration:none;color:var(--soft)}
+.btn{display:inline-block;border:0;border-radius:40px;background:var(--acc);color:#fff;padding:13px 24px;font-weight:600;text-decoration:none;font-size:15px}
+.btn.alt{background:transparent;color:var(--ink);box-shadow:inset 0 0 0 1.5px var(--line)}
+.hero{display:grid;grid-template-columns:1.1fr .9fr;gap:40px;align-items:center;padding:40px 0 70px}
+.kick{display:inline-block;background:var(--acc2);color:var(--acc);font-weight:700;font-size:12px;letter-spacing:.1em;text-transform:uppercase;padding:7px 14px;border-radius:30px}
+.hero h1{font:700 clamp(36px,5.4vw,60px)/1.05 var(--hf);margin:18px 0 16px;letter-spacing:-.01em}
+.hero p{font-size:18px;color:var(--soft);margin:0 0 26px;max-width:520px}
+.hero .cta{display:flex;gap:10px;flex-wrap:wrap}
+.trust{display:flex;gap:18px;margin-top:26px;font-size:13px;color:var(--soft);flex-wrap:wrap}
+.trust b{color:var(--ink)}
+.art{aspect-ratio:4/5;border-radius:200px 200px 28px 28px;background:linear-gradient(160deg,var(--acc2),var(--acc));position:relative;overflow:hidden;box-shadow:0 30px 60px rgba(40,20,40,.15)}
+.art img{width:100%;height:100%;object-fit:cover}
+.art .mono{position:absolute;inset:0;display:grid;place-items:center;font:700 120px var(--hf);color:rgba(255,255,255,.85)}
+.art .tag{position:absolute;left:18px;bottom:18px;right:18px;background:rgba(255,255,255,.92);border-radius:16px;padding:12px 14px;font-size:14px;color:var(--ink);display:flex;gap:10px;align-items:center}
+.art .tag span{font-size:22px}
+section.s{padding:64px 0;border-top:1px solid var(--line)}
+section.s h2{font:700 clamp(28px,3.6vw,40px)/1.15 var(--hf);margin:0 0 10px}
+section.s .lead{color:var(--soft);margin:0 0 30px;max-width:620px}
+.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:18px}
+.card{background:var(--card);border:1px solid var(--line);border-radius:22px;padding:22px;display:flex;flex-direction:column}
+.card h3{margin:0 0 4px;font:700 20px var(--hf)}
+.card .meta{font-size:13px;color:var(--soft)}
+.card p{color:var(--soft);font-size:15px;flex:1}
+.card .pr{display:flex;align-items:center;justify-content:space-between;margin-top:8px}
+.card .pr b{font:700 24px var(--hf)}
+.card .pr button{border:0;border-radius:30px;background:var(--acc2);color:var(--acc);font-weight:700;padding:9px 16px}
+.about{display:grid;grid-template-columns:.8fr 1.2fr;gap:40px;align-items:center}
+.about .ph{aspect-ratio:1;border-radius:28px;background:var(--acc2);display:grid;place-items:center;font:700 90px var(--hf);color:var(--acc);overflow:hidden}
+.about .ph img{width:100%;height:100%;object-fit:cover}
+.about ul{padding:0;list-style:none;margin:18px 0 0}
+.about li{padding:6px 0 6px 28px;position:relative}
+.about li:before{content:'✓';position:absolute;left:0;color:var(--acc);font-weight:800}
+table.tt{width:100%;border-collapse:separate;border-spacing:0;background:var(--card);border:1px solid var(--line);border-radius:18px;overflow:hidden}
+.tt th,.tt td{padding:13px 16px;text-align:left;border-bottom:1px solid var(--line);font-size:15px}
+.tt th{background:var(--acc2);color:var(--acc);font-size:12px;letter-spacing:.08em;text-transform:uppercase}
+.tt tr:last-child td{border-bottom:0}
+.tt td button{border:0;background:none;color:var(--acc);font-weight:700}
+.quote{background:var(--card);border:1px solid var(--line);border-radius:22px;padding:24px}
+.quote .st{color:#E9A23B;letter-spacing:3px}
+.quote p{font:500 18px/1.5 var(--hf);margin:10px 0}
+.quote small{color:var(--soft);font-weight:600}
+details{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:16px 20px;margin-bottom:10px}
+summary{font-weight:600;cursor:pointer}
+details p{color:var(--soft);margin:10px 0 0}
+.contact{background:var(--ink);color:#fff;border-radius:30px;padding:44px;display:grid;grid-template-columns:1fr 1fr;gap:30px;align-items:center}
+.contact h2{color:#fff}
+.contact .lead{color:rgba(255,255,255,.7)}
+.contact .ways a{display:flex;align-items:center;gap:12px;background:rgba(255,255,255,.08);border-radius:16px;padding:14px 16px;margin-bottom:10px;text-decoration:none}
+.contact .ways span{font-size:20px}
+footer.sf{text-align:center;color:var(--soft);font-size:13px;padding:40px 0}
+@media(max-width:780px){
+ .hero,.about,.contact{grid-template-columns:1fr}
+ .art{max-width:340px;margin:0 auto;width:100%}
+ nav.sn .links{display:none}
+ .contact{padding:28px}
+ .tt thead{display:none}
+ .tt tr{display:grid;grid-template-columns:1fr auto;padding:10px 14px;border-bottom:1px solid var(--line)}
+ .tt td{border:0;padding:2px 0;font-size:14px}
+ .tt td:nth-child(4){grid-row:1/4;grid-column:2;align-self:center}
+ #bar b{display:none}
+}
+</style></head>
+<body>
+<div id="bar" hidden>
+  <b>Test · Website builder</b>
+  <div class="seg" id="tpls"></div>
+  <span class="sp"></span>
+  <button id="bEdit">✏️ Edit</button>
+  <button class="main" id="bLink">🔗 Get my link</button>
+</div>
+<aside id="ed"><header>Edit your website <button class="x2" id="edX">×</button></header><div class="body" id="edBody"></div></aside>
+<div id="modal"><div class="box" id="mbox"></div></div>
+<main id="site"></main>
+
+<script>
+// ---------- demo templates ----------
+const THEMES={
+  rose:{bg:'#FAF7F2',ink:'#2A2530',soft:'#6E6672',acc:'#B5656F',acc2:'#F3E3E2',line:'#E9E2DA'},
+  sage:{bg:'#F5F6F1',ink:'#232A24',soft:'#646C64',acc:'#5E7F64',acc2:'#E1EADF',line:'#DEE3DA'},
+  ocean:{bg:'#F4F6F9',ink:'#1F2733',soft:'#5F6977',acc:'#3F6FA0',acc2:'#DEE8F3',line:'#DCE2EA'},
+  sun:{bg:'#FBF6EE',ink:'#2E261C',soft:'#73685A',acc:'#C47A2C',acc2:'#F5E6D2',line:'#EBDFCF'},
+  plum:{bg:'#F7F4F8',ink:'#271F2D',soft:'#6A6170',acc:'#7A4F8E',acc2:'#ECE1F1',line:'#E4DCE8'},
+  ink:{bg:'#F6F5F3',ink:'#1C1C1C',soft:'#666',acc:'#1C1C1C',acc2:'#E8E6E1',line:'#E2DFD9'}
+};
+const FONTS={classic:["'Fraunces',Georgia,serif","'Inter',system-ui,sans-serif"],elegant:["'Playfair Display',Georgia,serif","'Inter',system-ui,sans-serif"],soft:["'Nunito',system-ui,sans-serif","'Nunito',system-ui,sans-serif"],bold:["'DM Serif Display',Georgia,serif","'Inter',system-ui,sans-serif"]};
+const DEMOS={
+ coach:{label:'Coach',name:'Sana Rivers Coaching',kind:'ADHD & Life Coach',emoji:'🌱',theme:'sage',font:'classic',
+  headline:'Get unstuck, one calm step at a time',
+  sub:'Coaching for busy adults with ADHD who are tired of starting over. Kind structure, real accountability, no shame.',
+  cta:'Book a free 20-min call',city:'Online · Austin, TX',
+  owner:'Sana Rivers',photo:'',
+  about:'I was diagnosed with ADHD at 34, after years of “just try harder”. Today I help adults build routines that fit their brain, not the other way around.',
+  points:'ICF-certified coach\n8 years of experience\n300+ clients worldwide\nSessions on Zoom, evenings available',
+  services:[['Free discovery call','Free','20 min','See if we are a good fit. No pressure, no sales pitch.'],['1:1 Coaching session','$95','60 min','Weekly focus, one clear plan, a gentle check-in between sessions.'],['3-month program','$990','12 sessions','Routines, planning systems and accountability, with Voxer support.']],
+  schedTitle:'Availability',sched:[['Mon – Thu','9:00 – 18:00','1:1 sessions'],['Tue & Thu','19:00 – 21:00','Evening sessions'],['Saturday','10:00 – 13:00','Discovery calls']],
+  quotes:[['Mel, Denver','I finally have a morning routine that survives a bad night. Sana never made me feel lazy.'],['Jordan, NYC','In 3 months I went from drowning in emails to leaving work on time.']],
+  faq:[['Do I need a diagnosis?','No. Many clients suspect ADHD or just struggle with focus and routines.'],['Is coaching therapy?','No. Coaching is about action and systems. I will refer you if therapy is a better fit.'],['How do I pay?','After our call I send a secure payment link. You can pay per session or per program.']],
+  wa:'15125550147',email:'hello@sanarivers.com',phone:'+1 512 555 0147',insta:'sanarivers.coach'},
+ pilates:{label:'Pilates',name:'Core & Calm Pilates',kind:'Pilates studio',emoji:'🧘‍♀️',theme:'rose',font:'elegant',
+  headline:'Strong core. Calm mind. Small classes.',
+  sub:'Reformer and mat Pilates in a bright neighborhood studio. Max 6 people per class, so your teacher actually sees you.',
+  cta:'Book your first class',city:'Brooklyn, NY',
+  owner:'Lena Marsh',photo:'',
+  about:'Core & Calm opened in 2021 with one idea: Pilates that feels welcoming for every body. All teachers are certified, and every class can be adapted for injuries or pregnancy.',
+  points:'Max 6 people per class\nReformer & mat\nPre- and postnatal friendly\nFirst class only $15',
+  services:[['Intro class','$15','50 min','Your first class: we learn the basics and your goals.'],['Drop-in reformer','$38','50 min','Any group reformer class on the timetable.'],['10-class pack','$320','valid 4 months','Save $60. Share-friendly with a partner.'],['Private session','$85','55 min','One-on-one, perfect after an injury or for fast progress.']],
+  schedTitle:'Weekly timetable',sched:[['Monday','7:00','Reformer flow'],['Monday','18:30','Mat & stretch'],['Wednesday','12:15','Lunch express (30 min)'],['Thursday','18:30','Reformer strength'],['Saturday','9:00','Prenatal Pilates'],['Sunday','10:00','Beginner reformer']],
+  quotes:[['Priya','Small classes make all the difference. My back pain is gone after 2 months.'],['Ana','The prenatal class was my weekly safe place. Lovely teachers.']],
+  faq:[['I have never done Pilates. Is that ok?','Yes! Book the intro class, it is made for beginners.'],['What should I bring?','Comfortable clothes and grip socks (we also sell them at the studio).'],['Can I cancel?','Free cancellation up to 12 hours before class.']],
+  wa:'17185550190',email:'studio@coreandcalm.com',phone:'+1 718 555 0190',insta:'coreandcalm.pilates'},
+ nanny:{label:'Nanny',name:'Little Steps Childcare',kind:'Nanny & babysitter',emoji:'🧸',theme:'sun',font:'soft',
+  headline:'Loving, reliable childcare you can count on',
+  sub:'Full-time nanny, after-school care and date-night babysitting in Pasadena. CPR certified, references available.',
+  cta:'Ask about availability',city:'Pasadena, CA',
+  owner:'Maria Lopez',photo:'',
+  about:'Hi, I am Maria! I have cared for little ones for 12 years, from newborns to 10-year-olds. I speak English and Spanish and love crafts, outdoor play and story time.',
+  points:'Infant & child CPR certified\nBackground checked\nBilingual English / Spanish\nOwn car, clean driving record',
+  services:[['Full-time nanny','$24/h','40 h/week','Daily routines, meals, naps, activities and a daily report.'],['After-school care','$26/h','3–7 pm','School pick-up, snack, homework help and play.'],['Date night','$28/h','min. 3 h','Bedtime routine and a calm evening for the kids.']],
+  schedTitle:'Availability',sched:[['Mon – Fri','7:30 – 18:00','Full-time spots: 1 left'],['Mon – Fri','15:00 – 19:00','After-school'],['Fri – Sat','18:00 – 23:00','Date nights']],
+  quotes:[['The Nguyen family','Maria has been with us since our son was 4 months old. We trust her completely.'],['Sarah K.','Our go-to for date nights. The kids ask for her every weekend!']],
+  faq:[['Can we meet first?','Of course. I offer a free 30-minute meet & greet with your family.'],['Do you cook for the kids?','Yes, simple healthy meals and snacks following your rules and allergies.'],['What about sick days?','I always give as much notice as possible and can suggest a trusted backup.']],
+  wa:'16265550133',email:'maria@littlestepscare.com',phone:'+1 626 555 0133',insta:''},
+ photo:{label:'Photographer',name:'Golden Hour Studio',kind:'Family & portrait photographer',emoji:'📷',theme:'ink',font:'bold',
+  headline:'Real moments, beautifully kept',
+  sub:'Relaxed family, newborn and portrait sessions outdoors in Seattle. Gallery delivered in 2 weeks.',
+  cta:'Check my dates',city:'Seattle, WA',
+  owner:'Noah Kim',photo:'',
+  about:'I photograph families the way they really are: laughing, messy, in love. No stiff poses, just a fun walk and lots of light.',
+  points:'Online gallery in 14 days\nPrint release included\nOutdoor or at home\nBooking 2027 now',
+  services:[['Mini session','$195','20 min','10 edited photos. Perfect for holiday cards.'],['Family session','$395','60 min','40+ edited photos, 2 locations.'],['Newborn at home','$450','2 hours','Calm lifestyle session at your place.']],
+  schedTitle:'Upcoming mini-session days',sched:[['Nov 15','Discovery Park','6 spots left'],['Nov 22','Kerry Park','Sold out'],['Dec 6','Snow Lake trail','8 spots left']],
+  quotes:[['Emily & Josh','We finally have photos where we all look like ourselves. Noah made the kids laugh the whole time.'],['Rachel','The newborn session was so calm. I cried when I saw the gallery.']],
+  faq:[['What should we wear?','I send a style guide after booking, with colors that photograph well.'],['What if it rains?','We reschedule for free. Seattle life!'],['Do you travel?','Yes, within 50 miles of Seattle at no extra cost.']],
+  wa:'12065550178',email:'hi@goldenhourstudio.com',phone:'+1 206 555 0178',insta:'goldenhour.sea'}
+};
+// ---------- state ----------
+let S=null, VIEW=false;
+const $=s=>document.querySelector(s);
+const esc=s=>String(s??'').replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+const initials=n=>String(n||'?').split(/\s+/).filter(w=>/^\p{L}/u.test(w)).slice(0,2).map(w=>w[0]).join('').toUpperCase();
+const clone=o=>JSON.parse(JSON.stringify(o));
+
+function applyTheme(){
+  const t=THEMES[S.theme]||THEMES.rose, f=FONTS[S.font]||FONTS.classic, r=document.documentElement.style;
+  r.setProperty('--bg',t.bg);r.setProperty('--ink',t.ink);r.setProperty('--soft',t.soft);r.setProperty('--acc',t.acc);r.setProperty('--acc2',t.acc2);r.setProperty('--line',t.line);
+  r.setProperty('--hf',f[0]);r.setProperty('--bf',f[1]);
+  document.title=S.name||'My website';
+}
+function render(){
+  applyTheme();
+  const pts=String(S.points||'').split('\n').filter(Boolean);
+  const photo=(u,cls)=>u?`<img src="${esc(u)}" alt="" onerror="this.remove()">`:'';
+  $('#site').innerHTML=`
+  <div class="wrap">
+    <nav class="sn"><div class="logo"><i>${esc(initials(S.name))}</i>${esc(S.name)}</div>
+      <div class="links"><a href="#services">Services</a><a href="#about">About</a><a href="#schedule">${esc(S.schedTitle||'Schedule')}</a><a href="#contact">Contact</a></div>
+      <button class="btn" data-book="">Book</button></nav>
+    <div class="hero">
+      <div><span class="kick">${esc(S.kind)} · ${esc(S.city)}</span>
+        <h1>${esc(S.headline)}</h1><p>${esc(S.sub)}</p>
+        <div class="cta"><button class="btn" data-book="">${esc(S.cta)}</button><a class="btn alt" href="#services">See prices</a></div>
+        <div class="trust">${S.quotes.length?`<span><b>★★★★★</b> loved by clients</span>`:''}${pts[0]?`<span>✓ ${esc(pts[0])}</span>`:''}${pts[1]?`<span>✓ ${esc(pts[1])}</span>`:''}</div>
+      </div>
+      <div class="art">${S.photo?photo(S.photo):`<div class="mono">${esc(initials(S.name))}</div>`}<div class="tag"><span>${esc(S.emoji||'✨')}</span><div><b>${esc(S.owner)}</b><br>${esc(S.kind)}</div></div></div>
+    </div>
+  </div>
+  <section class="s" id="services"><div class="wrap"><h2>Services & prices</h2><p class="lead">Clear prices, no surprises. Tap a service to send a request.</p>
+    <div class="grid">${S.services.map((s,i)=>`<div class="card"><h3>${esc(s[0])}</h3><div class="meta">${esc(s[2])}</div><p>${esc(s[3])}</p><div class="pr"><b>${esc(s[1])}</b><button data-book="${i}">Book</button></div></div>`).join('')}</div></div></section>
+  <section class="s" id="about"><div class="wrap about"><div class="ph">${S.photo?photo(S.photo):esc(initials(S.owner))}</div>
+    <div><span class="kick">About</span><h2 style="margin-top:14px">Hi, I'm ${esc(String(S.owner||'').split(' ')[0])}</h2><p class="lead" style="margin:0">${esc(S.about)}</p><ul>${pts.map(p=>`<li>${esc(p)}</li>`).join('')}</ul></div></div></section>
+  ${S.sched.length?`<section class="s" id="schedule"><div class="wrap"><h2>${esc(S.schedTitle)}</h2><p class="lead">Pick a time that works for you and send a request in one tap.</p>
+    <table class="tt"><thead><tr><th>When</th><th>Time / place</th><th>What</th><th></th></tr></thead><tbody>${S.sched.map(r=>`<tr><td><b>${esc(r[0])}</b></td><td>${esc(r[1])}</td><td>${esc(r[2])}</td><td><button data-slot="${esc(r[0]+' '+r[1]+' · '+r[2])}">Request</button></td></tr>`).join('')}</tbody></table></div></section>`:''}
+  ${S.quotes.length?`<section class="s"><div class="wrap"><h2>Kind words</h2><p class="lead">What clients say.</p><div class="grid">${S.quotes.map(q=>`<div class="quote"><div class="st">★★★★★</div><p>“${esc(q[1])}”</p><small>${esc(q[0])}</small></div>`).join('')}</div></div></section>`:''}
+  ${S.faq.length?`<section class="s"><div class="wrap"><h2>Questions</h2><p class="lead">Quick answers before you book.</p>${S.faq.map(f=>`<details><summary>${esc(f[0])}</summary><p>${esc(f[1])}</p></details>`).join('')}</div></section>`:''}
+  <section class="s" id="contact" style="border:0"><div class="wrap"><div class="contact"><div><h2>Let's talk</h2><p class="lead">Send a message and ${esc(String(S.owner||'I').split(' ')[0])} will get back to you, usually the same day.</p><button class="btn" data-book="" style="background:#fff;color:var(--ink)">${esc(S.cta)}</button></div>
+    <div class="ways">${S.wa?`<a href="https://wa.me/${esc(S.wa.replace(/\D/g,''))}" target="_blank" rel="noopener"><span>💬</span>WhatsApp</a>`:''}${S.email?`<a href="mailto:${esc(S.email)}"><span>✉️</span>${esc(S.email)}</a>`:''}${S.phone?`<a href="tel:${esc(S.phone.replace(/\s/g,''))}"><span>📞</span>${esc(S.phone)}</a>`:''}${S.insta?`<a href="https://instagram.com/${esc(S.insta)}" target="_blank" rel="noopener"><span>📸</span>@${esc(S.insta)}</a>`:''}<a><span>📍</span>${esc(S.city)}</a></div></div></div></section>
+  <footer class="sf">© ${new Date().getFullYear()} ${esc(S.name)}${VIEW?'':' · <i>made with BestInCell</i>'}</footer>`;
+}
+// ---------- booking request (no server: WhatsApp or email) ----------
+function book(svc,slot){
+  const m=$('#modal'),b=$('#mbox');
+  b.innerHTML=`<h3>${esc(S.cta)}</h3><p style="color:#6E6672;margin:0">Your request goes straight to ${esc(String(S.owner).split(' ')[0])} by WhatsApp or email.</p>
+   <label>Your name</label><input id="bN" placeholder="First and last name">
+   <label>Service</label><select id="bS">${S.services.map((s,i)=>`<option ${String(i)===String(svc)?'selected':''}>${esc(s[0])} (${esc(s[1])})</option>`).join('')}</select>
+   <label>Preferred day & time</label><input id="bD" value="${esc(slot||'')}" placeholder="e.g. Tuesday evening">
+   <label>Message (optional)</label><textarea id="bM" rows="3" placeholder="Anything I should know?"></textarea>
+   <div class="btns">${S.wa?'<button class="wa" id="bWa">Send on WhatsApp</button>':''}${S.email?'<button id="bEm">Send by email</button>':''}<button class="ghost" id="bX">Cancel</button></div>`;
+  m.classList.add('on');
+  const txt=()=>`Hi ${String(S.owner).split(' ')[0]}! I'd like to book: ${$('#bS').value}\nName: ${$('#bN').value}\nWhen: ${$('#bD').value}\n${$('#bM').value}`.trim();
+  $('#bX').onclick=()=>m.classList.remove('on');
+  $('#bWa')&&($('#bWa').onclick=()=>{window.open('https://wa.me/'+S.wa.replace(/\D/g,'')+'?text='+encodeURIComponent(txt()),'_blank');m.classList.remove('on')});
+  $('#bEm')&&($('#bEm').onclick=()=>{location.href='mailto:'+S.email+'?subject='+encodeURIComponent('Booking request: '+$('#bS').value)+'&body='+encodeURIComponent(txt());m.classList.remove('on')});
+}
+document.addEventListener('click',e=>{
+  const bk=e.target.closest('[data-book]'); if(bk){book(bk.dataset.book,'');return}
+  const sl=e.target.closest('[data-slot]'); if(sl){book('',sl.dataset.slot);return}
+});
+$('#modal').addEventListener('click',e=>{if(e.target.id==='modal')e.target.classList.remove('on')});
+// ---------- link: the whole site lives in the URL ----------
+const b64u=u8=>btoa(String.fromCharCode(...u8)).replace(/\+/g,'-').replace(/\//g,'_').replace(/=+$/,'');
+const unb64u=s=>Uint8Array.from(atob(s.replace(/-/g,'+').replace(/_/g,'/')),c=>c.charCodeAt(0));
+async function pack(o){const raw=new TextEncoder().encode(JSON.stringify(o));
+  if(window.CompressionStream){const cs=new Blob([raw]).stream().pipeThrough(new CompressionStream('deflate-raw'));return 'z'+b64u(new Uint8Array(await new Response(cs).arrayBuffer()))}
+  return 'j'+b64u(raw)}
+async function unpack(s){const t=s[0],d=unb64u(s.slice(1));
+  if(t==='z'){const ds=new Blob([d]).stream().pipeThrough(new DecompressionStream('deflate-raw'));return JSON.parse(await new Response(ds).text())}
+  return JSON.parse(new TextDecoder().decode(d))}
+async function showLink(){
+  const url=location.origin+location.pathname+'#s='+await pack(S);
+  $('#mbox').innerHTML=`<h3>Your website link 🎉</h3><p style="color:#6E6672;margin:0 0 10px">This link <b>is</b> the website: share it on Instagram, Google, WhatsApp or a QR code. Edit again anytime and get a new link.</p>
+   <div class="link">${esc(url)}</div><div class="btns"><button id="lC">Copy link</button><button id="lO" class="wa">Open my site</button><button class="ghost" id="lX">Close</button></div>
+   <p style="font-size:12px;color:#8a8190;margin:12px 0 0">Test version: in the real product the link would be short, like <b>bestincell.site/${esc((S.name||'my-site').toLowerCase().replace(/[^a-z0-9]+/g,'-').replace(/^-|-$/g,''))}</b>.</p>`;
+  $('#modal').classList.add('on');
+  $('#lC').onclick=async()=>{try{await navigator.clipboard.writeText(url);$('#lC').textContent='Copied ✓'}catch(e){prompt('Copy this link',url)}};
+  $('#lO').onclick=()=>window.open(url,'_blank');
+  $('#lX').onclick=()=>$('#modal').classList.remove('on');
+}
+// ---------- editor ----------
+const FIELDS=[['Business','name','Business name'],['','kind','What you do (e.g. Pilates studio)'],['','city','City or "Online"'],['','emoji','Emoji'],['Home screen','headline','Big headline'],['','sub','Short description','ta'],['','cta','Main button text'],['About you','owner','Your name'],['','photo','Photo link (optional, https://…)'],['','about','About text','ta'],['','points','Highlights (one per line)','ta'],['Contact','wa','WhatsApp number (with country code)'],['','email','Email'],['','phone','Phone'],['','insta','Instagram (without @)'],['Schedule','schedTitle','Section title']];
+const LISTS={services:{t:'Services & prices',f:['Name','Price','Duration','Description'],blank:['New service','$0','60 min','']},sched:{t:'Schedule rows',f:['Day','Time / place','What'],blank:['Monday','10:00','']},quotes:{t:'Reviews',f:['Name','Review'],blank:['Client','']},faq:{t:'FAQ',f:['Question','Answer'],blank:['Question?','']}};
+function editor(){
+  let h='';
+  FIELDS.forEach(([sec,k,l,ta])=>{if(sec)h+=`<h4>${sec}</h4>`;h+=`<label>${l}</label>`+(ta?`<textarea data-k="${k}">${esc(S[k])}</textarea>`:`<input data-k="${k}" value="${esc(S[k])}">`);
+    if(k==='emoji'){h+=`<h4>Style</h4><label>Colors</label><div class="sw">${Object.entries(THEMES).map(([n,t])=>`<button data-th="${n}" class="${S.theme===n?'on':''}" style="background:${t.acc}" title="${n}"></button>`).join('')}</div><label>Fonts</label><select data-k="font">${Object.keys(FONTS).map(f=>`<option ${S.font===f?'selected':''}>${f}</option>`).join('')}</select>`}});
+  Object.entries(LISTS).forEach(([k,L])=>{h+=`<h4>${L.t}</h4>`+S[k].map((r,i)=>`<div class="row"><button class="x" data-del="${k}:${i}">×</button>${L.f.map((f,j)=>`<label>${f}</label>`+(j===L.f.length-1&&L.f.length>2||f==='Review'||f==='Answer'?`<textarea data-l="${k}:${i}:${j}">${esc(r[j])}</textarea>`:`<input data-l="${k}:${i}:${j}" value="${esc(r[j])}">`)).join('')}</div>`).join('')+`<button class="add" data-addl="${k}">+ Add</button>`});
+  $('#edBody').innerHTML=h;
+}
+$('#edBody').addEventListener('input',e=>{const t=e.target;
+  if(t.dataset.k){S[t.dataset.k]=t.value;render()}
+  if(t.dataset.l){const [k,i,j]=t.dataset.l.split(':');S[k][i][j]=t.value;render()}});
+$('#edBody').addEventListener('click',e=>{const t=e.target;
+  if(t.dataset.th){S.theme=t.dataset.th;render();editor()}
+  if(t.dataset.del){const [k,i]=t.dataset.del.split(':');S[k].splice(i,1);render();editor()}
+  if(t.dataset.addl){S[t.dataset.addl].push(clone(LISTS[t.dataset.addl].blank));render();editor()}});
+$('#bEdit').onclick=()=>{editor();$('#ed').classList.add('on')};
+$('#edX').onclick=()=>$('#ed').classList.remove('on');
+$('#bLink').onclick=showLink;
+function pick(k){S=clone(DEMOS[k]);S.tpl=k;document.querySelectorAll('#tpls button').forEach(b=>b.classList.toggle('on',b.dataset.t===k));render();if($('#ed').classList.contains('on'))editor();scrollTo(0,0)}
+// ---------- start ----------
+(async()=>{
+  const m=location.hash.match(/^#s=(.+)$/);
+  if(m){try{S=await unpack(m[1]);VIEW=true;render();return}catch(e){console.warn('bad link',e)}}
+  $('#bar').hidden=false;
+  $('#tpls').innerHTML=Object.entries(DEMOS).map(([k,d])=>`<button data-t="${k}">${d.label}</button>`).join('');
+  $('#tpls').onclick=e=>{const b=e.target.closest('[data-t]');b&&pick(b.dataset.t)};
+  pick('pilates');
+})();
+</script>
+</body></html>
